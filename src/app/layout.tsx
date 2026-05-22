@@ -8,7 +8,11 @@ import CapacitorStatusBar from "@/components/client/CapacitorStatusBar";
 import OfflineIndicator from "@/components/client/OfflineIndicator";
 import { WebVitals } from "@/components/client/WebVitals";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "arial"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://m4capital-fqpoqgx2h-shang-team.vercel.app"),

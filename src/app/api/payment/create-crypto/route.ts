@@ -34,12 +34,18 @@ export async function POST(request: NextRequest) {
         "Unauthorized",
         "Authentication required",
         undefined,
-        401
+        401,
       );
     }
 
     const body = await request.json();
-    const { amount, currency = "USD", cryptoCurrency = "btc", targetAsset } = body;
+    const {
+      amount,
+      currency = "USD",
+      cryptoCurrency = "btc",
+      targetAsset,
+      metadata,
+    } = body;
     // targetAsset can be:
     // - undefined/null: credits to fiat balance (default)
     // - "TRADEROOM": credits to traderoom balance
@@ -50,7 +56,7 @@ export async function POST(request: NextRequest) {
         "Invalid input",
         "Amount must be greater than 0",
         undefined,
-        400
+        400,
       );
     }
 
@@ -62,10 +68,10 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(
         "Invalid cryptocurrency",
         `Cryptocurrency ${cryptoCurrency} is not supported. Supported: ${Object.keys(
-          SUPPORTED_CRYPTOS
+          SUPPORTED_CRYPTOS,
         ).join(", ")}`,
         undefined,
-        400
+        400,
       );
     }
 
@@ -107,13 +113,14 @@ export async function POST(request: NextRequest) {
         currency,
         cryptoInfo.code,
         cryptoInfo.name,
-        targetAsset
+        targetAsset,
+        metadata,
       );
     } catch (error: any) {
       console.error(
         "Payment API failed, falling back to invoice API:",
         error?.message || error,
-        error?.stack
+        error?.stack,
       );
       try {
         return await createCryptoInvoice(
@@ -123,13 +130,14 @@ export async function POST(request: NextRequest) {
           currency,
           cryptoInfo.code,
           cryptoInfo.name,
-          targetAsset
+          targetAsset,
+          metadata,
         );
       } catch (invoiceError: any) {
         console.error(
           "Invoice API also failed:",
           invoiceError?.message || invoiceError,
-          invoiceError?.stack
+          invoiceError?.stack,
         );
         // Return a more descriptive error
         const errorMessage =
@@ -145,7 +153,7 @@ export async function POST(request: NextRequest) {
             paymentError: error?.message,
             invoiceError: invoiceError?.message,
           },
-          500
+          500,
         );
       }
     }
@@ -155,7 +163,7 @@ export async function POST(request: NextRequest) {
       "Internal server error",
       error instanceof Error ? error.message : "Failed to create payment",
       error,
-      500
+      500,
     );
   }
 }
@@ -170,7 +178,8 @@ async function createCryptoPayment(
   currency: string,
   payCurrency: string,
   cryptoName: string,
-  targetAsset?: string
+  targetAsset?: string,
+  metadata?: any,
 ) {
   // Get minimum amount for the selected crypto
   let minAmount = { min_amount: 0 };
@@ -207,7 +216,7 @@ async function createCryptoPayment(
         minAmount.min_amount
       } ${payCurrency.toUpperCase()} (~${currSym}${minUsdValue})`,
       undefined,
-      400
+      400,
     );
   }
 
@@ -224,6 +233,7 @@ async function createCryptoPayment(
       status: "PENDING",
       method: `NOWPAYMENTS_${payCurrency.toUpperCase()}`,
       targetAsset: targetAsset || null,
+      metadata: metadata || {},
       updatedAt: new Date(),
     },
   });
@@ -274,7 +284,7 @@ async function createCryptoPayment(
         method: "payment",
       },
     },
-    "Payment created successfully"
+    "Payment created successfully",
   );
 }
 
@@ -288,7 +298,8 @@ async function createCryptoInvoice(
   currency: string,
   payCurrency: string,
   cryptoName: string,
-  targetAsset?: string
+  targetAsset?: string,
+  metadata?: any,
 ) {
   // Estimate crypto amount
   const estimate = await nowPayments.estimatePrice({
@@ -310,6 +321,7 @@ async function createCryptoInvoice(
       status: "PENDING",
       method: `NOWPAYMENTS_${payCurrency.toUpperCase()}_INVOICE`,
       targetAsset: targetAsset || null,
+      metadata: metadata || {},
       updatedAt: new Date(),
     },
   });
@@ -363,6 +375,6 @@ async function createCryptoInvoice(
         method: "invoice",
       },
     },
-    "Invoice created successfully"
+    "Invoice created successfully",
   );
 }

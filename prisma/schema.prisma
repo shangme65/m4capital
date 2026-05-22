@@ -66,6 +66,61 @@ model CourseProgress {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model CopyTrading {
+  id                 String               @id
+  userId             String
+  traderName         String
+  traderImage        String
+  winRate            String
+  profitShare        String
+  minDeposit         Decimal
+  depositId          String?
+  status             String               @default("ACTIVE")
+  startedAt          DateTime             @default(now())
+  endedAt            DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  User               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CopyTradeExecution CopyTradeExecution[]
+
+  @@index([userId, status])
+  @@index([userId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model CopyTradeExecution {
+  id              String      @id
+  copyTradingId   String
+  userId          String
+  traderTradeId   String
+  symbol          String
+  direction       String
+  entryPrice      Decimal
+  exitPrice       Decimal?
+  amount          Decimal
+  quantity        Decimal
+  leverage        Int         @default(1)
+  status          TradeStatus @default(OPEN)
+  profit          Decimal     @default(0.00)
+  profitShare     Decimal     @default(0.00)
+  userProfit      Decimal     @default(0.00)
+  traderProfit    Decimal     @default(0.00)
+  openedAt        DateTime    @default(now())
+  closedAt        DateTime?
+  executedAt      DateTime    @default(now())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  metadata        Json?       @default("{}")
+  CopyTrading     CopyTrading @relation(fields: [copyTradingId], references: [id], onDelete: Cascade)
+  User            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([copyTradingId])
+  @@index([userId])
+  @@index([status])
+  @@index([traderTradeId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model CryptoWatchlist {
   id          String   @id
   userId      String
@@ -522,6 +577,8 @@ model User {
   hasClaimedFirstDepositBonus Boolean       @default(false)
   Account                Account[]
   BitcoinDeposit         BitcoinDeposit[]
+  CopyTrading            CopyTrading[]
+  CopyTradeExecution     CopyTradeExecution[]
   CourseProgress         CourseProgress[]
   CryptoWatchlist        CryptoWatchlist[]
   Deposit                Deposit[]

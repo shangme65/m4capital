@@ -86,22 +86,31 @@ export async function POST(request: NextRequest) {
     }
 
     const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET;
-    
+
     console.log("🔑 IPN Secret configured:", !!ipnSecret);
-    
+
     if (!ipnSecret) {
       console.error("❌ NOWPAYMENTS_IPN_SECRET not configured!");
-      console.log("⚠️ Proceeding without signature verification (INSECURE - FIX IN PRODUCTION)");
+      console.log(
+        "⚠️ Proceeding without signature verification (INSECURE - FIX IN PRODUCTION)",
+      );
       // Don't fail - just log warning and continue
     } else {
-      const isValid = nowPayments.verifyIPNSignature(body, signature, ipnSecret);
+      const isValid = nowPayments.verifyIPNSignature(
+        body,
+        signature,
+        ipnSecret,
+      );
       console.log("🔐 Signature valid:", isValid);
 
       if (!isValid) {
         console.error("❌ Invalid signature");
         console.error("Expected signature calculated from body");
         console.error("Received signature:", signature);
-        return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
+        return NextResponse.json(
+          { error: "Invalid signature" },
+          { status: 403 },
+        );
       }
     }
 
@@ -132,15 +141,15 @@ export async function POST(request: NextRequest) {
     if (!deposit) {
       console.error("❌ Deposit not found for order_id:", order_id);
       console.error("Searching all deposits to debug...");
-      
+
       // Debug: List recent deposits
       const recentDeposits = await prisma.deposit.findMany({
         take: 10,
-        orderBy: { createdAt: 'desc' },
-        select: { id: true, paymentId: true, status: true, createdAt: true }
+        orderBy: { createdAt: "desc" },
+        select: { id: true, paymentId: true, status: true, createdAt: true },
       });
       console.log("Recent deposits:", recentDeposits);
-      
+
       return NextResponse.json({ error: "Deposit not found" }, { status: 404 });
     }
 
@@ -155,12 +164,12 @@ export async function POST(request: NextRequest) {
       "💰 Processing deposit:",
       deposit.id,
       "Payment Status:",
-      payment_status
+      payment_status,
     );
 
     // Update deposit status based on payment status
     let newStatus = deposit.status;
-    
+
     console.log("📊 Payment status mapping:");
     console.log("  - Received status:", payment_status);
     console.log("  - Current deposit status:", deposit.status);
@@ -173,13 +182,13 @@ export async function POST(request: NextRequest) {
         if (deposit.status !== "PENDING" && deposit.User) {
           const userCurr = deposit.User.preferredCurrency || "USD";
           const currSym = getCurrencySymbol(userCurr);
-          
+
           // Convert price_amount (likely in USD) to user's currency
           let displayAmount = price_amount;
           if (userCurr !== "USD") {
             try {
               const ratesResponse = await fetch(
-                "https://api.frankfurter.app/latest?from=USD"
+                "https://api.frankfurter.app/latest?from=USD",
               );
               if (ratesResponse.ok) {
                 const ratesData = await ratesResponse.json();
@@ -190,7 +199,7 @@ export async function POST(request: NextRequest) {
               console.error("Error fetching exchange rate:", err);
             }
           }
-          
+
           await prisma.notification.create({
             data: {
               id: generateId(),
@@ -258,11 +267,15 @@ export async function POST(request: NextRequest) {
         break;
       default:
         newStatus = "PENDING";
-        console.log("  - New status: PENDING (unknown status:", payment_status, ")");
+        console.log(
+          "  - New status: PENDING (unknown status:",
+          payment_status,
+          ")",
+        );
     }
 
     console.log("💾 Updating deposit in database...");
-    
+
     // Determine confirmations based on payment status
     let confirmations = deposit.confirmations;
     if (payment_status === "confirmed" || payment_status === "finished") {
@@ -272,7 +285,7 @@ export async function POST(request: NextRequest) {
       confirmations = Math.min(deposit.confirmations + 1, 5); // Increment but don't exceed 5
       console.log("  - Incrementing confirmations to", confirmations);
     }
-    
+
     // Update deposit
     await prisma.deposit.update({
       where: { id: deposit.id },
@@ -282,7 +295,7 @@ export async function POST(request: NextRequest) {
         confirmations: confirmations,
       },
     });
-    
+
     console.log("✅ Deposit updated successfully");
     console.log("  - Status:", newStatus);
     console.log("  - Confirmations:", confirmations);
@@ -292,515 +305,703 @@ export async function POST(request: NextRequest) {
     console.log("🔍 Checking if should credit user...");
     console.log("  - New status:", newStatus);
     console.log("  - Previous status:", deposit.status);
-    const shouldCredit = newStatus === "COMPLETED" && deposit.status !== "COMPLETED";
+    const shouldCredit =
+      newStatus === "COMPLETED" && deposit.status !== "COMPLETED";
     console.log("  - Should credit?", shouldCredit);
-    
+
     // Also check if this is a recovery case - deposit was FAILED but NowPayments says finished
     const isRecovery = newStatus === "COMPLETED" && deposit.status === "FAILED";
     if (isRecovery) {
-      console.log("🔄 RECOVERY CASE: Deposit was FAILED but NowPayments confirms payment!");
-      console.log("  - This payment was marked as FAILED locally but NowPayments shows it succeeded!");
+      console.log(
+        "🔄 RECOVERY CASE: Deposit was FAILED but NowPayments confirms payment!",
+      );
+      console.log(
+        "  - This payment was marked as FAILED locally but NowPayments shows it succeeded!",
+      );
     }
-    
+
     if (shouldCredit || isRecovery) {
       try {
-      console.log("💰💰💰 PAYMENT COMPLETED! Starting credit process...");
+        console.log("💰💰💰 PAYMENT COMPLETED! Starting credit process...");
 
-      // IMPORTANT: Check if we already processed this deposit to prevent duplicate notifications
-      // This can happen if NowPayments sends both 'confirmed' and 'finished' webhooks quickly
-      const existingCompletedNotif = await prisma.notification.findFirst({
-        where: {
-          userId: deposit.userId || "",
-          type: "DEPOSIT",
-          metadata: {
-            path: ["depositId"],
-            equals: deposit.id,
-          },
-          title: {
-            contains: "Completed",
-          },
-        },
-      });
-      
-      if (existingCompletedNotif) {
-        console.log("⚠️ Deposit already processed - completion notification exists, skipping duplicate");
-        console.log("  - Existing notification ID:", existingCompletedNotif.id);
-        return NextResponse.json({
-          success: true,
-          message: "Webhook acknowledged (deposit already credited)",
-        });
-      }
-
-      // Check if user exists
-      if (!deposit.User) {
-        console.error("❌ Deposit has no associated user!");
-        return NextResponse.json(
-          { success: false, error: "User not found" },
-          { status: 400 }
-        );
-      }
-      
-      console.log("✅ User found:", deposit.User.email);
-
-      // Get or create portfolio
-      let portfolio = deposit.User.Portfolio;
-      if (!portfolio) {
-        console.log("📁 Creating new portfolio for user...");
-        portfolio = await prisma.portfolio.create({
-          data: {
-            id: generateId(),
-            userId: deposit.User.id,
-            balance: 0,
-            traderoomBalance: 0,
-            assets: [],
+        // IMPORTANT: Check if we already processed this deposit to prevent duplicate notifications
+        // This can happen if NowPayments sends both 'confirmed' and 'finished' webhooks quickly
+        const existingCompletedNotif = await prisma.notification.findFirst({
+          where: {
+            userId: deposit.userId || "",
+            type: "DEPOSIT",
+            metadata: {
+              path: ["depositId"],
+              equals: deposit.id,
+            },
+            title: {
+              contains: "Completed",
+            },
           },
         });
-        console.log("✅ Portfolio created");
-      } else {
-        console.log("✅ Portfolio exists - ID:", portfolio.id);
-      }
 
-      const depositCurrency = deposit.currency || "USD";
-      let depositAmount = parseFloat(deposit.amount.toString());
-      const userPreferredCurrency = deposit.User.preferredCurrency || "USD";
-      
-      console.log("💵 Deposit details:");
-      console.log("  - Amount:", depositAmount);
-      console.log("  - Currency:", depositCurrency);
-      console.log("  - User's preferred currency:", userPreferredCurrency);
-      console.log("  - Target:", deposit.targetAsset || "REGULAR");
-
-      // Convert deposit amount to user's preferred currency if different
-      if (depositCurrency !== userPreferredCurrency) {
-        console.log(`💱 Converting from ${depositCurrency} to ${userPreferredCurrency}...`);
-        try {
-          const ratesResponse = await fetch(
-            `https://api.frankfurter.app/latest?from=${depositCurrency}&to=${userPreferredCurrency}`
+        if (existingCompletedNotif) {
+          console.log(
+            "⚠️ Deposit already processed - completion notification exists, skipping duplicate",
           );
-          if (ratesResponse.ok) {
-            const ratesData = await ratesResponse.json();
-            const rate = ratesData.rates[userPreferredCurrency];
-            if (rate) {
-              const originalAmount = depositAmount;
-              depositAmount = depositAmount * rate;
-              console.log(`  - Exchange rate: 1 ${depositCurrency} = ${rate} ${userPreferredCurrency}`);
-              console.log(`  - Original amount: ${originalAmount} ${depositCurrency}`);
-              console.log(`  - Converted amount: ${depositAmount} ${userPreferredCurrency}`);
+          console.log(
+            "  - Existing notification ID:",
+            existingCompletedNotif.id,
+          );
+          return NextResponse.json({
+            success: true,
+            message: "Webhook acknowledged (deposit already credited)",
+          });
+        }
+
+        // Check if user exists
+        if (!deposit.User) {
+          console.error("❌ Deposit has no associated user!");
+          return NextResponse.json(
+            { success: false, error: "User not found" },
+            { status: 400 },
+          );
+        }
+
+        console.log("✅ User found:", deposit.User.email);
+
+        // Get or create portfolio
+        let portfolio = deposit.User.Portfolio;
+        if (!portfolio) {
+          console.log("📁 Creating new portfolio for user...");
+          portfolio = await prisma.portfolio.create({
+            data: {
+              id: generateId(),
+              userId: deposit.User.id,
+              balance: 0,
+              traderoomBalance: 0,
+              assets: [],
+            },
+          });
+          console.log("✅ Portfolio created");
+        } else {
+          console.log("✅ Portfolio exists - ID:", portfolio.id);
+        }
+
+        const depositCurrency = deposit.currency || "USD";
+        let depositAmount = parseFloat(deposit.amount.toString());
+        const userPreferredCurrency = deposit.User.preferredCurrency || "USD";
+
+        console.log("💵 Deposit details:");
+        console.log("  - Amount:", depositAmount);
+        console.log("  - Currency:", depositCurrency);
+        console.log("  - User's preferred currency:", userPreferredCurrency);
+        console.log("  - Target:", deposit.targetAsset || "REGULAR");
+
+        // Convert deposit amount to user's preferred currency if different
+        if (depositCurrency !== userPreferredCurrency) {
+          console.log(
+            `💱 Converting from ${depositCurrency} to ${userPreferredCurrency}...`,
+          );
+          try {
+            const ratesResponse = await fetch(
+              `https://api.frankfurter.app/latest?from=${depositCurrency}&to=${userPreferredCurrency}`,
+            );
+            if (ratesResponse.ok) {
+              const ratesData = await ratesResponse.json();
+              const rate = ratesData.rates[userPreferredCurrency];
+              if (rate) {
+                const originalAmount = depositAmount;
+                depositAmount = depositAmount * rate;
+                console.log(
+                  `  - Exchange rate: 1 ${depositCurrency} = ${rate} ${userPreferredCurrency}`,
+                );
+                console.log(
+                  `  - Original amount: ${originalAmount} ${depositCurrency}`,
+                );
+                console.log(
+                  `  - Converted amount: ${depositAmount} ${userPreferredCurrency}`,
+                );
+              } else {
+                console.error(
+                  `❌ Exchange rate not found for ${userPreferredCurrency}`,
+                );
+              }
             } else {
-              console.error(`❌ Exchange rate not found for ${userPreferredCurrency}`);
+              console.error(
+                `❌ Failed to fetch exchange rates: ${ratesResponse.status}`,
+              );
+            }
+          } catch (conversionError) {
+            console.error("❌ Error converting currency:", conversionError);
+            console.log("⚠️ Proceeding with original amount (no conversion)");
+          }
+        } else {
+          console.log(
+            `✓ Deposit currency matches user's preferred currency - no conversion needed`,
+          );
+        }
+
+        // Check if this is a traderoom deposit
+        if (deposit.targetAsset === "TRADEROOM") {
+          console.log("🎮 Processing TRADEROOM deposit...");
+
+          // Check if promo bonus applies (first deposit only)
+          let bonusAmount = 0;
+          let totalCredit = depositAmount;
+          const promoActive = isPromoBonusActive(
+            deposit.User.hasClaimedFirstDepositBonus,
+          );
+
+          if (promoActive) {
+            bonusAmount = calculateBonusAmount(depositAmount);
+            totalCredit = depositAmount + bonusAmount;
+            console.log(
+              `🎁 First deposit bonus! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`,
+            );
+            // Mark user as having claimed the first deposit bonus
+            await prisma.user.update({
+              where: { id: deposit.User.id },
+              data: { hasClaimedFirstDepositBonus: true },
+            });
+            console.log(
+              `✅ Marked user ${deposit.User.email} as having claimed first deposit bonus`,
+            );
+          }
+
+          // Credit to traderoom balance (including bonus if applicable)
+          const currentTraderoomBalance = parseFloat(
+            (portfolio.traderoomBalance || 0).toString(),
+          );
+          const newTraderoomBalance = currentTraderoomBalance + totalCredit;
+
+          console.log(
+            "  - Current traderoom balance:",
+            currentTraderoomBalance,
+          );
+          console.log("  - Deposit amount:", depositAmount);
+          if (bonusAmount > 0) {
+            console.log("  - Bonus amount:", bonusAmount);
+          }
+          console.log("  - Total credit:", totalCredit);
+          console.log("  - New traderoom balance:", newTraderoomBalance);
+
+          await prisma.portfolio.update({
+            where: { id: portfolio.id },
+            data: {
+              traderoomBalance: newTraderoomBalance,
+            },
+          });
+
+          console.log(
+            `✅ Credited ${totalCredit} ${userPreferredCurrency} to TRADEROOM balance for user ${deposit.User.email}${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ""}`,
+          );
+          console.log(
+            `New traderoom balance: ${newTraderoomBalance} ${userPreferredCurrency}`,
+          );
+
+          // Check if this is a copy trading deposit
+          console.log("🔍 Checking for copy trading metadata...");
+          const metadata = deposit.metadata as any;
+          if (metadata && metadata.copyTrading) {
+            console.log("🎯 Copy trading deposit detected!");
+            console.log("  - Trader:", metadata.copyTrading.traderName);
+            console.log("  - Win Rate:", metadata.copyTrading.winRate);
+            console.log("  - Profit Share:", metadata.copyTrading.profitShare);
+
+            try {
+              // Create CopyTrading record
+              const copyTradingRecord = await prisma.copyTrading.create({
+                data: {
+                  id: generateId(),
+                  userId: deposit.User.id,
+                  traderName: metadata.copyTrading.traderName,
+                  traderImage: metadata.copyTrading.traderImage,
+                  winRate: metadata.copyTrading.winRate,
+                  profitShare: metadata.copyTrading.profitShare,
+                  minDeposit: metadata.copyTrading.minDeposit,
+                  depositId: deposit.id,
+                  status: "ACTIVE",
+                },
+              });
+
+              console.log(
+                "✅ Copy trading record created - ID:",
+                copyTradingRecord.id,
+              );
+
+              // Create copy trading activation notification
+              await prisma.notification.create({
+                data: {
+                  id: generateId(),
+                  userId: deposit.User.id,
+                  type: "TRADE",
+                  title: `Now Copying ${metadata.copyTrading.traderName}!`,
+                  message: `You are now copying trades from ${metadata.copyTrading.traderName} (${metadata.copyTrading.winRate} win rate). You'll earn profits automatically while they take a ${metadata.copyTrading.profitShare} profit share.`,
+                  metadata: {
+                    copyTradingId: copyTradingRecord.id,
+                    traderName: metadata.copyTrading.traderName,
+                    traderImage: metadata.copyTrading.traderImage,
+                    winRate: metadata.copyTrading.winRate,
+                    profitShare: metadata.copyTrading.profitShare,
+                  },
+                },
+              });
+
+              console.log("✅ Copy trading activation notification created");
+
+              // Send push notification for copy trading activation
+              try {
+                await sendPushNotification(
+                  deposit.User.id,
+                  `Now Copying ${metadata.copyTrading.traderName}!`,
+                  `Your copy trading is now active. Start earning with ${metadata.copyTrading.winRate} win rate trader!`,
+                  {
+                    type: "copy_trading",
+                    url: "/copy-trading",
+                  },
+                );
+                console.log("✅ Copy trading push notification sent");
+              } catch (pushError) {
+                console.error(
+                  "❌ Failed to send copy trading push notification:",
+                  pushError,
+                );
+              }
+            } catch (copyTradingError) {
+              console.error(
+                "❌ Failed to create copy trading record:",
+                copyTradingError,
+              );
+              // Don't fail the entire webhook - just log the error
             }
           } else {
-            console.error(`❌ Failed to fetch exchange rates: ${ratesResponse.status}`);
+            console.log("  - No copy trading metadata found");
           }
-        } catch (conversionError) {
-          console.error("❌ Error converting currency:", conversionError);
-          console.log("⚠️ Proceeding with original amount (no conversion)");
-        }
-      } else {
-        console.log(`✓ Deposit currency matches user's preferred currency - no conversion needed`);
-      }
 
-      // Check if this is a traderoom deposit
-      if (deposit.targetAsset === "TRADEROOM") {
-        console.log("🎮 Processing TRADEROOM deposit...");
-        
-        // Check if promo bonus applies (first deposit only)
-        let bonusAmount = 0;
-        let totalCredit = depositAmount;
-        const promoActive = isPromoBonusActive(deposit.User.hasClaimedFirstDepositBonus);
-        
-        if (promoActive) {
-          bonusAmount = calculateBonusAmount(depositAmount);
-          totalCredit = depositAmount + bonusAmount;
-          console.log(`🎁 First deposit bonus! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
-          // Mark user as having claimed the first deposit bonus
-          await prisma.user.update({
-            where: { id: deposit.User.id },
-            data: { hasClaimedFirstDepositBonus: true },
+          const userCurrency = userPreferredCurrency;
+          const bonusMessage =
+            bonusAmount > 0
+              ? ` Plus ${PROMO_BONUS_PERCENT}% bonus: ${getCurrencySymbol(userCurrency)}${bonusAmount.toFixed(2)}!`
+              : "";
+
+          console.log("📧 Creating TRADEROOM deposit notification...");
+          // Create notification for successful traderoom deposit
+          const cryptoCurrencyCode = deposit.cryptoCurrency || "BTC";
+          await prisma.notification.create({
+            data: {
+              id: generateId(),
+              userId: deposit.User.id,
+              type: "DEPOSIT",
+              title:
+                bonusAmount > 0
+                  ? `${cryptoCurrencyCode} Traderoom Deposit + Bonus!`
+                  : `${cryptoCurrencyCode} Traderoom Deposit Completed`,
+              message: `Your ${cryptoCurrencyCode} deposit of ${getCurrencySymbol(userCurrency)}${depositAmount.toFixed(
+                2,
+              )} has been successfully credited to your Traderoom balance.${bonusMessage}`,
+              amount: totalCredit, // Include bonus in the displayed amount
+              asset: userCurrency,
+              metadata: {
+                depositId: deposit.id,
+                transactionId: payment_id,
+                method: deposit.method,
+                target: "TRADEROOM",
+                cryptoCurrency: cryptoCurrencyCode,
+                bonusAmount: bonusAmount > 0 ? bonusAmount : undefined,
+                bonusPercent: bonusAmount > 0 ? PROMO_BONUS_PERCENT : undefined,
+              },
+            },
           });
-          console.log(`✅ Marked user ${deposit.User.email} as having claimed first deposit bonus`);
-        }
-        
-        // Credit to traderoom balance (including bonus if applicable)
-        const currentTraderoomBalance = parseFloat(
-          (portfolio.traderoomBalance || 0).toString()
-        );
-        const newTraderoomBalance = currentTraderoomBalance + totalCredit;
+          console.log("✅ TRADEROOM notification created");
 
-        console.log("  - Current traderoom balance:", currentTraderoomBalance);
-        console.log("  - Deposit amount:", depositAmount);
-        if (bonusAmount > 0) {
-          console.log("  - Bonus amount:", bonusAmount);
-        }
-        console.log("  - Total credit:", totalCredit);
-        console.log("  - New traderoom balance:", newTraderoomBalance);
-
-        await prisma.portfolio.update({
-          where: { id: portfolio.id },
-          data: {
-            traderoomBalance: newTraderoomBalance,
-          },
-        });
-
-        console.log(
-          `✅ Credited ${totalCredit} ${userPreferredCurrency} to TRADEROOM balance for user ${deposit.User.email}${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ''}`
-        );
-        console.log(
-          `New traderoom balance: ${newTraderoomBalance} ${userPreferredCurrency}`
-        );
-
-        const userCurrency = userPreferredCurrency;
-        const bonusMessage = bonusAmount > 0 
-          ? ` Plus ${PROMO_BONUS_PERCENT}% bonus: ${getCurrencySymbol(userCurrency)}${bonusAmount.toFixed(2)}!`
-          : '';
-
-        console.log("📧 Creating TRADEROOM deposit notification...");
-        // Create notification for successful traderoom deposit
-        const cryptoCurrencyCode = deposit.cryptoCurrency || "BTC";
-        await prisma.notification.create({
-          data: {
-            id: generateId(),
-            userId: deposit.User.id,
-            type: "DEPOSIT",
-            title: bonusAmount > 0 ? `${cryptoCurrencyCode} Traderoom Deposit + Bonus!` : `${cryptoCurrencyCode} Traderoom Deposit Completed`,
-            message: `Your ${cryptoCurrencyCode} deposit of ${getCurrencySymbol(userCurrency)}${
-              depositAmount.toFixed(2)
-            } has been successfully credited to your Traderoom balance.${bonusMessage}`,
-            amount: totalCredit, // Include bonus in the displayed amount
-            asset: userCurrency,
-            metadata: {
-              depositId: deposit.id,
-              transactionId: payment_id,
-              method: deposit.method,
-              target: "TRADEROOM",
-              cryptoCurrency: cryptoCurrencyCode,
-              bonusAmount: bonusAmount > 0 ? bonusAmount : undefined,
-              bonusPercent: bonusAmount > 0 ? PROMO_BONUS_PERCENT : undefined,
-            },
-          },
-        });
-        console.log("✅ TRADEROOM notification created");
-
-        // Send email notification if user preferences allow and email exists
-        if (shouldSendDepositEmail(deposit.User) && deposit.User.email) {
-          try {
-            const displayAmount = (Math.round(depositAmount * 100) / 100).toFixed(2);
-            const cryptoCoin = deposit.cryptoCurrency || "BTC";
-            await sendEmail({
-              to: deposit.User.email,
-              subject: `${cryptoCoin} Traderoom Deposit Completed - M4 Capital`,
-              html: depositConfirmedTemplate(
-                deposit.User.name || "User",
-                displayAmount,
-                userPreferredCurrency,
-                getCurrencySymbol(userPreferredCurrency),
-                payment_id,
-                false
-              ),
-            });
-            console.log("✅ Email notification sent");
-          } catch (emailError) {
-            console.error("❌ Failed to send email notification:", emailError);
-          }
-        } else {
-          console.log("📧 Email notification skipped (user preferences or unverified email)");
-        }
-
-        // Send web push notification
-        try {
-          const pushBonusText = bonusAmount > 0 ? ` (includes ${PROMO_BONUS_PERCENT}% bonus!)` : '';
-          const cryptoCoin = deposit.cryptoCurrency || "BTC";
-          await sendPushNotification(
-            deposit.User.id,
-            bonusAmount > 0 ? `${cryptoCoin} Traderoom Deposit + Bonus!` : `${cryptoCoin} Traderoom Deposit Completed!`,
-            `Your ${cryptoCoin} deposit of ${getCurrencySymbol(userCurrency)}${depositAmount.toFixed(2)} has been credited to your Traderoom balance.${pushBonusText}`,
-            {
-              type: "deposit",
-              amount: totalCredit,
-              asset: userPreferredCurrency,
-              url: "/dashboard",
+          // Send email notification if user preferences allow and email exists
+          if (shouldSendDepositEmail(deposit.User) && deposit.User.email) {
+            try {
+              const displayAmount = (
+                Math.round(depositAmount * 100) / 100
+              ).toFixed(2);
+              const cryptoCoin = deposit.cryptoCurrency || "BTC";
+              await sendEmail({
+                to: deposit.User.email,
+                subject: `${cryptoCoin} Traderoom Deposit Completed - M4 Capital`,
+                html: depositConfirmedTemplate(
+                  deposit.User.name || "User",
+                  displayAmount,
+                  userPreferredCurrency,
+                  getCurrencySymbol(userPreferredCurrency),
+                  payment_id,
+                  false,
+                ),
+              });
+              console.log("✅ Email notification sent");
+            } catch (emailError) {
+              console.error(
+                "❌ Failed to send email notification:",
+                emailError,
+              );
             }
-          );
-          console.log("✅ Web push notification sent");
-        } catch (pushError) {
-          console.error("❌ Failed to send push notification:", pushError);
-        }
-      } else if (deposit.targetAsset && deposit.targetAsset !== "TRADEROOM") {
-        // Direct crypto asset deposit - credit to the specific crypto asset balance
-        console.log(`🪙 Processing DIRECT CRYPTO ASSET deposit to ${deposit.targetAsset}...`);
-        
-        // Get the actual crypto amount received
-        const cryptoAmount = parseFloat(deposit.cryptoAmount?.toString() || "0");
-        const cryptoSymbol = deposit.targetAsset.toUpperCase();
-        
-        if (cryptoAmount <= 0) {
-          console.error("❌ No crypto amount found for direct asset deposit");
-          console.error("  - cryptoAmount:", deposit.cryptoAmount);
-          throw new Error("Invalid crypto amount for direct asset deposit");
-        }
-        
-        console.log("  - Crypto amount:", cryptoAmount);
-        console.log("  - Target asset:", cryptoSymbol);
-        
-        // Get current assets from portfolio
-        const currentAssets = (portfolio.assets as any[]) || [];
-        console.log("  - Current assets:", JSON.stringify(currentAssets));
-        
-        // Find existing asset or create new one
-        const existingAssetIndex = currentAssets.findIndex(
-          (a: any) => a.symbol?.toUpperCase() === cryptoSymbol
-        );
-        
-        let updatedAssets;
-        if (existingAssetIndex >= 0) {
-          // Update existing asset
-          const existingAsset = currentAssets[existingAssetIndex];
-          const currentAmount = parseFloat(existingAsset.amount?.toString() || "0");
-          const newAmount = currentAmount + cryptoAmount;
-          
-          console.log("  - Existing asset amount:", currentAmount);
-          console.log("  - New asset amount:", newAmount);
-          
-          updatedAssets = [...currentAssets];
-          updatedAssets[existingAssetIndex] = {
-            ...existingAsset,
-            amount: newAmount,
-          };
-        } else {
-          // Add new asset
-          console.log("  - Creating new asset entry");
-          updatedAssets = [
-            ...currentAssets,
-            {
-              symbol: cryptoSymbol,
-              amount: cryptoAmount,
-              name: deposit.cryptoCurrency || cryptoSymbol,
-            },
-          ];
-        }
-        
-        // Update portfolio with new assets
-        await prisma.portfolio.update({
-          where: { id: portfolio.id },
-          data: {
-            assets: updatedAssets,
-          },
-        });
-        
-        console.log(`✅ Credited ${cryptoAmount} ${cryptoSymbol} to user ${deposit.User.email}'s crypto holdings`);
-        
-        // Create notification
-        const userCurrency = userPreferredCurrency;
-        const cryptoCurrencyCode = deposit.cryptoCurrency || cryptoSymbol;
-        await prisma.notification.create({
-          data: {
-            id: generateId(),
-            userId: deposit.User.id,
-            type: "DEPOSIT",
-            title: `${cryptoCurrencyCode} Deposit Completed`,
-            message: `Your deposit of ${cryptoAmount.toFixed(8)} ${cryptoCurrencyCode} has been credited to your ${cryptoCurrencyCode} holdings.`,
-            amount: cryptoAmount,
-            asset: cryptoCurrencyCode,
-            metadata: {
-              depositId: deposit.id,
-              transactionId: payment_id,
-              method: deposit.method,
-              target: "CRYPTO_ASSET",
-              cryptoCurrency: cryptoCurrencyCode,
-              cryptoAmount: cryptoAmount,
-            },
-          },
-        });
-        console.log("✅ Crypto asset deposit notification created");
-        
-        // Send email notification if user preferences allow
-        if (shouldSendDepositEmail(deposit.User) && deposit.User.email) {
-          try {
-            await sendEmail({
-              to: deposit.User.email,
-              subject: `${cryptoCurrencyCode} Deposit Completed - M4 Capital`,
-              html: depositConfirmedTemplate(
-                deposit.User.name || "User",
-                cryptoAmount.toFixed(8),
-                cryptoCurrencyCode,
-                "",
-                payment_id,
-                false
-              ),
-            });
-            console.log("✅ Email notification sent");
-          } catch (emailError) {
-            console.error("❌ Failed to send email notification:", emailError);
+          } else {
+            console.log(
+              "📧 Email notification skipped (user preferences or unverified email)",
+            );
           }
-        }
-        
-        // Send web push notification
-        try {
-          await sendPushNotification(
-            deposit.User.id,
-            `${cryptoCurrencyCode} Deposit Completed!`,
-            `Your deposit of ${cryptoAmount.toFixed(8)} ${cryptoCurrencyCode} has been added to your holdings.`,
-            {
-              type: "deposit",
+
+          // Send web push notification
+          try {
+            const pushBonusText =
+              bonusAmount > 0
+                ? ` (includes ${PROMO_BONUS_PERCENT}% bonus!)`
+                : "";
+            const cryptoCoin = deposit.cryptoCurrency || "BTC";
+            await sendPushNotification(
+              deposit.User.id,
+              bonusAmount > 0
+                ? `${cryptoCoin} Traderoom Deposit + Bonus!`
+                : `${cryptoCoin} Traderoom Deposit Completed!`,
+              `Your ${cryptoCoin} deposit of ${getCurrencySymbol(userCurrency)}${depositAmount.toFixed(2)} has been credited to your Traderoom balance.${pushBonusText}`,
+              {
+                type: "deposit",
+                amount: totalCredit,
+                asset: userPreferredCurrency,
+                url: "/dashboard",
+              },
+            );
+            console.log("✅ Web push notification sent");
+          } catch (pushError) {
+            console.error("❌ Failed to send push notification:", pushError);
+          }
+        } else if (deposit.targetAsset && deposit.targetAsset !== "TRADEROOM") {
+          // Direct crypto asset deposit - credit to the specific crypto asset balance
+          console.log(
+            `🪙 Processing DIRECT CRYPTO ASSET deposit to ${deposit.targetAsset}...`,
+          );
+
+          // Get the actual crypto amount received
+          const cryptoAmount = parseFloat(
+            deposit.cryptoAmount?.toString() || "0",
+          );
+          const cryptoSymbol = deposit.targetAsset.toUpperCase();
+
+          if (cryptoAmount <= 0) {
+            console.error("❌ No crypto amount found for direct asset deposit");
+            console.error("  - cryptoAmount:", deposit.cryptoAmount);
+            throw new Error("Invalid crypto amount for direct asset deposit");
+          }
+
+          console.log("  - Crypto amount:", cryptoAmount);
+          console.log("  - Target asset:", cryptoSymbol);
+
+          // Get current assets from portfolio
+          const currentAssets = (portfolio.assets as any[]) || [];
+          console.log("  - Current assets:", JSON.stringify(currentAssets));
+
+          // Find existing asset or create new one
+          const existingAssetIndex = currentAssets.findIndex(
+            (a: any) => a.symbol?.toUpperCase() === cryptoSymbol,
+          );
+
+          let updatedAssets;
+          if (existingAssetIndex >= 0) {
+            // Update existing asset
+            const existingAsset = currentAssets[existingAssetIndex];
+            const currentAmount = parseFloat(
+              existingAsset.amount?.toString() || "0",
+            );
+            const newAmount = currentAmount + cryptoAmount;
+
+            console.log("  - Existing asset amount:", currentAmount);
+            console.log("  - New asset amount:", newAmount);
+
+            updatedAssets = [...currentAssets];
+            updatedAssets[existingAssetIndex] = {
+              ...existingAsset,
+              amount: newAmount,
+            };
+          } else {
+            // Add new asset
+            console.log("  - Creating new asset entry");
+            updatedAssets = [
+              ...currentAssets,
+              {
+                symbol: cryptoSymbol,
+                amount: cryptoAmount,
+                name: deposit.cryptoCurrency || cryptoSymbol,
+              },
+            ];
+          }
+
+          // Update portfolio with new assets
+          await prisma.portfolio.update({
+            where: { id: portfolio.id },
+            data: {
+              assets: updatedAssets,
+            },
+          });
+
+          console.log(
+            `✅ Credited ${cryptoAmount} ${cryptoSymbol} to user ${deposit.User.email}'s crypto holdings`,
+          );
+
+          // Create notification
+          const userCurrency = userPreferredCurrency;
+          const cryptoCurrencyCode = deposit.cryptoCurrency || cryptoSymbol;
+          await prisma.notification.create({
+            data: {
+              id: generateId(),
+              userId: deposit.User.id,
+              type: "DEPOSIT",
+              title: `${cryptoCurrencyCode} Deposit Completed`,
+              message: `Your deposit of ${cryptoAmount.toFixed(8)} ${cryptoCurrencyCode} has been credited to your ${cryptoCurrencyCode} holdings.`,
               amount: cryptoAmount,
               asset: cryptoCurrencyCode,
-              url: "/dashboard",
-            }
-          );
-          console.log("✅ Web push notification sent");
-        } catch (pushError) {
-          console.error("❌ Failed to send push notification:", pushError);
-        }
-      } else {
-        console.log("💰 Processing REGULAR deposit...");
-        
-        // Check if promo bonus applies (first deposit only)
-        let bonusAmount = 0;
-        let totalCredit = depositAmount;
-        const promoActive = isPromoBonusActive(deposit.User.hasClaimedFirstDepositBonus);
-        
-        if (promoActive) {
-          bonusAmount = calculateBonusAmount(depositAmount);
-          totalCredit = depositAmount + bonusAmount;
-          console.log(`🎁 First deposit bonus! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${userPreferredCurrency}`);
-          
-          // Mark user as having claimed the first deposit bonus
-          await prisma.user.update({
-            where: { id: deposit.User.id },
-            data: { hasClaimedFirstDepositBonus: true },
-          });
-          console.log(`✅ Marked user ${deposit.User.email} as having claimed first deposit bonus`);
-        }
-        
-        // Credit to regular fiat balance (including bonus if applicable)
-        const newBalance =
-          parseFloat(portfolio.balance.toString()) + totalCredit;
-
-        console.log("  - Current balance:", parseFloat(portfolio.balance.toString()));
-        console.log("  - Deposit amount:", depositAmount);
-        if (bonusAmount > 0) {
-          console.log("  - Bonus amount:", bonusAmount);
-        }
-        console.log("  - Total credit:", totalCredit);
-        console.log("  - New balance:", newBalance);
-
-        await prisma.portfolio.update({
-          where: { id: portfolio.id },
-          data: {
-            balance: newBalance,
-            balanceCurrency: userPreferredCurrency,
-          },
-        });
-
-        console.log(
-          `✅ Credited ${totalCredit} ${userPreferredCurrency} to user ${deposit.User.email}${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ''}`
-        );
-        console.log(`New balance: ${newBalance} ${userPreferredCurrency}`);
-
-        console.log("📧 Creating deposit notification...");
-        // Create notification for successful deposit
-        const userCurrency2 = userPreferredCurrency;
-        const cryptoCurrencyCode2 = deposit.cryptoCurrency || "BTC";
-        const bonusMessage = bonusAmount > 0 
-          ? ` Plus ${PROMO_BONUS_PERCENT}% bonus: ${getCurrencySymbol(userCurrency2)}${bonusAmount.toFixed(2)}!`
-          : '';
-        await prisma.notification.create({
-          data: {
-            id: generateId(),
-            userId: deposit.User.id,
-            type: "DEPOSIT",
-            title: bonusAmount > 0 ? `${cryptoCurrencyCode2} Deposit + Bonus!` : `${cryptoCurrencyCode2} Deposit Completed`,
-            message: `Your ${cryptoCurrencyCode2} deposit of ${getCurrencySymbol(userCurrency2)}${
-              depositAmount.toFixed(2)
-            } has been successfully credited to your account.${bonusMessage}`,
-            amount: totalCredit, // Include bonus in the displayed amount
-            asset: userCurrency2,
-            metadata: {
-              depositId: deposit.id,
-              transactionId: payment_id,
-              method: deposit.method,
-              cryptoCurrency: cryptoCurrencyCode2,
-              bonusAmount: bonusAmount > 0 ? bonusAmount : undefined,
-              bonusPercent: bonusAmount > 0 ? PROMO_BONUS_PERCENT : undefined,
+              metadata: {
+                depositId: deposit.id,
+                transactionId: payment_id,
+                method: deposit.method,
+                target: "CRYPTO_ASSET",
+                cryptoCurrency: cryptoCurrencyCode,
+                cryptoAmount: cryptoAmount,
+              },
             },
-          },
-        });
-        console.log("✅ Deposit notification created");
+          });
+          console.log("✅ Crypto asset deposit notification created");
 
-        // Send email notification if user preferences allow and email exists
-        console.log("📧 Checking email notification eligibility...");
-        console.log("  - User email:", deposit.User.email);
-        console.log("  - Email verified:", deposit.User.isEmailVerified);
-        console.log("  - Email notifications enabled:", deposit.User.emailNotifications);
-        console.log("  - Trading notifications enabled:", deposit.User.tradingNotifications);
-        
-        if (shouldSendDepositEmail(deposit.User) && deposit.User.email) {
+          // Send email notification if user preferences allow
+          if (shouldSendDepositEmail(deposit.User) && deposit.User.email) {
+            try {
+              await sendEmail({
+                to: deposit.User.email,
+                subject: `${cryptoCurrencyCode} Deposit Completed - M4 Capital`,
+                html: depositConfirmedTemplate(
+                  deposit.User.name || "User",
+                  cryptoAmount.toFixed(8),
+                  cryptoCurrencyCode,
+                  "",
+                  payment_id,
+                  false,
+                ),
+              });
+              console.log("✅ Email notification sent");
+            } catch (emailError) {
+              console.error(
+                "❌ Failed to send email notification:",
+                emailError,
+              );
+            }
+          }
+
+          // Send web push notification
           try {
-            const displayAmount = (Math.round(depositAmount * 100) / 100).toFixed(2);
-            const cryptoCoin = deposit.cryptoCurrency || "BTC";
-            console.log("📧 Sending email to:", deposit.User.email);
-            await sendEmail({
-              to: deposit.User.email,
-              subject: `${cryptoCoin} Deposit Completed - M4 Capital`,
-              html: depositConfirmedTemplate(
-                deposit.User.name || "User",
-                displayAmount,
-                userPreferredCurrency,
-                getCurrencySymbol(userPreferredCurrency),
-                payment_id,
-                false
-              ),
-            });
-            console.log("✅ Email notification sent successfully");
-          } catch (emailError) {
-            console.error("❌ Failed to send email notification:", emailError);
+            await sendPushNotification(
+              deposit.User.id,
+              `${cryptoCurrencyCode} Deposit Completed!`,
+              `Your deposit of ${cryptoAmount.toFixed(8)} ${cryptoCurrencyCode} has been added to your holdings.`,
+              {
+                type: "deposit",
+                amount: cryptoAmount,
+                asset: cryptoCurrencyCode,
+                url: "/dashboard",
+              },
+            );
+            console.log("✅ Web push notification sent");
+          } catch (pushError) {
+            console.error("❌ Failed to send push notification:", pushError);
           }
         } else {
-          console.log("📧 Email notification skipped - eligibility check failed");
-        }
+          console.log("💰 Processing REGULAR deposit...");
 
-        // Send web push notification
-        console.log("📱 Sending push notification to user:", deposit.User.id);
-        try {
-          const pushBonusText = bonusAmount > 0 ? ` (includes ${PROMO_BONUS_PERCENT}% bonus!)` : '';
-          const cryptoCoin = deposit.cryptoCurrency || "BTC";
-          const pushResult = await sendPushNotification(
-            deposit.User.id,
-            bonusAmount > 0 ? `${cryptoCoin} Deposit + Bonus!` : `${cryptoCoin} Deposit Completed!`,
-            `Your ${cryptoCoin} deposit of ${getCurrencySymbol(userCurrency2)}${depositAmount.toFixed(2)} has been credited to your account.${pushBonusText}`,
-            {
-              type: "deposit",
-              amount: totalCredit,
-              asset: userPreferredCurrency,
-              url: "/dashboard",
-            }
+          // Check if promo bonus applies (first deposit only)
+          let bonusAmount = 0;
+          let totalCredit = depositAmount;
+          const promoActive = isPromoBonusActive(
+            deposit.User.hasClaimedFirstDepositBonus,
           );
-          console.log("✅ Web push notification result:", pushResult);
-        } catch (pushError) {
-          console.error("❌ Failed to send push notification:", pushError);
+
+          if (promoActive) {
+            bonusAmount = calculateBonusAmount(depositAmount);
+            totalCredit = depositAmount + bonusAmount;
+            console.log(
+              `🎁 First deposit bonus! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${userPreferredCurrency}`,
+            );
+
+            // Mark user as having claimed the first deposit bonus
+            await prisma.user.update({
+              where: { id: deposit.User.id },
+              data: { hasClaimedFirstDepositBonus: true },
+            });
+            console.log(
+              `✅ Marked user ${deposit.User.email} as having claimed first deposit bonus`,
+            );
+          }
+
+          // Credit to regular fiat balance (including bonus if applicable)
+          const newBalance =
+            parseFloat(portfolio.balance.toString()) + totalCredit;
+
+          console.log(
+            "  - Current balance:",
+            parseFloat(portfolio.balance.toString()),
+          );
+          console.log("  - Deposit amount:", depositAmount);
+          if (bonusAmount > 0) {
+            console.log("  - Bonus amount:", bonusAmount);
+          }
+          console.log("  - Total credit:", totalCredit);
+          console.log("  - New balance:", newBalance);
+
+          await prisma.portfolio.update({
+            where: { id: portfolio.id },
+            data: {
+              balance: newBalance,
+              balanceCurrency: userPreferredCurrency,
+            },
+          });
+
+          console.log(
+            `✅ Credited ${totalCredit} ${userPreferredCurrency} to user ${deposit.User.email}${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ""}`,
+          );
+          console.log(`New balance: ${newBalance} ${userPreferredCurrency}`);
+
+          console.log("📧 Creating deposit notification...");
+          // Create notification for successful deposit
+          const userCurrency2 = userPreferredCurrency;
+          const cryptoCurrencyCode2 = deposit.cryptoCurrency || "BTC";
+          const bonusMessage =
+            bonusAmount > 0
+              ? ` Plus ${PROMO_BONUS_PERCENT}% bonus: ${getCurrencySymbol(userCurrency2)}${bonusAmount.toFixed(2)}!`
+              : "";
+          await prisma.notification.create({
+            data: {
+              id: generateId(),
+              userId: deposit.User.id,
+              type: "DEPOSIT",
+              title:
+                bonusAmount > 0
+                  ? `${cryptoCurrencyCode2} Deposit + Bonus!`
+                  : `${cryptoCurrencyCode2} Deposit Completed`,
+              message: `Your ${cryptoCurrencyCode2} deposit of ${getCurrencySymbol(userCurrency2)}${depositAmount.toFixed(
+                2,
+              )} has been successfully credited to your account.${bonusMessage}`,
+              amount: totalCredit, // Include bonus in the displayed amount
+              asset: userCurrency2,
+              metadata: {
+                depositId: deposit.id,
+                transactionId: payment_id,
+                method: deposit.method,
+                cryptoCurrency: cryptoCurrencyCode2,
+                bonusAmount: bonusAmount > 0 ? bonusAmount : undefined,
+                bonusPercent: bonusAmount > 0 ? PROMO_BONUS_PERCENT : undefined,
+              },
+            },
+          });
+          console.log("✅ Deposit notification created");
+
+          // Send email notification if user preferences allow and email exists
+          console.log("📧 Checking email notification eligibility...");
+          console.log("  - User email:", deposit.User.email);
+          console.log("  - Email verified:", deposit.User.isEmailVerified);
+          console.log(
+            "  - Email notifications enabled:",
+            deposit.User.emailNotifications,
+          );
+          console.log(
+            "  - Trading notifications enabled:",
+            deposit.User.tradingNotifications,
+          );
+
+          if (shouldSendDepositEmail(deposit.User) && deposit.User.email) {
+            try {
+              const displayAmount = (
+                Math.round(depositAmount * 100) / 100
+              ).toFixed(2);
+              const cryptoCoin = deposit.cryptoCurrency || "BTC";
+              console.log("📧 Sending email to:", deposit.User.email);
+              await sendEmail({
+                to: deposit.User.email,
+                subject: `${cryptoCoin} Deposit Completed - M4 Capital`,
+                html: depositConfirmedTemplate(
+                  deposit.User.name || "User",
+                  displayAmount,
+                  userPreferredCurrency,
+                  getCurrencySymbol(userPreferredCurrency),
+                  payment_id,
+                  false,
+                ),
+              });
+              console.log("✅ Email notification sent successfully");
+            } catch (emailError) {
+              console.error(
+                "❌ Failed to send email notification:",
+                emailError,
+              );
+            }
+          } else {
+            console.log(
+              "📧 Email notification skipped - eligibility check failed",
+            );
+          }
+
+          // Send web push notification
+          console.log("📱 Sending push notification to user:", deposit.User.id);
+          try {
+            const pushBonusText =
+              bonusAmount > 0
+                ? ` (includes ${PROMO_BONUS_PERCENT}% bonus!)`
+                : "";
+            const cryptoCoin = deposit.cryptoCurrency || "BTC";
+            const pushResult = await sendPushNotification(
+              deposit.User.id,
+              bonusAmount > 0
+                ? `${cryptoCoin} Deposit + Bonus!`
+                : `${cryptoCoin} Deposit Completed!`,
+              `Your ${cryptoCoin} deposit of ${getCurrencySymbol(userCurrency2)}${depositAmount.toFixed(2)} has been credited to your account.${pushBonusText}`,
+              {
+                type: "deposit",
+                amount: totalCredit,
+                asset: userPreferredCurrency,
+                url: "/dashboard",
+              },
+            );
+            console.log("✅ Web push notification result:", pushResult);
+          } catch (pushError) {
+            console.error("❌ Failed to send push notification:", pushError);
+          }
         }
-      }
 
-      console.log("✅✅✅ CREDIT PROCESS COMPLETED SUCCESSFULLY!");
+        console.log("✅✅✅ CREDIT PROCESS COMPLETED SUCCESSFULLY!");
 
-      // TODO: Send email notification to user
-      // TODO: Send Telegram notification if enabled
+        // TODO: Send email notification to user
+        // TODO: Send Telegram notification if enabled
       } catch (creditError) {
         console.error("❌❌❌ CRITICAL ERROR IN CREDIT PROCESS:");
-        console.error("Error type:", creditError instanceof Error ? creditError.name : typeof creditError);
-        console.error("Error message:", creditError instanceof Error ? creditError.message : String(creditError));
-        console.error("Stack trace:", creditError instanceof Error ? creditError.stack : "No stack trace");
+        console.error(
+          "Error type:",
+          creditError instanceof Error ? creditError.name : typeof creditError,
+        );
+        console.error(
+          "Error message:",
+          creditError instanceof Error
+            ? creditError.message
+            : String(creditError),
+        );
+        console.error(
+          "Stack trace:",
+          creditError instanceof Error ? creditError.stack : "No stack trace",
+        );
         console.error("Deposit ID:", deposit.id);
         console.error("User ID:", deposit.User?.id);
         console.error("Amount:", deposit.amount, deposit.currency);
-        
+
         // Don't throw - respond success to NowPayments so they don't retry
         // We'll need to manually recover this deposit
-        console.error("⚠️ Responding with success to prevent retry loop - MANUAL RECOVERY REQUIRED!");
-        console.error("Run recovery: POST /api/admin/recover-deposit with depositId:", deposit.id);
+        console.error(
+          "⚠️ Responding with success to prevent retry loop - MANUAL RECOVERY REQUIRED!",
+        );
+        console.error(
+          "Run recovery: POST /api/admin/recover-deposit with depositId:",
+          deposit.id,
+        );
       }
     } else {
-      console.log("⏭️ Skipping credit process (not completed or already credited)");
+      console.log(
+        "⏭️ Skipping credit process (not completed or already credited)",
+      );
     }
 
     console.log("📤 Sending success response to NowPayments");
@@ -817,7 +1018,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error ? error.message : "Webhook processing failed",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

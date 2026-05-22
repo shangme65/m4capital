@@ -543,12 +543,6 @@ function MobileTradingPanel({
               Higher
             </span>
           </div>
-          <span
-            className="text-[10px] tabular-nums opacity-80"
-            style={{ color: C.white }}
-          >
-            +85%
-          </span>
         </button>
 
         {/* Lower button */}
@@ -571,12 +565,6 @@ function MobileTradingPanel({
               Lower
             </span>
           </div>
-          <span
-            className="text-[10px] tabular-nums opacity-80"
-            style={{ color: C.white }}
-          >
-            +85%
-          </span>
         </button>
 
         {/* Open positions indicator (spans full width) */}
@@ -702,12 +690,6 @@ function MobileTradingPanel({
                           {opt.label}
                         </span>
                         <div className="flex items-center gap-3">
-                          <span
-                            className="text-base font-medium"
-                            style={{ color: C.greenText }}
-                          >
-                            +85%
-                          </span>
                           {isSelected && (
                             <span style={{ color: C.greenText }}>✓</span>
                           )}

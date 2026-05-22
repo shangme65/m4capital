@@ -99,6 +99,12 @@ const traders: Trader[] = [
     image: "/copytrading/timothy-sykes.jpeg",
   },
   {
+    name: "KateLilianGems",
+    winRate: "99.8%",
+    profitShare: "10%",
+    image: "/copytrading/kate-lilian-gems.png",
+  },
+  {
     name: "Roland Wolf",
     winRate: "93.97%",
     profitShare: "8%",
@@ -658,6 +664,15 @@ export default function CopyTradingPage() {
           amount: minUsd,
           currency: "USD",
           cryptoCurrency: crypto.id,
+          metadata: {
+            copyTrading: {
+              traderName: confirmTrader.name,
+              traderImage: confirmTrader.image,
+              winRate: confirmTrader.winRate,
+              profitShare: confirmTrader.profitShare,
+              minDeposit: minUsd,
+            },
+          },
         }),
       });
       const json = await res.json();
