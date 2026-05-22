@@ -567,6 +567,17 @@ function MobileTradingPanel({
           </div>
         </button>
 
+        {/* Expected return display */}
+        <div className="col-span-2 flex items-center justify-center py-2">
+          <span className="text-sm font-medium" style={{ color: C.white }}>
+            Expected return{" "}
+            <span style={{ color: C.green }}>
+              +${(amount * 1.85).toFixed(2)}
+            </span>{" "}
+            <span style={{ color: C.textSecondary }}>+85%</span>
+          </span>
+        </div>
+
         {/* Open positions indicator (spans full width) */}
         {activeOnSymbol.length > 0 && (
           <div
