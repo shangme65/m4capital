@@ -212,65 +212,194 @@ function MobileAssetHeader({
           );
           const tabSym = symbols.find((s) => s.symbol === tab.symbol);
           const tabFlag = tabSym?.flag || "";
+          const hasActiveTrades = tabTrades.length > 0;
+          const hasFinishedResult = !hasActiveTrades && !!tab.lastResult;
+
+          // Countdown for earliest active trade
+          let tradeCountdownSec = 0;
+          if (hasActiveTrades) {
+            const earliest = tabTrades.reduce((a, b) =>
+              a.expirationTime < b.expirationTime ? a : b,
+            );
+            tradeCountdownSec = Math.max(
+              0,
+              Math.ceil((earliest.expirationTime - Date.now()) / 1000),
+            );
+          }
+          const countdownMin = Math.floor(tradeCountdownSec / 60);
+          const countdownSecDisplay = tradeCountdownSec % 60;
+          const countdownText =
+            countdownMin > 0
+              ? `${countdownMin}:${countdownSecDisplay.toString().padStart(2, "0")}`
+              : `:${countdownSecDisplay.toString().padStart(2, "0")}`;
+
+          // Circular timer
+          const totalDuration = hasActiveTrades
+            ? tabTrades.reduce((a, b) =>
+                a.expirationTime < b.expirationTime ? a : b,
+              ).expirationSeconds
+            : 0;
+          const progress =
+            totalDuration > 0 ? 1 - tradeCountdownSec / totalDuration : 0;
+          const radius = 11;
+          const circumference = 2 * Math.PI * radius;
+          const strokeDashoffset = circumference * (1 - progress);
+
+          // P/L for active trades
+          const totalPL = tabTrades.reduce((sum, trade) => {
+            const isWinning =
+              trade.result !== undefined ? trade.result > 0 : false;
+            return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
+          }, 0);
 
           return (
-            <button
+            <div
               key={`${tab.symbol}-${i}`}
               onClick={() => onTabChange(i)}
-              className="flex items-center gap-2 flex-shrink-0 rounded-lg px-3 py-2 transition-all duration-200"
+              className="relative group flex-shrink-0 cursor-pointer rounded-lg transition-all duration-200 overflow-hidden"
               style={{
-                backgroundColor: isActive ? C.secondary : C.quaternary,
-                minHeight: "48px",
+                backgroundColor: isActive
+                  ? "rgba(255, 193, 7, 0.12)"
+                  : C.quaternary,
+                border: isActive
+                  ? "2px solid rgba(255, 193, 7, 0.35)"
+                  : "2px solid #3B4A6F",
+                boxShadow: isActive
+                  ? "0 0 16px rgba(255, 193, 7, 0.18), inset 0 0 12px rgba(255, 193, 7, 0.07)"
+                  : "none",
+                minHeight: "52px",
+                paddingLeft: "12px",
+                paddingRight: openTabs.length > 1 ? "10px" : "12px",
+                paddingTop: "6px",
+                paddingBottom: "6px",
               }}
             >
-              <AssetFlag flag={tabFlag} symbol={tab.symbol} size={24} />
-              <span
-                className="text-sm font-semibold whitespace-nowrap"
-                style={{
-                  color: isActive ? C.textPrimary : C.textSecondary,
-                }}
-              >
-                {tab.symbol}
-              </span>
-              {tabTrades.length > 0 && (
-                <span
-                  className="w-1.5 h-1.5 rounded-full animate-pulse"
-                  style={{ backgroundColor: C.green }}
-                />
+              {/* Gold bottom glow bar */}
+              {isActive && (
+                <>
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-[3px]"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, transparent, #ffc107 20%, #ffeb3b 50%, #ffc107 80%, transparent)",
+                      boxShadow:
+                        "0 0 10px #ffc107, 0 -1px 8px rgba(255,193,7,0.5)",
+                    }}
+                  />
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-[2px] blur-[2px]"
+                    style={{ backgroundColor: "#ffeb3b", opacity: 0.7 }}
+                  />
+                </>
               )}
-              {tab.lastResult && (
-                <span
-                  className="text-xs font-bold tabular-nums"
-                  style={{
-                    color:
-                      tab.lastResult.status === "won" ? C.greenText : C.redText,
-                  }}
-                >
-                  {tab.lastResult.status === "won" ? "+" : "-"}$
-                  {Math.abs(tab.lastResult.amount).toFixed(0)}
-                </span>
-              )}
+
+              {/* Close × top-left */}
               {openTabs.length > 1 && (
                 <span
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Close ${tab.symbol}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onCloseTab(i);
                   }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.stopPropagation();
-                      onCloseTab(i);
-                    }
-                  }}
-                  className="ml-0.5 opacity-40 hover:opacity-100 transition-opacity inline-flex"
+                  className="absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 bg-gray-700 hover:bg-gray-600 rounded-full transition-all w-4 h-4 flex items-center justify-center z-10 cursor-pointer"
+                  style={{ color: "#fff", fontSize: "10px", lineHeight: 1 }}
                 >
-                  <X size={12} style={{ color: C.textSecondary }} />
+                  ×
                 </span>
               )}
-            </button>
+
+              <div className="flex items-center gap-2 h-full">
+                {/* Icon: countdown circle or asset flag */}
+                {hasActiveTrades ? (
+                  <div
+                    className="relative flex items-center justify-center flex-shrink-0"
+                    style={{ width: 26, height: 26 }}
+                  >
+                    <svg
+                      width="26"
+                      height="26"
+                      viewBox="0 0 26 26"
+                      className="absolute"
+                    >
+                      <circle
+                        cx="13"
+                        cy="13"
+                        r={radius}
+                        fill="none"
+                        stroke="#3a3a3a"
+                        strokeWidth="2"
+                      />
+                      <circle
+                        cx="13"
+                        cy="13"
+                        r={radius}
+                        fill="none"
+                        stroke="#ff8516"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                        style={{
+                          transform: "rotate(-90deg)",
+                          transformOrigin: "center",
+                          transition: "stroke-dashoffset 1s linear",
+                        }}
+                      />
+                    </svg>
+                    <span className="text-[8px] font-bold text-white z-10">
+                      {countdownText}
+                    </span>
+                  </div>
+                ) : (
+                  <AssetFlag
+                    flag={tabFlag}
+                    symbol={tab.symbol}
+                    size={22}
+                    className="flex-shrink-0"
+                  />
+                )}
+
+                {/* Text column */}
+                <div className="flex flex-col items-start">
+                  <span
+                    className="text-sm font-semibold whitespace-nowrap leading-tight"
+                    style={{
+                      color: isActive ? C.textPrimary : C.textSecondary,
+                    }}
+                  >
+                    {tab.symbol}
+                  </span>
+
+                  {hasActiveTrades ? (
+                    <span
+                      className="text-[10px] font-medium leading-tight"
+                      style={{ color: totalPL >= 0 ? C.greenText : C.redText }}
+                    >
+                      {totalPL >= 0 ? "+" : ""}${Math.abs(totalPL).toFixed(2)}
+                    </span>
+                  ) : hasFinishedResult && tab.lastResult ? (
+                    <span
+                      className="text-[10px] font-medium leading-tight"
+                      style={{
+                        color:
+                          tab.lastResult.status === "won"
+                            ? C.greenText
+                            : C.redText,
+                      }}
+                    >
+                      {tab.lastResult.status === "won" ? "+$" : "-$"}
+                      {Math.abs(tab.lastResult.amount).toFixed(0)}
+                    </span>
+                  ) : (
+                    <span
+                      className="text-[10px] leading-tight"
+                      style={{ color: isActive ? "#ffc107" : C.textTertiary }}
+                    >
+                      {tab.type}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           );
         })}
 

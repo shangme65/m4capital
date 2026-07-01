@@ -29,6 +29,8 @@ export async function GET() {
         preferredCurrency: true,
         country: true,
         isEmailVerified: true,
+        phoneNumber: true,
+        phoneVerified: true,
         createdAt: true,
       },
     });
@@ -49,13 +51,67 @@ export async function GET() {
       preferredCurrency: user.preferredCurrency,
       country: user.country,
       isEmailVerified: user.isEmailVerified,
+      phoneNumber: user.phoneNumber,
+      phoneVerified: user.phoneVerified,
       createdAt: user.createdAt,
     });
   } catch (error) {
     console.error("Error fetching user profile:", error);
     return NextResponse.json(
       { error: "Failed to fetch user profile" },
-      { status: 500 }
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * PUT /api/user/profile
+ * Update the user's display name.
+ * All other identity fields are locked once KYC is approved.
+ */
+export async function PUT(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { name } = body;
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
+
+    // Block name changes when KYC is approved
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { KycVerification: { select: { status: true } } },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (user.KycVerification?.status === "APPROVED") {
+      return NextResponse.json(
+        { error: "Profile is locked after KYC approval" },
+        { status: 403 },
+      );
+    }
+
+    await prisma.user.update({
+      where: { email: session.user.email },
+      data: { name: name.trim() },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    return NextResponse.json(
+      { error: "Failed to update profile" },
+      { status: 500 },
     );
   }
 }

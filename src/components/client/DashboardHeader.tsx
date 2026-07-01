@@ -105,7 +105,7 @@ const DashboardHeader = () => {
                 className={`font-semibold leading-tight truncate max-w-[100px] sm:max-w-[140px] text-sm sm:text-base ${isDark ? "text-white" : "text-gray-900"}`}
                 suppressHydrationWarning
               >
-                {session?.user?.name || "User"}
+                {session?.user?.name?.split(" ")[0] || "User"}
               </p>
               <p
                 className={`text-xs uppercase tracking-wide ${isDark ? "text-gray-400" : "text-gray-500"}`}

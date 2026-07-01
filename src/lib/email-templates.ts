@@ -46,7 +46,8 @@ const colors = {
 };
 
 // Anti-threading token: injected into every email to prevent Gmail from collapsing as "quoted text"
-const antiThreadToken = () => `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;" aria-hidden="true">m4c-${Date.now().toString(36)}</div>`;
+const antiThreadToken = () =>
+  `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;" aria-hidden="true">m4c-${Date.now().toString(36)}</div>`;
 
 // Base email template wrapper - Modern Dark Theme
 export const emailTemplate = (content: string) => `
@@ -69,7 +70,7 @@ export const emailTemplate = (content: string) => `
 </head>
 <body style="margin: 0; padding: 0; background-color: ${colors.dark}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
   <!-- Outer Container -->
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(180deg, ${colors.dark} 0%, ${colors.darkSecondary} 100%); min-height: 100vh;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(180deg, ${colors.dark} 0%, ${colors.darkSecondary} 100%);">
     <tr>
       <td align="center" style="padding: 0;">
         <!-- Main Card -->
@@ -166,7 +167,7 @@ export const emailHero = (
   icon: string,
   title: string,
   subtitle?: string,
-  gradient: "primary" | "success" | "warning" | "danger" | "info" = "primary"
+  gradient: "primary" | "success" | "warning" | "danger" | "info" = "primary",
 ) => {
   const gradients = {
     primary: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
@@ -176,7 +177,16 @@ export const emailHero = (
     info: `linear-gradient(135deg, ${colors.info} 0%, ${colors.infoDark} 100%)`,
   };
 
-  const glowColor = gradient === "primary" ? colors.primary : gradient === "success" ? colors.success : gradient === "warning" ? colors.warning : gradient === "danger" ? colors.danger : colors.info;
+  const glowColor =
+    gradient === "primary"
+      ? colors.primary
+      : gradient === "success"
+        ? colors.success
+        : gradient === "warning"
+          ? colors.warning
+          : gradient === "danger"
+            ? colors.danger
+            : colors.info;
 
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
@@ -205,7 +215,12 @@ export const emailCard = (content: string, borderColor?: string) => `
 
 // Transaction Details Table
 export const emailTransactionTable = (
-  rows: Array<{ label: string; value: string; highlight?: boolean; color?: string }>
+  rows: Array<{
+    label: string;
+    value: string;
+    highlight?: boolean;
+    color?: string;
+  }>,
 ) => `
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 12px 0; background: rgba(0, 0, 0, 0.3); border-radius: 10px; overflow: hidden;">
     ${rows
@@ -219,7 +234,7 @@ export const emailTransactionTable = (
           ${row.value}
         </td>
       </tr>
-    `
+    `,
       )
       .join("")}
   </table>
@@ -228,7 +243,7 @@ export const emailTransactionTable = (
 // Status Badge
 export const emailBadge = (
   text: string,
-  status: "success" | "warning" | "danger" | "info" | "pending" = "success"
+  status: "success" | "warning" | "danger" | "info" | "pending" = "success",
 ) => {
   const statusColors = {
     success: { bg: "rgba(16, 185, 129, 0.2)", text: colors.success },
@@ -271,13 +286,29 @@ export const emailButtonSecondary = (text: string, href: string) => `
 export const emailAlert = (
   message: string,
   type: "success" | "warning" | "danger" | "info" = "info",
-  _icon?: string // kept for backwards compatibility, not displayed
+  _icon?: string, // kept for backwards compatibility, not displayed
 ) => {
   const alertStyles = {
-    success: { bg: "rgba(16, 185, 129, 0.15)", border: colors.success, text: colors.success },
-    warning: { bg: "rgba(245, 158, 11, 0.15)", border: colors.warning, text: colors.warning },
-    danger: { bg: "rgba(239, 68, 68, 0.15)", border: colors.danger, text: colors.danger },
-    info: { bg: "rgba(59, 130, 246, 0.15)", border: colors.info, text: colors.info },
+    success: {
+      bg: "rgba(16, 185, 129, 0.15)",
+      border: colors.success,
+      text: colors.success,
+    },
+    warning: {
+      bg: "rgba(245, 158, 11, 0.15)",
+      border: colors.warning,
+      text: colors.warning,
+    },
+    danger: {
+      bg: "rgba(239, 68, 68, 0.15)",
+      border: colors.danger,
+      text: colors.danger,
+    },
+    info: {
+      bg: "rgba(59, 130, 246, 0.15)",
+      border: colors.info,
+      text: colors.info,
+    },
   };
 
   return `
@@ -303,7 +334,9 @@ export const emailDivider = () => `
 `;
 
 // Feature List
-export const emailFeatureList = (items: Array<{ icon: string; text: string }>) => `
+export const emailFeatureList = (
+  items: Array<{ icon: string; text: string }>,
+) => `
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
     ${items
       .map(
@@ -317,7 +350,7 @@ export const emailFeatureList = (items: Array<{ icon: string; text: string }>) =
           </table>
         </td>
       </tr>
-    `
+    `,
       )
       .join("")}
   </table>
@@ -436,10 +469,13 @@ export const kycRejectedTemplate = (userName: string, reason: string) =>
     
     ${emailParagraph("Unfortunately, we were unable to approve your KYC verification at this time. Please review the feedback below and resubmit your documents.")}
     
-    ${emailCard(`
+    ${emailCard(
+      `
       <p style="margin: 0 0 8px; color: ${colors.grayLight}; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Reason for Review</p>
       <p style="margin: 0; color: ${colors.white}; font-size: 15px; line-height: 1.6;">${reason}</p>
-    `, colors.warning)}
+    `,
+      colors.warning,
+    )}
     
     ${emailCard(`
       <p style="margin: 0 0 16px; color: ${colors.white}; font-size: 16px; font-weight: 600;">📝 Common Issues to Check</p>
@@ -464,7 +500,7 @@ export const kycAdminNotificationTemplate = (
   userName: string,
   userEmail: string,
   userId: string,
-  kycId: string
+  kycId: string,
 ) =>
   emailTemplate(`
     ${emailHero("🔔", "New KYC Submission", "A user has submitted documents for review", "info")}
@@ -578,7 +614,7 @@ export const kycAdminNotificationTextTemplate = (
   userName: string,
   userEmail: string,
   userId: string,
-  kycId: string
+  kycId: string,
 ) => `
 🔔 NEW KYC SUBMISSION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -635,7 +671,8 @@ export const verificationCodeTemplate = (name: string, code: string) => `
 // ============================================================================
 
 // Welcome Email Template (after verification)
-export const welcomeEmailTemplate = (name: string) => emailTemplate(`
+export const welcomeEmailTemplate = (name: string) =>
+  emailTemplate(`
   ${emailHero("🚀", "Welcome to M4 Capital!", `Your account is ready, ${name}`, "success")}
   
   ${emailAlert("Your email has been successfully verified and your account is now active!", "success")}
@@ -678,7 +715,7 @@ export const welcomeEmailTemplate = (name: string) => emailTemplate(`
 // Telegram Linking Success Template
 export const telegramLinkSuccessTemplate = (
   name: string,
-  telegramUsername: string
+  telegramUsername: string,
 ) =>
   emailTemplate(`
     ${emailHero("🔗", "Telegram Connected!", `Your account is now linked`, "success")}
@@ -692,7 +729,10 @@ export const telegramLinkSuccessTemplate = (
       ${emailFeatureList([
         { icon: "💰", text: "Check your balance with /balance command" },
         { icon: "📊", text: "View your portfolio with /portfolio command" },
-        { icon: "🔔", text: "Receive instant deposit & withdrawal notifications" },
+        {
+          icon: "🔔",
+          text: "Receive instant deposit & withdrawal notifications",
+        },
         { icon: "📈", text: "Get real-time crypto price updates" },
         { icon: "⚡", text: "Set custom price alerts" },
       ])}
@@ -711,7 +751,7 @@ export const telegramLinkSuccessTemplate = (
 
 export const telegramUnlinkTemplate = (
   name: string,
-  telegramUsername: string
+  telegramUsername: string,
 ) =>
   emailTemplate(`
     ${emailHero("🔓", "Telegram Disconnected", `Your account has been unlinked`, "warning")}
@@ -723,8 +763,14 @@ export const telegramUnlinkTemplate = (
     ${emailCard(`
       <p style="margin: 0 0 16px; color: ${colors.white}; font-size: 16px; font-weight: 600;">What This Means</p>
       ${emailFeatureList([
-        { icon: "🚫", text: "You will no longer receive Telegram notifications" },
-        { icon: "📱", text: "Telegram commands (/balance, /portfolio) are disabled" },
+        {
+          icon: "🚫",
+          text: "You will no longer receive Telegram notifications",
+        },
+        {
+          icon: "📱",
+          text: "Telegram commands (/balance, /portfolio) are disabled",
+        },
         { icon: "🔒", text: "Your account security remains intact" },
         { icon: "🔄", text: "You can reconnect anytime from your settings" },
       ])}
@@ -744,7 +790,8 @@ export const telegramUnlinkTemplate = (
 // ============================================================================
 
 // Password Reset Email Template
-export const passwordResetTemplate = (name: string, resetUrl: string) => emailTemplate(`
+export const passwordResetTemplate = (name: string, resetUrl: string) =>
+  emailTemplate(`
   ${emailHero("🔐", "Password Reset Request", "We received a request to reset your password", "warning")}
   
   ${emailGreeting(name)}
@@ -793,7 +840,7 @@ export const cryptoPurchaseTemplate = (
   totalCost: number,
   newBalance: number,
   currencyCode: string = "USD",
-  currencySymbol: string = "$"
+  currencySymbol: string = "$",
 ) =>
   emailTemplate(`
     ${emailHero("🎉", "Purchase Successful!", `You bought ${asset}`, "success")}
@@ -803,11 +850,25 @@ export const cryptoPurchaseTemplate = (
     ${emailParagraph("Great news! Your cryptocurrency purchase has been completed successfully and added to your portfolio.")}
     
     ${emailTransactionTable([
-      { label: "Asset", value: `<strong style="color: ${colors.primary};">${asset}</strong>` },
+      {
+        label: "Asset",
+        value: `<strong style="color: ${colors.primary};">${asset}</strong>`,
+      },
       { label: "Amount Purchased", value: `${amount.toFixed(8)} ${asset}` },
-      { label: "Price per Unit", value: `${currencySymbol}${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-      { label: "Total Cost", value: `-${currencySymbol}${totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: colors.danger },
-      { label: "New Balance", value: `${currencySymbol}${newBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, highlight: true },
+      {
+        label: "Price per Unit",
+        value: `${currencySymbol}${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      },
+      {
+        label: "Total Cost",
+        value: `-${currencySymbol}${totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        color: colors.danger,
+      },
+      {
+        label: "New Balance",
+        value: `${currencySymbol}${newBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        highlight: true,
+      },
     ])}
     
     ${emailButton("View Portfolio", `${baseUrl}/dashboard`)}
@@ -826,7 +887,7 @@ export const cryptoPurchaseTextTemplate = (
   totalCost: number,
   newBalance: number,
   currencyCode: string = "USD",
-  currencySymbol: string = "$"
+  currencySymbol: string = "$",
 ) => `
 🎉 Crypto Purchase Successful!
 
@@ -872,7 +933,7 @@ export const cryptoSaleTemplate = (
   fee: number,
   netReceived: number,
   newBalance: number,
-  currencySymbol: string = "$"
+  currencySymbol: string = "$",
 ) =>
   emailTemplate(`
     ${emailHero("💰", "Sale Successful!", `You sold ${asset}`, "success")}
@@ -882,13 +943,34 @@ export const cryptoSaleTemplate = (
     ${emailParagraph(`Your ${assetName} (${asset}) sale has been completed and the funds have been credited to your account.`)}
     
     ${emailTransactionTable([
-      { label: "Asset", value: `<strong style="color: ${colors.primary};">${assetName} (${asset})</strong>` },
+      {
+        label: "Asset",
+        value: `<strong style="color: ${colors.primary};">${assetName} (${asset})</strong>`,
+      },
       { label: "Amount Sold", value: `${amount.toFixed(8)} ${asset}` },
-      { label: "Price per Unit", value: `${currencySymbol}${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-      { label: "Total Value", value: `${currencySymbol}${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-      { label: "Fee (1.5%)", value: `-${currencySymbol}${fee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: colors.warning },
-      { label: "Net Received", value: `+${currencySymbol}${netReceived.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, highlight: true },
-      { label: "New Balance", value: `${currencySymbol}${newBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: colors.success },
+      {
+        label: "Price per Unit",
+        value: `${currencySymbol}${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      },
+      {
+        label: "Total Value",
+        value: `${currencySymbol}${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      },
+      {
+        label: "Fee (1.5%)",
+        value: `-${currencySymbol}${fee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        color: colors.warning,
+      },
+      {
+        label: "Net Received",
+        value: `+${currencySymbol}${netReceived.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        highlight: true,
+      },
+      {
+        label: "New Balance",
+        value: `${currencySymbol}${newBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        color: colors.success,
+      },
     ])}
     
     ${emailButton("View Portfolio", `${baseUrl}/dashboard`)}
@@ -909,7 +991,7 @@ export const cryptoSaleTextTemplate = (
   fee: number,
   netReceived: number,
   newBalance: number,
-  currencySymbol: string = "$"
+  currencySymbol: string = "$",
 ) => `
 💰 Crypto Sale Successful!
 
@@ -953,7 +1035,7 @@ export const depositConfirmedTemplate = (
   asset: string,
   currencySymbol: string = "$",
   transactionId?: string,
-  isCrypto: boolean = false
+  isCrypto: boolean = false,
 ) =>
   emailTemplate(`
     ${emailHero("✅", "Deposit Confirmed!", `Your ${asset} deposit is complete`, "success")}
@@ -963,10 +1045,20 @@ export const depositConfirmedTemplate = (
     ${emailParagraph("Great news! Your deposit has been confirmed and credited to your account.")}
     
     ${emailTransactionTable([
-      { label: "Amount", value: isCrypto ? `${amount} ${asset}` : `${currencySymbol}${amount}` },
+      {
+        label: "Amount",
+        value: isCrypto ? `${amount} ${asset}` : `${currencySymbol}${amount}`,
+      },
       { label: "Asset", value: asset },
       { label: "Status", value: emailBadge("Completed", "success") },
-      ...(transactionId ? [{ label: "Transaction ID", value: transactionId.substring(0, 16) + "..." }] : []),
+      ...(transactionId
+        ? [
+            {
+              label: "Transaction ID",
+              value: transactionId.substring(0, 16) + "...",
+            },
+          ]
+        : []),
       { label: "Date", value: new Date().toLocaleString() },
     ])}
     
@@ -984,7 +1076,7 @@ export const depositPendingTemplate = (
   asset: string,
   currencySymbol: string = "$",
   confirmationsRequired: number = 6,
-  isCrypto: boolean = false
+  isCrypto: boolean = false,
 ) =>
   emailTemplate(`
     ${emailHero("⏳", "Deposit Pending", `Waiting for ${asset} confirmation`, "info")}
@@ -994,10 +1086,16 @@ export const depositPendingTemplate = (
     ${emailParagraph("We've received your deposit and it's currently being processed. Your funds will be credited once the required confirmations are complete.")}
     
     ${emailTransactionTable([
-      { label: "Amount", value: isCrypto ? `${amount} ${asset}` : `${currencySymbol}${amount}` },
+      {
+        label: "Amount",
+        value: isCrypto ? `${amount} ${asset}` : `${currencySymbol}${amount}`,
+      },
       { label: "Asset", value: asset },
       { label: "Status", value: emailBadge("Pending", "pending") },
-      { label: "Required Confirmations", value: confirmationsRequired.toString() },
+      {
+        label: "Required Confirmations",
+        value: confirmationsRequired.toString(),
+      },
     ])}
     
     ${emailAlert("You will receive another email once the deposit is fully confirmed and credited to your account.", "info", "📧")}
@@ -1015,7 +1113,7 @@ export const depositPendingTemplate = (
 export const roleUpdateTemplate = (
   userName: string,
   newRole: string,
-  isPromotion: boolean = true
+  isPromotion: boolean = true,
 ) =>
   emailTemplate(`
     ${emailHero(isPromotion ? "🎉" : "📋", isPromotion ? "Congratulations!" : "Role Update", `Your account role has been updated`, isPromotion ? "success" : "info")}
@@ -1036,7 +1134,7 @@ export const roleUpdateTemplate = (
 export const roleUpdateTextTemplate = (
   userName: string,
   newRole: string,
-  isPromotion: boolean = true
+  isPromotion: boolean = true,
 ) =>
   `Hi ${userName}, your M4 Capital account role has been ${isPromotion ? "upgraded" : "updated"} to ${newRole}. ${isPromotion ? "You now have access to additional administrative features and capabilities." : "Your account permissions have been updated accordingly."}`;
 
@@ -1046,7 +1144,7 @@ export const adminRoleNotificationTemplate = (
   userId: string,
   previousRole: string,
   newRole: string,
-  isPromotion: boolean = true
+  isPromotion: boolean = true,
 ) =>
   emailTemplate(`
     ${emailHero(isPromotion ? "⬆️" : "⬇️", isPromotion ? "Staff Promotion" : "Role Change", `A user's role has been ${isPromotion ? "upgraded" : "updated"}`, isPromotion ? "success" : "warning")}
@@ -1088,7 +1186,7 @@ export const adminRoleNotificationTextTemplate = (
   userEmail: string,
   previousRole: string,
   newRole: string,
-  isPromotion: boolean = true
+  isPromotion: boolean = true,
 ) =>
   `A user has been ${isPromotion ? "promoted" : "updated"}: ${userName} (${userEmail}). Previous Role: ${previousRole}. New Role: ${newRole}.`;
 
@@ -1103,12 +1201,13 @@ export const cryptoSwapTemplate = (
   feeAmount: number,
   fromDisplayValue: string,
   toDisplayValue: string,
-  currencySymbol: string
+  currencySymbol: string,
 ) =>
   emailTemplate(`
     ${emailHero("🔄", "Swap Completed!", `${fromAsset} → ${toAsset}`, "info")}
     
-    ${emailCard(`
+    ${emailCard(
+      `
       <table width="100%" cellpadding="8" cellspacing="0" border="0">
         <tr>
           <td style="padding: 12px 0;">
@@ -1130,7 +1229,9 @@ export const cryptoSwapTemplate = (
           </td>
         </tr>
       </table>
-    `, colors.info)}
+    `,
+      colors.info,
+    )}
     
     ${emailCard(`
       <table width="100%" cellpadding="8" cellspacing="0" border="0">
@@ -1160,6 +1261,6 @@ export const cryptoSwapTextTemplate = (
   amount: number,
   receiveAmount: number,
   rate: number,
-  feeAmount: number
+  feeAmount: number,
 ) =>
   `Swap Completed! You swapped ${amount.toFixed(8)} ${fromAsset} for ${receiveAmount.toFixed(8)} ${toAsset}. Exchange Rate: 1 ${fromAsset} = ${rate.toFixed(8)} ${toAsset}. Fee: ${feeAmount.toFixed(8)} ${toAsset}. Thank you for using M4 Capital!`;

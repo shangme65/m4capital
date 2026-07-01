@@ -512,12 +512,12 @@ export default function NotificationsPanel({
 
           {/* Enhanced Panel */}
           <motion.div
-            initial={{ opacity: 0, x: 400, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 400, scale: 0.9 }}
+            initial={{ opacity: 0, x: 400 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 400 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className={`absolute right-0 top-0 h-full w-full sm:w-[480px] border-l flex flex-col shadow-2xl ${isDark ? "bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-gray-700/50" : "bg-gradient-to-br from-white via-gray-50 to-gray-100 border-gray-200"}`}
-            style={{ zIndex: 2 }}
+            style={{ zIndex: 2, willChange: "transform" }}
           >
             {/* Smaller Header */}
             <div className="relative overflow-hidden">
@@ -672,7 +672,14 @@ export default function NotificationsPanel({
             </div>
 
             {/* Enhanced Notifications List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div
+              className="flex-1 min-h-0 overflow-y-auto custom-scrollbar"
+              style={{
+                overscrollBehavior: "contain",
+                WebkitOverflowScrolling: "auto",
+                touchAction: "pan-y",
+              }}
+            >
               {filteredNotifications.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}

@@ -59,6 +59,7 @@ import {
   FileText,
   LogOut,
   X,
+  LayoutDashboard,
 } from "lucide-react";
 import {
   TradingProvider,
@@ -2592,17 +2593,47 @@ function TradingInterface() {
                         setActiveTab(index);
                         setSelectedSymbol(tab.symbol);
                       }}
-                      className="relative group cursor-pointer rounded transition-all duration-200 h-9 md:h-11 lg:h-[52px]"
+                      className="relative group cursor-pointer rounded-lg transition-all duration-300 h-9 md:h-11 lg:h-[52px] overflow-hidden"
                       style={{
                         backgroundColor:
                           activeTab === index
-                            ? "rgba(255, 133, 22, 0.08)"
+                            ? "rgba(255, 193, 7, 0.12)"
                             : "transparent",
-                        border: "1px solid #6b6b6b",
-                        paddingLeft: openTabs.length > 1 ? "12px" : "8px",
-                        paddingRight: "10px",
+                        border:
+                          activeTab === index
+                            ? "2px solid rgba(255, 193, 7, 0.3)"
+                            : "2px solid #6b6b6b",
+                        paddingLeft: openTabs.length > 1 ? "16px" : "12px",
+                        paddingRight: "14px",
+                        boxShadow:
+                          activeTab === index
+                            ? "0 0 20px rgba(255, 193, 7, 0.15), inset 0 0 15px rgba(255, 193, 7, 0.08)"
+                            : "none",
                       }}
                     >
+                      {/* Yellow bottom marker for active tab with gradient and glow */}
+                      {activeTab === index && (
+                        <>
+                          <div
+                            className="absolute bottom-0 left-0 right-0 h-1 transition-all duration-300"
+                            style={{
+                              background:
+                                "linear-gradient(90deg, transparent, #ffc107 20%, #ffeb3b 50%, #ffc107 80%, transparent)",
+                              boxShadow:
+                                "0 0 15px #ffc107, 0 -2px 10px rgba(255, 193, 7, 0.5)",
+                            }}
+                          />
+                          {/* Additional glow layer */}
+                          <div
+                            className="absolute bottom-0 left-0 right-0 h-[2px] blur-sm transition-all duration-300"
+                            style={{
+                              backgroundColor: "#ffeb3b",
+                              opacity: 0.8,
+                            }}
+                          />
+                        </>
+                      )}
+
                       {/* Close button at top-left corner */}
                       {openTabs.length > 1 && (
                         <span
@@ -2688,7 +2719,7 @@ function TradingInterface() {
                         const strokeDashoffset = circumference * (1 - progress);
 
                         return (
-                          <div className="flex items-center space-x-1 md:space-x-1.5 lg:space-x-2 h-full">
+                          <div className="flex items-center space-x-2 md:space-x-3 lg:space-x-4 h-full">
                             {/* Left icon: countdown circle for active trades, flag for others */}
                             {hasActiveTrades ? (
                               <div
@@ -2818,7 +2849,7 @@ function TradingInterface() {
                     className="rounded hover:bg-white/5 transition-all duration-200 flex items-center justify-center h-9 w-9 md:h-11 md:w-11 lg:h-[52px] lg:w-[52px]"
                     style={{
                       backgroundColor: "transparent",
-                      border: "1px solid #6b6b6b",
+                      border: "2px solid #6b6b6b",
                       color: "#8b8b8b",
                     }}
                   >
@@ -3007,6 +3038,11 @@ function TradingInterface() {
 
                           {/* Menu Items */}
                           {[
+                            {
+                              icon: LayoutDashboard,
+                              label: "Dashboard",
+                              action: () => router.push("/dashboard"),
+                            },
                             {
                               icon: Camera,
                               label: "Change Photo",
@@ -3392,16 +3428,16 @@ function TradingInterface() {
                   onClick={() => {
                     setShowFundModal(true);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-semibold transition-all duration-200 hover:bg-[#5ddf38]/10 relative z-[110]"
+                  className="flex items-center justify-center gap-2 px-4 rounded text-base font-semibold transition-all duration-200 hover:bg-[#5ddf38]/10 relative z-[110] h-9 md:h-11 lg:h-[52px] w-32 md:w-36 lg:w-40"
                   style={{
                     backgroundColor: "transparent",
                     color: "#5ddf38",
-                    border: "2px solid #5ddf38",
+                    border: "3px solid #5ddf38",
                   }}
                 >
                   <svg
-                    width="14"
-                    height="14"
+                    width="16"
+                    height="16"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="#5ddf38"
@@ -3430,7 +3466,7 @@ function TradingInterface() {
               }}
             >
               {/* Sidebar Icons */}
-              <div className="flex flex-col items-center py-1.5 space-y-2">
+              <div className="flex flex-col items-center py-4 justify-evenly flex-1">
                 {/* Total Portfolio */}
                 <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
@@ -6098,9 +6134,9 @@ function TradingInterface() {
                 </div>
 
                 {/* IQ Option Style HIGHER/LOWER Indicators + Tools on Left Side */}
-                <div className="absolute left-0 top-16 bottom-0 z-50 flex flex-col justify-between py-4 w-16">
-                  {/* HIGHER Indicator - Top */}
-                  <div className="flex flex-col items-start">
+                <div className="absolute left-0 top-16 bottom-0 z-50 flex flex-col py-4 w-16">
+                  {/* HIGHER Indicator - Top Half */}
+                  <div className="flex flex-col items-start justify-center flex-1">
                     <div className="text-[#22c55e] text-xs font-bold tracking-wider mb-0.5 ml-2">
                       HIGHER
                     </div>
@@ -6119,8 +6155,8 @@ function TradingInterface() {
                     />
                   </div>
 
-                  {/* LOWER Indicator - Middle */}
-                  <div className="flex flex-col items-start">
+                  {/* LOWER Indicator - Bottom Half */}
+                  <div className="flex flex-col items-start justify-center flex-1">
                     {/* Red gradient bar */}
                     <div
                       className="w-4 mb-1 ml-2"
@@ -6136,193 +6172,6 @@ function TradingInterface() {
                     </div>
                     <div className="text-[#ef4444] text-lg font-bold ml-2">
                       10%
-                    </div>
-                  </div>
-
-                  {/* Tool Buttons - Bottom */}
-                  <div className="flex flex-col items-center gap-1 mt-auto">
-                    {/* Drawing Tool */}
-                    <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
-                      <svg
-                        className="w-4 h-4 text-gray-400"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <rect x="3" y="3" width="7" height="7" rx="1" />
-                        <rect x="14" y="3" width="7" height="7" rx="1" />
-                        <rect x="3" y="14" width="7" height="7" rx="1" />
-                        <rect x="14" y="14" width="7" height="7" rx="1" />
-                      </svg>
-                    </button>
-
-                    {/* Expiration Time Selector */}
-                    <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e] text-white text-xs font-bold">
-                      {expirationSeconds}s
-                    </button>
-
-                    {/* Sound Toggle */}
-                    <button
-                      onClick={() => setIsSoundOn(!isSoundOn)}
-                      className={`w-9 h-9 rounded flex items-center justify-center transition-colors border ${
-                        isSoundOn
-                          ? "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
-                          : "bg-[#1a1512] border-[#2a2220] hover:bg-[#2a2220]"
-                      }`}
-                    >
-                      {isSoundOn ? (
-                        <svg
-                          className="w-4 h-4 text-gray-400"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="w-4 h-4 text-red-400"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                          <line x1="23" y1="9" x2="17" y2="15" />
-                          <line x1="17" y1="9" x2="23" y2="15" />
-                        </svg>
-                      )}
-                    </button>
-
-                    {/* Pencil/Draw */}
-                    <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
-                      <svg
-                        className="w-4 h-4 text-gray-400"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                      </svg>
-                    </button>
-
-                    {/* Wave/Indicators */}
-                    <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
-                      <svg
-                        className="w-4 h-4 text-gray-400"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5 2 2 2 5" />
-                      </svg>
-                    </button>
-
-                    {/* Candle Timeframe - with dropdown */}
-                    <div className="relative" data-dropdown>
-                      <button
-                        onClick={() => {
-                          setShowCandleDropdown(!showCandleDropdown);
-                          setShowTimeframeDropdown(false);
-                        }}
-                        className={`w-9 h-9 rounded flex items-center justify-center transition-colors border text-white text-xs font-bold ${
-                          showCandleDropdown
-                            ? "bg-[#38312e] border-[#4a3f3a]"
-                            : "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
-                        }`}
-                      >
-                        {getCandleDisplayLabel()}
-                      </button>
-
-                      {/* Candle Time Period Dropdown */}
-                      {showCandleDropdown && (
-                        <div className="absolute bottom-full left-10 mb-0 ml-1 bg-[#1e1e2d] border border-[#2a2a3d] rounded-lg shadow-2xl z-50 py-1 min-w-[160px] max-h-[320px] overflow-y-auto">
-                          <div className="px-3 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider border-b border-[#2a2a3d]">
-                            Candle Time Period
-                          </div>
-                          {candleTimePeriods.map((period) => (
-                            <button
-                              key={period.value}
-                              onClick={() => {
-                                setCandleInterval(period.value);
-                                setShowCandleDropdown(false);
-                              }}
-                              className={`w-full px-3 py-1.5 text-left text-sm transition-colors flex items-center justify-between ${
-                                candleInterval === period.value
-                                  ? "bg-[#f0b90b]/10 text-[#f0b90b]"
-                                  : "text-gray-300 hover:bg-[#2a2a3d]"
-                              }`}
-                            >
-                              <span>{period.label}</span>
-                              {candleInterval === period.value && (
-                                <svg
-                                  className="w-3 h-3"
-                                  viewBox="0 0 24 24"
-                                  fill="currentColor"
-                                >
-                                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                                </svg>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Chart Timeframe - with dropdown */}
-                    <div className="relative" data-dropdown>
-                      <button
-                        onClick={() => {
-                          setShowTimeframeDropdown(!showTimeframeDropdown);
-                          setShowCandleDropdown(false);
-                        }}
-                        className={`w-9 h-9 rounded flex items-center justify-center transition-colors border text-white text-xs font-bold ${
-                          showTimeframeDropdown
-                            ? "bg-[#38312e] border-[#4a3f3a]"
-                            : "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
-                        }`}
-                      >
-                        {chartTimeframe}
-                      </button>
-
-                      {/* Timeframe Dropdown */}
-                      {showTimeframeDropdown && (
-                        <div className="absolute bottom-full left-10 mb-0 ml-1 bg-[#1e1e2d] border border-[#2a2a3d] rounded-lg shadow-2xl z-50 py-1 min-w-[140px]">
-                          <div className="px-3 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider border-b border-[#2a2a3d]">
-                            Chart Timeframe
-                          </div>
-                          {timeframeOptions.map((tf) => (
-                            <button
-                              key={tf.value}
-                              onClick={() => {
-                                setChartTimeframe(tf.value);
-                                setShowTimeframeDropdown(false);
-                              }}
-                              className={`w-full px-3 py-1.5 text-left text-sm transition-colors flex items-center justify-between ${
-                                chartTimeframe === tf.value
-                                  ? "bg-[#f0b90b]/10 text-[#f0b90b]"
-                                  : "text-gray-300 hover:bg-[#2a2a3d]"
-                              }`}
-                            >
-                              <span>{tf.label}</span>
-                              {chartTimeframe === tf.value && (
-                                <svg
-                                  className="w-3 h-3"
-                                  viewBox="0 0 24 24"
-                                  fill="currentColor"
-                                >
-                                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                                </svg>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -7727,850 +7576,885 @@ function TradingInterface() {
                 );
 
                 return (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ type: "spring", damping: 30, stiffness: 340 }}
-                    className="absolute top-12 left-[700px] z-[60] flex rounded-xl overflow-hidden shadow-2xl"
-                    style={{
-                      width: "720px",
-                      maxWidth: "calc(100vw - 20px)",
-                      height: "520px",
-                      maxHeight: "calc(100vh - 150px)",
-                    }}
-                  >
-                    {/* Close button */}
-                    <button
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-[109] bg-black/50"
                       onClick={() => setShowAddAssetModal(false)}
-                      className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full transition-colors hover:bg-white/10"
-                      style={{ color: "#6b82a0" }}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="w-4 h-4"
-                      >
-                        <path d="M18 6L6 18M6 6l12 12" />
-                      </svg>
-                    </button>
+                    />
 
-                    {/* ── Left Sidebar ── */}
-                    <div
-                      className="flex flex-col flex-shrink-0 overflow-y-auto rounded-l-xl"
-                      style={{
-                        width: "176px",
-                        backgroundColor: "#131c2e",
-                        borderRight: "1px solid #1d2d45",
+                    {/* Modal */}
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{
+                        type: "spring",
+                        damping: 30,
+                        stiffness: 340,
                       }}
+                      className="absolute top-12 left-[700px] z-[110] flex rounded-xl overflow-hidden shadow-2xl"
+                      style={{
+                        width: "720px",
+                        maxWidth: "calc(100vw - 20px)",
+                        height: "520px",
+                        maxHeight: "calc(100vh - 150px)",
+                      }}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {/* Trending */}
+                      {/* Close button */}
                       <button
-                        onClick={() => setAddAssetSideTab("trending")}
-                        className="flex items-center gap-1.5 px-2 py-2 transition-colors"
-                        style={{
-                          backgroundColor:
-                            addAssetSideTab === "trending"
-                              ? "#1a2840"
-                              : "transparent",
-                          color:
-                            addAssetSideTab === "trending" ? "#fff" : "#6b82a0",
-                          borderLeft:
-                            addAssetSideTab === "trending"
-                              ? "2px solid #4c8dff"
-                              : "2px solid transparent",
-                        }}
+                        onClick={() => setShowAddAssetModal(false)}
+                        className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                        style={{ color: "#6b82a0" }}
                       >
-                        <div
-                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: "#162032" }}
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="w-4 h-4"
                         >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="w-3 h-3"
-                          >
-                            <path d="M12 20V10M18 20V4M6 20v-4" />
-                          </svg>
-                        </div>
-                        <span className="text-sm font-medium">Trending</span>
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
                       </button>
 
-                      {/* Options */}
-                      <button
-                        onClick={() => setAddAssetSideTab("options")}
-                        className="flex items-center gap-1.5 px-2 py-2 transition-colors"
-                        style={{
-                          backgroundColor:
-                            addAssetSideTab === "options"
-                              ? "#1a2840"
-                              : "transparent",
-                          color:
-                            addAssetSideTab === "options" ? "#fff" : "#6b82a0",
-                          borderLeft:
-                            addAssetSideTab === "options"
-                              ? "2px solid #4c8dff"
-                              : "2px solid transparent",
-                        }}
-                      >
-                        <div
-                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: "#162032" }}
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="w-3 h-3"
-                          >
-                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                          </svg>
-                        </div>
-                        <span className="text-sm font-medium flex-1 text-left">
-                          Options
-                        </span>
-                        <span
-                          className="text-xs font-bold rounded-full px-1.5 py-0.5"
-                          style={{
-                            backgroundColor: "#e8690a",
-                            color: "#fff",
-                            minWidth: "26px",
-                            textAlign: "center",
-                          }}
-                        >
-                          {optionsCount}
-                        </span>
-                      </button>
-
-                      {/* Margin */}
-                      <button
-                        onClick={() => setAddAssetSideTab("margin")}
-                        className="flex items-center gap-1.5 px-2 py-2 transition-colors"
-                        style={{
-                          backgroundColor:
-                            addAssetSideTab === "margin"
-                              ? "#1a2840"
-                              : "transparent",
-                          color:
-                            addAssetSideTab === "margin" ? "#fff" : "#6b82a0",
-                          borderLeft:
-                            addAssetSideTab === "margin"
-                              ? "2px solid #4c8dff"
-                              : "2px solid transparent",
-                        }}
-                      >
-                        <div
-                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: "#162032" }}
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="w-3 h-3"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M12 8v4l3 3" />
-                          </svg>
-                        </div>
-                        <span className="text-sm font-medium flex-1 text-left">
-                          Margin
-                        </span>
-                        <span
-                          className="text-xs font-bold rounded-full px-1.5 py-0.5"
-                          style={{
-                            backgroundColor: "#e8690a",
-                            color: "#fff",
-                            minWidth: "26px",
-                            textAlign: "center",
-                          }}
-                        >
-                          {marginCount}
-                        </span>
-                      </button>
-
-                      {/* Watchlist */}
-                      <button
-                        onClick={() => setAddAssetSideTab("watchlist")}
-                        className="flex items-center gap-1.5 px-2 py-2 transition-colors"
-                        style={{
-                          backgroundColor:
-                            addAssetSideTab === "watchlist"
-                              ? "#1a2840"
-                              : "transparent",
-                          color:
-                            addAssetSideTab === "watchlist"
-                              ? "#fff"
-                              : "#6b82a0",
-                          borderLeft:
-                            addAssetSideTab === "watchlist"
-                              ? "2px solid #4c8dff"
-                              : "2px solid transparent",
-                        }}
-                      >
-                        <div
-                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: "#162032" }}
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="w-3 h-3"
-                          >
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                          </svg>
-                        </div>
-                        <span className="text-sm font-medium flex-1 text-left">
-                          Watchlist
-                        </span>
-                        <span
-                          className="text-xs font-bold rounded-full px-1.5 py-0.5"
-                          style={{
-                            backgroundColor: "#162032",
-                            color: "#6b82a0",
-                            minWidth: "26px",
-                            textAlign: "center",
-                          }}
-                        >
-                          {watchlistedSymbols.length}
-                        </span>
-                      </button>
-                    </div>
-
-                    {/* ── Main Content Panel ── */}
-                    <div
-                      className="flex flex-col flex-1 overflow-hidden rounded-r-xl"
-                      style={{ backgroundColor: "#0f1a2a" }}
-                    >
-                      {/* Search bar + Market Dropdown + Geo Toggle */}
+                      {/* ── Left Sidebar ── */}
                       <div
-                        className="px-4 py-3 flex-shrink-0 space-y-3"
-                        style={{ borderBottom: "1px solid #1a2d45" }}
+                        className="flex flex-col flex-shrink-0 overflow-y-auto rounded-l-xl"
+                        style={{
+                          width: "176px",
+                          backgroundColor: "#131c2e",
+                          borderRight: "1px solid #1d2d45",
+                        }}
                       >
-                        {/* Search */}
-                        <div className="relative">
-                          <Search
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-                            style={{ color: "#3d5470" }}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Search by name or ticker"
-                            value={addAssetSearch}
-                            onChange={(e) => setAddAssetSearch(e.target.value)}
-                            autoFocus
-                            className="w-full rounded-full pl-9 pr-4 py-2 text-sm outline-none"
-                            style={{
-                              backgroundColor: "#152030",
-                              border: "1px solid #1d3050",
-                              color: "#ffffff",
-                            }}
-                          />
-                        </div>
-
-                        {/* Market Dropdown + Geo Toggle Row */}
-                        <div className="flex items-center justify-between gap-3">
-                          {/* Market Dropdown */}
+                        {/* Trending */}
+                        <button
+                          onClick={() => setAddAssetSideTab("trending")}
+                          className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                          style={{
+                            backgroundColor:
+                              addAssetSideTab === "trending"
+                                ? "#1a2840"
+                                : "transparent",
+                            color:
+                              addAssetSideTab === "trending"
+                                ? "#fff"
+                                : "#6b82a0",
+                            borderLeft:
+                              addAssetSideTab === "trending"
+                                ? "2px solid #4c8dff"
+                                : "2px solid transparent",
+                          }}
+                        >
                           <div
-                            className="relative flex-1"
-                            style={{ maxWidth: "200px" }}
+                            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: "#162032" }}
                           >
-                            <button
-                              onClick={() =>
-                                setShowMarketDropdown(!showMarketDropdown)
-                              }
-                              className="w-full flex items-center justify-between gap-2 px-4 py-2 rounded text-sm font-medium transition-colors"
-                              style={{
-                                backgroundColor: "#1e3a5f",
-                                color: "#fff",
-                              }}
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="w-3 h-3"
                             >
-                              <span>{selectedMarket}</span>
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                className="w-4 h-4 flex-shrink-0"
-                                style={{ color: "#6b82a0" }}
-                              >
-                                <path
-                                  d={
-                                    showMarketDropdown
-                                      ? "M18 15l-6-6-6 6"
-                                      : "M6 9l6 6 6-6"
-                                  }
-                                />
-                              </svg>
-                            </button>
-                            {showMarketDropdown && (
-                              <div
-                                className="absolute top-full left-0 mt-1 z-50 rounded overflow-hidden shadow-xl w-full"
-                                style={{ backgroundColor: "#1e3a5f" }}
-                              >
-                                {marketCategories.map((cat) => (
-                                  <button
-                                    key={cat}
-                                    onClick={() => {
-                                      setSelectedMarket(cat);
-                                      setShowMarketDropdown(false);
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm transition-colors hover:bg-[#2a4a70]"
-                                    style={{
-                                      backgroundColor:
-                                        selectedMarket === cat
-                                          ? "#2a4a70"
-                                          : "transparent",
-                                      color: "#fff",
-                                    }}
-                                  >
-                                    {cat}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
+                              <path d="M12 20V10M18 20V4M6 20v-4" />
+                            </svg>
                           </div>
+                          <span className="text-sm font-medium">Trending</span>
+                        </button>
 
-                          {/* Worldwide / Local Toggle */}
-                          <div className="flex rounded overflow-hidden">
-                            <button
-                              onClick={() => setAddAssetGeoTab("worldwide")}
-                              className="px-4 py-2 text-sm font-medium transition-colors"
-                              style={{
-                                backgroundColor:
-                                  addAssetGeoTab === "worldwide"
-                                    ? "#1e3a5f"
-                                    : "transparent",
-                                color: "#fff",
-                              }}
+                        {/* Options */}
+                        <button
+                          onClick={() => setAddAssetSideTab("options")}
+                          className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                          style={{
+                            backgroundColor:
+                              addAssetSideTab === "options"
+                                ? "#1a2840"
+                                : "transparent",
+                            color:
+                              addAssetSideTab === "options"
+                                ? "#fff"
+                                : "#6b82a0",
+                            borderLeft:
+                              addAssetSideTab === "options"
+                                ? "2px solid #4c8dff"
+                                : "2px solid transparent",
+                          }}
+                        >
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: "#162032" }}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="w-3 h-3"
                             >
-                              Worldwide
-                            </button>
-                            <button
-                              onClick={() => setAddAssetGeoTab("local")}
-                              className="px-4 py-2 text-sm font-medium transition-colors"
-                              style={{
-                                backgroundColor:
-                                  addAssetGeoTab === "local"
-                                    ? "#1e3a5f"
-                                    : "transparent",
-                                color:
-                                  addAssetGeoTab === "local"
-                                    ? "#fff"
-                                    : "#6b82a0",
-                              }}
-                            >
-                              Brazil
-                            </button>
+                              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                            </svg>
                           </div>
-                        </div>
+                          <span className="text-sm font-medium flex-1 text-left">
+                            Options
+                          </span>
+                          <span
+                            className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                            style={{
+                              backgroundColor: "#e8690a",
+                              color: "#fff",
+                              minWidth: "26px",
+                              textAlign: "center",
+                            }}
+                          >
+                            {optionsCount}
+                          </span>
+                        </button>
+
+                        {/* Margin */}
+                        <button
+                          onClick={() => setAddAssetSideTab("margin")}
+                          className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                          style={{
+                            backgroundColor:
+                              addAssetSideTab === "margin"
+                                ? "#1a2840"
+                                : "transparent",
+                            color:
+                              addAssetSideTab === "margin" ? "#fff" : "#6b82a0",
+                            borderLeft:
+                              addAssetSideTab === "margin"
+                                ? "2px solid #4c8dff"
+                                : "2px solid transparent",
+                          }}
+                        >
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: "#162032" }}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="w-3 h-3"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="M12 8v4l3 3" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium flex-1 text-left">
+                            Margin
+                          </span>
+                          <span
+                            className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                            style={{
+                              backgroundColor: "#e8690a",
+                              color: "#fff",
+                              minWidth: "26px",
+                              textAlign: "center",
+                            }}
+                          >
+                            {marginCount}
+                          </span>
+                        </button>
+
+                        {/* Watchlist */}
+                        <button
+                          onClick={() => setAddAssetSideTab("watchlist")}
+                          className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                          style={{
+                            backgroundColor:
+                              addAssetSideTab === "watchlist"
+                                ? "#1a2840"
+                                : "transparent",
+                            color:
+                              addAssetSideTab === "watchlist"
+                                ? "#fff"
+                                : "#6b82a0",
+                            borderLeft:
+                              addAssetSideTab === "watchlist"
+                                ? "2px solid #4c8dff"
+                                : "2px solid transparent",
+                          }}
+                        >
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: "#162032" }}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="w-3 h-3"
+                            >
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium flex-1 text-left">
+                            Watchlist
+                          </span>
+                          <span
+                            className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                            style={{
+                              backgroundColor: "#162032",
+                              color: "#6b82a0",
+                              minWidth: "26px",
+                              textAlign: "center",
+                            }}
+                          >
+                            {watchlistedSymbols.length}
+                          </span>
+                        </button>
                       </div>
 
-                      {/* Trending View with Cards */}
-                      {addAssetSideTab === "trending" &&
-                        !addAssetSearch.trim() && (
-                          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-6">
-                            {/* Trader's Choice Section */}
-                            <div>
-                              <div className="flex items-center justify-between mb-3">
-                                <span className="text-lg font-medium text-white">
-                                  Trader&apos;s choice
-                                </span>
-                                <span
-                                  className="text-xs"
+                      {/* ── Main Content Panel ── */}
+                      <div
+                        className="flex flex-col flex-1 overflow-hidden rounded-r-xl"
+                        style={{ backgroundColor: "#0f1a2a" }}
+                      >
+                        {/* Search bar + Market Dropdown + Geo Toggle */}
+                        <div
+                          className="px-4 py-3 flex-shrink-0 space-y-3"
+                          style={{ borderBottom: "1px solid #1a2d45" }}
+                        >
+                          {/* Search */}
+                          <div className="relative">
+                            <Search
+                              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                              style={{ color: "#3d5470" }}
+                            />
+                            <input
+                              type="text"
+                              placeholder="Search by name or ticker"
+                              value={addAssetSearch}
+                              onChange={(e) =>
+                                setAddAssetSearch(e.target.value)
+                              }
+                              autoFocus
+                              className="w-full rounded-full pl-9 pr-4 py-2 text-sm outline-none"
+                              style={{
+                                backgroundColor: "#152030",
+                                border: "1px solid #1d3050",
+                                color: "#ffffff",
+                              }}
+                            />
+                          </div>
+
+                          {/* Market Dropdown + Geo Toggle Row */}
+                          <div className="flex items-center justify-between gap-3">
+                            {/* Market Dropdown */}
+                            <div
+                              className="relative flex-1"
+                              style={{ maxWidth: "200px" }}
+                            >
+                              <button
+                                onClick={() =>
+                                  setShowMarketDropdown(!showMarketDropdown)
+                                }
+                                className="w-full flex items-center justify-between gap-2 px-4 py-2 rounded text-sm font-medium transition-colors"
+                                style={{
+                                  backgroundColor: "#1e3a5f",
+                                  color: "#fff",
+                                }}
+                              >
+                                <span>{selectedMarket}</span>
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  className="w-4 h-4 flex-shrink-0"
                                   style={{ color: "#6b82a0" }}
                                 >
-                                  Last week
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-3 gap-3">
-                                {tradersChoice.map((sym) => {
-                                  const profit = profitPctMap[sym.symbol] ?? 87;
-                                  return (
+                                  <path
+                                    d={
+                                      showMarketDropdown
+                                        ? "M18 15l-6-6-6 6"
+                                        : "M6 9l6 6 6-6"
+                                    }
+                                  />
+                                </svg>
+                              </button>
+                              {showMarketDropdown && (
+                                <div
+                                  className="absolute top-full left-0 mt-1 z-50 rounded overflow-hidden shadow-xl w-full"
+                                  style={{ backgroundColor: "#1e3a5f" }}
+                                >
+                                  {marketCategories.map((cat) => (
                                     <button
-                                      key={sym.symbol}
-                                      onClick={() => handleSelectSymbol(sym)}
-                                      className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
-                                      style={{ backgroundColor: "#131c2e" }}
+                                      key={cat}
+                                      onClick={() => {
+                                        setSelectedMarket(cat);
+                                        setShowMarketDropdown(false);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm transition-colors hover:bg-[#2a4a70]"
+                                      style={{
+                                        backgroundColor:
+                                          selectedMarket === cat
+                                            ? "#2a4a70"
+                                            : "transparent",
+                                        color: "#fff",
+                                      }}
                                     >
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <AssetFlag
-                                          flag={sym.flag}
-                                          symbol={sym.symbol}
-                                          size={24}
-                                        />
-                                        <span className="text-sm font-medium text-white truncate">
-                                          {sym.symbol}
-                                        </span>
-                                      </div>
-                                      <div
-                                        className="text-xs mb-1"
-                                        style={{ color: "#6b82a0" }}
-                                      >
-                                        Profit
-                                      </div>
-                                      <div className="text-lg font-bold text-green-400 mb-2">
-                                        {profit}%
-                                      </div>
-                                      <div className="flex justify-between text-xs">
-                                        <div>
-                                          <span style={{ color: "#6b82a0" }}>
-                                            Price
-                                          </span>
-                                          <div className="text-white">
-                                            {sym.price}
-                                          </div>
-                                        </div>
-                                        <div className="text-right">
-                                          <span style={{ color: "#6b82a0" }}>
-                                            5 min change
-                                          </span>
-                                          <div
-                                            style={{
-                                              color: sym.change.startsWith("+")
-                                                ? "#4ade80"
-                                                : "#f87171",
-                                            }}
-                                          >
-                                            {sym.change.startsWith("+")
-                                              ? "+"
-                                              : ""}
-                                            {sym.percentage}%
-                                          </div>
-                                        </div>
-                                      </div>
+                                      {cat}
                                     </button>
-                                  );
-                                })}
-                              </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
 
-                            {/* Gainers Section */}
-                            <div>
-                              <div className="flex items-center justify-between mb-3">
-                                <span className="text-lg font-medium text-white">
-                                  Gainers
-                                </span>
-                                <span
-                                  className="text-xs"
-                                  style={{ color: "#6b82a0" }}
-                                >
-                                  Last week
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-3 gap-3">
-                                {trendingGainers.map((sym) => {
-                                  const profit = profitPctMap[sym.symbol] ?? 86;
-                                  return (
-                                    <button
-                                      key={sym.symbol}
-                                      onClick={() => handleSelectSymbol(sym)}
-                                      className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
-                                      style={{ backgroundColor: "#131c2e" }}
-                                    >
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <AssetFlag
-                                          flag={sym.flag}
-                                          symbol={sym.symbol}
-                                          size={24}
-                                        />
-                                        <span className="text-sm font-medium text-white truncate">
-                                          {sym.symbol}
-                                        </span>
-                                      </div>
-                                      <div
-                                        className="text-xs mb-1"
-                                        style={{ color: "#6b82a0" }}
-                                      >
-                                        Profit
-                                      </div>
-                                      <div className="text-lg font-bold text-green-400 mb-2">
-                                        {profit}%
-                                      </div>
-                                      <div className="flex justify-between text-xs">
-                                        <div>
-                                          <span style={{ color: "#6b82a0" }}>
-                                            Price
-                                          </span>
-                                          <div className="text-white">
-                                            {sym.price}
-                                          </div>
-                                        </div>
-                                        <div className="text-right">
-                                          <span style={{ color: "#6b82a0" }}>
-                                            5 min change
-                                          </span>
-                                          <div
-                                            style={{
-                                              color: sym.change.startsWith("+")
-                                                ? "#4ade80"
-                                                : "#f87171",
-                                            }}
-                                          >
-                                            {sym.change.startsWith("+")
-                                              ? "+"
-                                              : ""}
-                                            {sym.percentage}%
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            {/* Losers Section */}
-                            <div>
-                              <div className="flex items-center justify-between mb-3">
-                                <span className="text-lg font-medium text-white">
-                                  Losers
-                                </span>
-                                <span
-                                  className="text-xs"
-                                  style={{ color: "#6b82a0" }}
-                                >
-                                  Last week
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-3 gap-3">
-                                {trendingLosers.map((sym) => {
-                                  const profit = profitPctMap[sym.symbol] ?? 86;
-                                  return (
-                                    <button
-                                      key={sym.symbol}
-                                      onClick={() => handleSelectSymbol(sym)}
-                                      className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
-                                      style={{ backgroundColor: "#131c2e" }}
-                                    >
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <AssetFlag
-                                          flag={sym.flag}
-                                          symbol={sym.symbol}
-                                          size={24}
-                                        />
-                                        <span className="text-sm font-medium text-white truncate">
-                                          {sym.symbol}
-                                        </span>
-                                      </div>
-                                      <div
-                                        className="text-xs mb-1"
-                                        style={{ color: "#6b82a0" }}
-                                      >
-                                        Profit
-                                      </div>
-                                      <div className="text-lg font-bold text-green-400 mb-2">
-                                        {profit}%
-                                      </div>
-                                      <div className="flex justify-between text-xs">
-                                        <div>
-                                          <span style={{ color: "#6b82a0" }}>
-                                            Price
-                                          </span>
-                                          <div className="text-white">
-                                            {sym.price}
-                                          </div>
-                                        </div>
-                                        <div className="text-right">
-                                          <span style={{ color: "#6b82a0" }}>
-                                            5 min change
-                                          </span>
-                                          <div
-                                            style={{
-                                              color: sym.change.startsWith("+")
-                                                ? "#4ade80"
-                                                : "#f87171",
-                                            }}
-                                          >
-                                            {sym.change.startsWith("+")
-                                              ? "+"
-                                              : ""}
-                                            {sym.percentage}%
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
+                            {/* Worldwide / Local Toggle */}
+                            <div className="flex rounded overflow-hidden">
+                              <button
+                                onClick={() => setAddAssetGeoTab("worldwide")}
+                                className="px-4 py-2 text-sm font-medium transition-colors"
+                                style={{
+                                  backgroundColor:
+                                    addAssetGeoTab === "worldwide"
+                                      ? "#1e3a5f"
+                                      : "transparent",
+                                  color: "#fff",
+                                }}
+                              >
+                                Worldwide
+                              </button>
+                              <button
+                                onClick={() => setAddAssetGeoTab("local")}
+                                className="px-4 py-2 text-sm font-medium transition-colors"
+                                style={{
+                                  backgroundColor:
+                                    addAssetGeoTab === "local"
+                                      ? "#1e3a5f"
+                                      : "transparent",
+                                  color:
+                                    addAssetGeoTab === "local"
+                                      ? "#fff"
+                                      : "#6b82a0",
+                                }}
+                              >
+                                Brazil
+                              </button>
                             </div>
                           </div>
-                        )}
+                        </div>
 
-                      {/* Table header - for Options/Margin/Watchlist or when searching in Trending */}
-                      {(addAssetSideTab !== "trending" ||
-                        addAssetSearch.trim()) &&
-                        addAssetSideTab !== "watchlist" && (
-                          <div
-                            className="flex items-center px-4 py-2 flex-shrink-0 text-xs select-none"
-                            style={{
-                              borderBottom: "1px solid #1a2d45",
-                              color: "#3d5470",
-                            }}
-                          >
-                            <div className="flex-1 font-medium">Asset</div>
-                            <div className="w-20 text-right pr-3 font-medium flex items-center justify-end gap-1">
-                              Profit
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                className="w-3 h-3 flex-shrink-0"
-                              >
-                                <path d="M18 15l-6-6-6 6" />
-                              </svg>
-                            </div>
-                            <div className="w-20 text-center font-medium">
-                              Popular
-                            </div>
-                            <div className="w-20 text-center font-medium">
-                              Volatility
-                            </div>
-                            <div className="w-14 text-center">
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                className="w-3.5 h-3.5 mx-auto"
-                              >
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="12" y1="8" x2="12" y2="12" />
-                                <line x1="12" y1="16" x2="12.01" y2="16" />
-                              </svg>
-                            </div>
-                          </div>
-                        )}
+                        {/* Trending View with Cards */}
+                        {addAssetSideTab === "trending" &&
+                          !addAssetSearch.trim() && (
+                            <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-6">
+                              {/* Trader's Choice Section */}
+                              <div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-lg font-medium text-white">
+                                    Trader&apos;s choice
+                                  </span>
+                                  <span
+                                    className="text-xs"
+                                    style={{ color: "#6b82a0" }}
+                                  >
+                                    Last week
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-3">
+                                  {tradersChoice.map((sym) => {
+                                    const profit =
+                                      profitPctMap[sym.symbol] ?? 87;
+                                    return (
+                                      <button
+                                        key={sym.symbol}
+                                        onClick={() => handleSelectSymbol(sym)}
+                                        className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                        style={{ backgroundColor: "#131c2e" }}
+                                      >
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <AssetFlag
+                                            flag={sym.flag}
+                                            symbol={sym.symbol}
+                                            size={24}
+                                          />
+                                          <span className="text-sm font-medium text-white truncate">
+                                            {sym.symbol}
+                                          </span>
+                                        </div>
+                                        <div
+                                          className="text-xs mb-1"
+                                          style={{ color: "#6b82a0" }}
+                                        >
+                                          Profit
+                                        </div>
+                                        <div className="text-lg font-bold text-green-400 mb-2">
+                                          {profit}%
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                          <div>
+                                            <span style={{ color: "#6b82a0" }}>
+                                              Price
+                                            </span>
+                                            <div className="text-white">
+                                              {sym.price}
+                                            </div>
+                                          </div>
+                                          <div className="text-right">
+                                            <span style={{ color: "#6b82a0" }}>
+                                              5 min change
+                                            </span>
+                                            <div
+                                              style={{
+                                                color: sym.change.startsWith(
+                                                  "+",
+                                                )
+                                                  ? "#4ade80"
+                                                  : "#f87171",
+                                              }}
+                                            >
+                                              {sym.change.startsWith("+")
+                                                ? "+"
+                                                : ""}
+                                              {sym.percentage}%
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
 
-                      {/* Asset rows - for Options/Margin/Watchlist or when searching */}
-                      {(addAssetSideTab !== "trending" ||
-                        addAssetSearch.trim()) && (
-                        <div className="flex-1 overflow-y-auto custom-scrollbar">
-                          {addAssetSideTab === "watchlist" &&
-                          displaySymbols.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-52 gap-3 pt-8">
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                className="w-14 h-14"
-                                style={{ color: "#1a2d45" }}
-                              >
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                              </svg>
+                              {/* Gainers Section */}
+                              <div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-lg font-medium text-white">
+                                    Gainers
+                                  </span>
+                                  <span
+                                    className="text-xs"
+                                    style={{ color: "#6b82a0" }}
+                                  >
+                                    Last week
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-3">
+                                  {trendingGainers.map((sym) => {
+                                    const profit =
+                                      profitPctMap[sym.symbol] ?? 86;
+                                    return (
+                                      <button
+                                        key={sym.symbol}
+                                        onClick={() => handleSelectSymbol(sym)}
+                                        className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                        style={{ backgroundColor: "#131c2e" }}
+                                      >
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <AssetFlag
+                                            flag={sym.flag}
+                                            symbol={sym.symbol}
+                                            size={24}
+                                          />
+                                          <span className="text-sm font-medium text-white truncate">
+                                            {sym.symbol}
+                                          </span>
+                                        </div>
+                                        <div
+                                          className="text-xs mb-1"
+                                          style={{ color: "#6b82a0" }}
+                                        >
+                                          Profit
+                                        </div>
+                                        <div className="text-lg font-bold text-green-400 mb-2">
+                                          {profit}%
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                          <div>
+                                            <span style={{ color: "#6b82a0" }}>
+                                              Price
+                                            </span>
+                                            <div className="text-white">
+                                              {sym.price}
+                                            </div>
+                                          </div>
+                                          <div className="text-right">
+                                            <span style={{ color: "#6b82a0" }}>
+                                              5 min change
+                                            </span>
+                                            <div
+                                              style={{
+                                                color: sym.change.startsWith(
+                                                  "+",
+                                                )
+                                                  ? "#4ade80"
+                                                  : "#f87171",
+                                              }}
+                                            >
+                                              {sym.change.startsWith("+")
+                                                ? "+"
+                                                : ""}
+                                              {sym.percentage}%
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Losers Section */}
+                              <div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-lg font-medium text-white">
+                                    Losers
+                                  </span>
+                                  <span
+                                    className="text-xs"
+                                    style={{ color: "#6b82a0" }}
+                                  >
+                                    Last week
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-3">
+                                  {trendingLosers.map((sym) => {
+                                    const profit =
+                                      profitPctMap[sym.symbol] ?? 86;
+                                    return (
+                                      <button
+                                        key={sym.symbol}
+                                        onClick={() => handleSelectSymbol(sym)}
+                                        className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                        style={{ backgroundColor: "#131c2e" }}
+                                      >
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <AssetFlag
+                                            flag={sym.flag}
+                                            symbol={sym.symbol}
+                                            size={24}
+                                          />
+                                          <span className="text-sm font-medium text-white truncate">
+                                            {sym.symbol}
+                                          </span>
+                                        </div>
+                                        <div
+                                          className="text-xs mb-1"
+                                          style={{ color: "#6b82a0" }}
+                                        >
+                                          Profit
+                                        </div>
+                                        <div className="text-lg font-bold text-green-400 mb-2">
+                                          {profit}%
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                          <div>
+                                            <span style={{ color: "#6b82a0" }}>
+                                              Price
+                                            </span>
+                                            <div className="text-white">
+                                              {sym.price}
+                                            </div>
+                                          </div>
+                                          <div className="text-right">
+                                            <span style={{ color: "#6b82a0" }}>
+                                              5 min change
+                                            </span>
+                                            <div
+                                              style={{
+                                                color: sym.change.startsWith(
+                                                  "+",
+                                                )
+                                                  ? "#4ade80"
+                                                  : "#f87171",
+                                              }}
+                                            >
+                                              {sym.change.startsWith("+")
+                                                ? "+"
+                                                : ""}
+                                              {sym.percentage}%
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Table header - for Options/Margin/Watchlist or when searching in Trending */}
+                        {(addAssetSideTab !== "trending" ||
+                          addAssetSearch.trim()) &&
+                          addAssetSideTab !== "watchlist" && (
+                            <div
+                              className="flex items-center px-4 py-2 flex-shrink-0 text-xs select-none"
+                              style={{
+                                borderBottom: "1px solid #1a2d45",
+                                color: "#3d5470",
+                              }}
+                            >
+                              <div className="flex-1 font-medium">Asset</div>
+                              <div className="w-20 text-right pr-3 font-medium flex items-center justify-end gap-1">
+                                Profit
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  className="w-3 h-3 flex-shrink-0"
+                                >
+                                  <path d="M18 15l-6-6-6 6" />
+                                </svg>
+                              </div>
+                              <div className="w-20 text-center font-medium">
+                                Popular
+                              </div>
+                              <div className="w-20 text-center font-medium">
+                                Volatility
+                              </div>
+                              <div className="w-14 text-center">
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  className="w-3.5 h-3.5 mx-auto"
+                                >
+                                  <circle cx="12" cy="12" r="10" />
+                                  <line x1="12" y1="8" x2="12" y2="12" />
+                                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Asset rows - for Options/Margin/Watchlist or when searching */}
+                        {(addAssetSideTab !== "trending" ||
+                          addAssetSearch.trim()) && (
+                          <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            {addAssetSideTab === "watchlist" &&
+                            displaySymbols.length === 0 ? (
+                              <div className="flex flex-col items-center justify-center h-52 gap-3 pt-8">
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  className="w-14 h-14"
+                                  style={{ color: "#1a2d45" }}
+                                >
+                                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <p
+                                  className="font-medium text-sm"
+                                  style={{ color: "#3d5470" }}
+                                >
+                                  Your watchlist is empty
+                                </p>
+                                <p
+                                  className="text-xs text-center max-w-[200px]"
+                                  style={{ color: "#233344" }}
+                                >
+                                  Click ☆ on any asset to add it here
+                                </p>
+                              </div>
+                            ) : displaySymbols.length === 0 ? (
                               <p
-                                className="font-medium text-sm"
+                                className="text-center py-12 text-sm"
                                 style={{ color: "#3d5470" }}
                               >
-                                Your watchlist is empty
+                                No assets found
                               </p>
-                              <p
-                                className="text-xs text-center max-w-[200px]"
-                                style={{ color: "#233344" }}
-                              >
-                                Click ☆ on any asset to add it here
-                              </p>
-                            </div>
-                          ) : displaySymbols.length === 0 ? (
-                            <p
-                              className="text-center py-12 text-sm"
-                              style={{ color: "#3d5470" }}
-                            >
-                              No assets found
-                            </p>
-                          ) : (
-                            displaySymbols.map((sym) => {
-                              const profit = profitPctMap[sym.symbol] ?? 87;
-                              const popularity = popularityMap[sym.symbol] ?? 2;
-                              const volatility = volatilityMap[sym.symbol] ?? 2;
-                              const isWatchlisted = watchlistedSymbols.includes(
-                                sym.symbol,
-                              );
-                              const isActive = openTabs.some(
-                                (t) =>
-                                  t.symbol === sym.symbol &&
-                                  t.type === selectedMarket,
-                              );
-                              const isNew = newBadgeSymbols.has(sym.symbol);
+                            ) : (
+                              displaySymbols.map((sym) => {
+                                const profit = profitPctMap[sym.symbol] ?? 87;
+                                const popularity =
+                                  popularityMap[sym.symbol] ?? 2;
+                                const volatility =
+                                  volatilityMap[sym.symbol] ?? 2;
+                                const isWatchlisted =
+                                  watchlistedSymbols.includes(sym.symbol);
+                                const isActive = openTabs.some(
+                                  (t) =>
+                                    t.symbol === sym.symbol &&
+                                    t.type === selectedMarket,
+                                );
+                                const isNew = newBadgeSymbols.has(sym.symbol);
 
-                              return (
-                                <button
-                                  key={sym.symbol}
-                                  onClick={() => handleSelectSymbol(sym)}
-                                  className="w-full flex items-center px-4 py-2 text-left transition-colors"
-                                  style={{
-                                    backgroundColor: isActive
-                                      ? "#132030"
-                                      : "transparent",
-                                    borderBottom: "1px solid #0e1d2d",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (!isActive)
-                                      (
-                                        e.currentTarget as HTMLElement
-                                      ).style.backgroundColor = "#111d2f";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!isActive)
-                                      (
-                                        e.currentTarget as HTMLElement
-                                      ).style.backgroundColor = "transparent";
-                                  }}
-                                >
-                                  {/* Icon + Name */}
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <div className="relative flex-shrink-0">
-                                      <div
-                                        className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
-                                        style={{
-                                          backgroundColor: "#172840",
-                                          border: "2px solid #1e3654",
-                                        }}
-                                      >
-                                        <AssetFlag
-                                          flag={sym.flag}
-                                          symbol={sym.symbol}
-                                          size={18}
-                                        />
+                                return (
+                                  <button
+                                    key={sym.symbol}
+                                    onClick={() => handleSelectSymbol(sym)}
+                                    className="w-full flex items-center px-4 py-2 text-left transition-colors"
+                                    style={{
+                                      backgroundColor: isActive
+                                        ? "#132030"
+                                        : "transparent",
+                                      borderBottom: "1px solid #0e1d2d",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (!isActive)
+                                        (
+                                          e.currentTarget as HTMLElement
+                                        ).style.backgroundColor = "#111d2f";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (!isActive)
+                                        (
+                                          e.currentTarget as HTMLElement
+                                        ).style.backgroundColor = "transparent";
+                                    }}
+                                  >
+                                    {/* Icon + Name */}
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <div className="relative flex-shrink-0">
+                                        <div
+                                          className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
+                                          style={{
+                                            backgroundColor: "#172840",
+                                            border: "2px solid #1e3654",
+                                          }}
+                                        >
+                                          <AssetFlag
+                                            flag={sym.flag}
+                                            symbol={sym.symbol}
+                                            size={18}
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="min-w-0">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <span className="text-sm font-semibold text-white truncate">
+                                            {(sym as any).displayName ??
+                                              sym.symbol}
+                                          </span>
+                                          {isNew && (
+                                            <span
+                                              className="text-white px-1 rounded flex-shrink-0 font-bold"
+                                              style={{
+                                                backgroundColor: "#1a5080",
+                                                fontSize: "9px",
+                                              }}
+                                            >
+                                              NEW
+                                            </span>
+                                          )}
+                                        </div>
+                                        <span
+                                          className="text-xs block"
+                                          style={{ color: "#3d5470" }}
+                                        >
+                                          {sym.price}
+                                        </span>
                                       </div>
                                     </div>
-                                    <div className="min-w-0">
-                                      <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className="text-sm font-semibold text-white truncate">
-                                          {(sym as any).displayName ??
-                                            sym.symbol}
-                                        </span>
-                                        {isNew && (
-                                          <span
-                                            className="text-white px-1 rounded flex-shrink-0 font-bold"
-                                            style={{
-                                              backgroundColor: "#1a5080",
-                                              fontSize: "9px",
-                                            }}
-                                          >
-                                            NEW
-                                          </span>
-                                        )}
-                                      </div>
+
+                                    {/* Profit */}
+                                    <div className="w-20 text-right pr-3 flex-shrink-0">
                                       <span
-                                        className="text-xs block"
-                                        style={{ color: "#3d5470" }}
+                                        className="text-sm font-bold"
+                                        style={{ color: "#22c55e" }}
                                       >
-                                        {sym.price}
+                                        {profit}%
                                       </span>
                                     </div>
-                                  </div>
 
-                                  {/* Profit */}
-                                  <div className="w-20 text-right pr-3 flex-shrink-0">
-                                    <span
-                                      className="text-sm font-bold"
-                                      style={{ color: "#22c55e" }}
-                                    >
-                                      {profit}%
-                                    </span>
-                                  </div>
+                                    {/* Popular */}
+                                    <div className="w-20 flex justify-center flex-shrink-0">
+                                      <FlameIcons count={popularity} />
+                                    </div>
 
-                                  {/* Popular */}
-                                  <div className="w-20 flex justify-center flex-shrink-0">
-                                    <FlameIcons count={popularity} />
-                                  </div>
+                                    {/* Volatility */}
+                                    <div className="w-20 flex justify-center flex-shrink-0">
+                                      <VolatilityBars count={volatility} />
+                                    </div>
 
-                                  {/* Volatility */}
-                                  <div className="w-20 flex justify-center flex-shrink-0">
-                                    <VolatilityBars count={volatility} />
-                                  </div>
-
-                                  {/* Star + Info */}
-                                  <div className="w-14 flex items-center justify-center gap-1.5 flex-shrink-0">
-                                    <button
-                                      onClick={(e) =>
-                                        toggleWatchlist(e, sym.symbol)
-                                      }
-                                      className="p-1 rounded transition-colors"
-                                      style={{
-                                        color: isWatchlisted
-                                          ? "#f59e0b"
-                                          : "#2a3e56",
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        if (!isWatchlisted)
+                                    {/* Star + Info */}
+                                    <div className="w-14 flex items-center justify-center gap-1.5 flex-shrink-0">
+                                      <button
+                                        onClick={(e) =>
+                                          toggleWatchlist(e, sym.symbol)
+                                        }
+                                        className="p-1 rounded transition-colors"
+                                        style={{
+                                          color: isWatchlisted
+                                            ? "#f59e0b"
+                                            : "#2a3e56",
+                                        }}
+                                        onMouseEnter={(e) => {
+                                          if (!isWatchlisted)
+                                            (
+                                              e.currentTarget as HTMLElement
+                                            ).style.color = "#6b82a0";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          if (!isWatchlisted)
+                                            (
+                                              e.currentTarget as HTMLElement
+                                            ).style.color = "#2a3e56";
+                                        }}
+                                      >
+                                        <svg
+                                          viewBox="0 0 24 24"
+                                          className="w-4 h-4"
+                                          fill={
+                                            isWatchlisted
+                                              ? "currentColor"
+                                              : "none"
+                                          }
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                        >
+                                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                        </svg>
+                                      </button>
+                                      <button
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="p-1 rounded transition-colors"
+                                        style={{ color: "#2a3e56" }}
+                                        onMouseEnter={(e) => {
                                           (
                                             e.currentTarget as HTMLElement
                                           ).style.color = "#6b82a0";
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        if (!isWatchlisted)
+                                        }}
+                                        onMouseLeave={(e) => {
                                           (
                                             e.currentTarget as HTMLElement
                                           ).style.color = "#2a3e56";
-                                      }}
-                                    >
-                                      <svg
-                                        viewBox="0 0 24 24"
-                                        className="w-4 h-4"
-                                        fill={
-                                          isWatchlisted
-                                            ? "currentColor"
-                                            : "none"
-                                        }
-                                        stroke="currentColor"
-                                        strokeWidth="2"
+                                        }}
                                       >
-                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                      </svg>
-                                    </button>
-                                    <button
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="p-1 rounded transition-colors"
-                                      style={{ color: "#2a3e56" }}
-                                      onMouseEnter={(e) => {
-                                        (
-                                          e.currentTarget as HTMLElement
-                                        ).style.color = "#6b82a0";
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        (
-                                          e.currentTarget as HTMLElement
-                                        ).style.color = "#2a3e56";
-                                      }}
-                                    >
-                                      <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        className="w-4 h-4"
-                                      >
-                                        <circle cx="12" cy="12" r="10" />
-                                        <line x1="12" y1="8" x2="12" y2="12" />
-                                        <line
-                                          x1="12"
-                                          y1="16"
-                                          x2="12.01"
-                                          y2="16"
-                                        />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                </button>
-                              );
-                            })
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
+                                        <svg
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          className="w-4 h-4"
+                                        >
+                                          <circle cx="12" cy="12" r="10" />
+                                          <line
+                                            x1="12"
+                                            y1="8"
+                                            x2="12"
+                                            y2="12"
+                                          />
+                                          <line
+                                            x1="12"
+                                            y1="16"
+                                            x2="12.01"
+                                            y2="16"
+                                          />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  </button>
+                                );
+                              })
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </>
                 );
               })()}
           </AnimatePresence>

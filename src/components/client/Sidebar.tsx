@@ -10,6 +10,7 @@ import {
   Home,
   AlertCircle,
   Users,
+  Cpu,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
@@ -59,11 +60,12 @@ const Sidebar = () => {
   // The session will update naturally when needed via NextAuth's built-in mechanisms
 
   const navItems = [
-    { icon: <Home size={24} />, name: "Homepage", href: "/" },
-    { icon: <Briefcase size={24} />, name: "Dashboard", href: "/dashboard" },
-    { icon: <TrendingUp size={24} />, name: "Traderoom", href: "/traderoom" },
-    { icon: <Users size={24} />, name: "CopyTrading", href: "/copy-trading" },
-    { icon: <Settings size={24} />, name: "Settings", href: "/settings" },
+    { icon: <Home size={18} />, name: "Homepage", href: "/" },
+    { icon: <Briefcase size={18} />, name: "Dashboard", href: "/dashboard" },
+    { icon: <TrendingUp size={18} />, name: "Traderoom", href: "/traderoom" },
+    { icon: <Users size={18} />, name: "CopyTrading", href: "/copy-trading" },
+    { icon: <Cpu size={18} />, name: "F2 Pool Mining", href: "/f2pool-mining" },
+    { icon: <Settings size={18} />, name: "Settings", href: "/settings" },
   ];
 
   // Check if user is admin for Admin panel access
@@ -71,7 +73,7 @@ const Sidebar = () => {
     session?.user?.role === "ADMIN" || session?.user?.role === "STAFF_ADMIN";
 
   const adminItem = {
-    icon: <Shield size={24} />,
+    icon: <Shield size={18} />,
     name: "Admin",
     href: "/admin",
   };
@@ -139,7 +141,7 @@ const Sidebar = () => {
             <motion.div
               key="sidebar-content"
               data-tutorial="sidebar"
-              className={`fixed left-0 top-0 h-full w-60 sm:w-72 p-4 sm:p-6 pt-6 flex flex-col z-[145] transition-colors ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}`}
+              className={`fixed left-0 top-0 h-full w-60 sm:w-60 p-4 sm:p-4 pt-5 flex flex-col z-[145] transition-colors ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}`}
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -157,26 +159,44 @@ const Sidebar = () => {
                 </Link>
               </div>
 
-              {/* User Name - Mobile Only */}
+              {/* User Name - Mobile & Desktop */}
               {session?.user?.name && (
                 <div
-                  className={`sm:hidden mb-4 pb-4 border-b ${isDark ? "border-gray-700/50" : "border-gray-200"}`}
+                  className={`mb-4 pb-4 border-b ${isDark ? "border-gray-700/50" : "border-gray-200"}`}
                 >
                   <div className="flex items-center gap-1.5">
+                    <div className="relative flex-shrink-0">
+                      {session.user.image ? (
+                        <img
+                          src={session.user.image}
+                          alt={session.user.name || "User"}
+                          className="w-7 h-7 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br from-orange-500 to-orange-600">
+                          {(session.user.name || "U")
+                            .split(" ")
+                            .slice(0, 2)
+                            .map((p) => p[0])
+                            .join("")
+                            .toUpperCase()}
+                        </div>
+                      )}
+                    </div>
                     <span
-                      className={`text-lg font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}
+                      className={`text-sm font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}
                     >
                       {session.user.name}
                     </span>
                     {isVerified && (
                       <VscVerifiedFilled
                         className="text-green-500 flex-shrink-0"
-                        size={16}
+                        size={15}
                       />
                     )}
                   </div>
                   <p
-                    className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    className={`text-xs truncate mt-1 ml-8 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                   >
                     {session.user.email}
                   </p>
@@ -199,7 +219,7 @@ const Sidebar = () => {
               <nav className="flex-1 overflow-y-auto">
                 <ul>
                   {navItems.map((item) => (
-                    <li key={item.name} className="mb-4 sm:mb-6">
+                    <li key={item.name} className="mb-2 sm:mb-2">
                       <motion.div
                         animate={{
                           y: [0, -3, 0],
@@ -216,7 +236,7 @@ const Sidebar = () => {
                           // Traderoom link for all users
                           <Link
                             href={item.href}
-                            className={`flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
+                            className={`flex items-center p-2 sm:p-2 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                             onClick={closeSidebar}
                             onMouseEnter={() => setHoveredItem(item.name)}
                             onMouseLeave={() => setHoveredItem(null)}
@@ -227,7 +247,7 @@ const Sidebar = () => {
                               {item.icon}
                             </motion.div>
                             <motion.span
-                              className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-400 transition-colors duration-300 ${isDark ? "" : "text-gray-700"}`}
+                              className={`ml-3 sm:ml-3 text-sm sm:text-sm group-hover:text-orange-400 transition-colors duration-300 ${isDark ? "" : "text-gray-700"}`}
                             >
                               {item.name}
                             </motion.span>
@@ -236,7 +256,7 @@ const Sidebar = () => {
                           // Special Settings item with synchronized hover effects
                           <Link
                             href={item.href}
-                            className={`flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
+                            className={`flex items-center p-2 sm:p-2 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                             onClick={closeSidebar}
                             onMouseEnter={() => setHoveredItem(item.name)}
                             onMouseLeave={() => setHoveredItem(null)}
@@ -273,7 +293,7 @@ const Sidebar = () => {
                               </motion.div>
                             </motion.div>
                             <motion.span
-                              className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                              className={`ml-3 sm:ml-3 text-sm sm:text-sm group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                               whileHover={{
                                 x: [0, 3, 0],
                                 transition: {
@@ -319,7 +339,7 @@ const Sidebar = () => {
                           // Regular navigation items
                           <Link
                             href={item.href}
-                            className={`flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
+                            className={`flex items-center p-2 sm:p-2 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                             onClick={closeSidebar}
                             onMouseEnter={() => setHoveredItem(item.name)}
                             onMouseLeave={() => setHoveredItem(null)}
@@ -370,7 +390,7 @@ const Sidebar = () => {
                               {item.icon}
                             </motion.div>
                             <motion.span
-                              className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                              className={`ml-3 sm:ml-3 text-sm sm:text-sm group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                               whileHover={{
                                 x: [0, 3, 0],
                                 transition: {
@@ -418,7 +438,7 @@ const Sidebar = () => {
                   ))}
                   {(session?.user?.role === "ADMIN" ||
                     session?.user?.role === "STAFF_ADMIN") && (
-                    <li className="mb-6">
+                    <li className="mb-2">
                       <motion.div
                         animate={{
                           y: [0, -3, 0],
@@ -437,7 +457,7 @@ const Sidebar = () => {
                               ? "/staff-admin"
                               : adminItem.href
                           }
-                          className={`flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
+                          className={`flex items-center p-2 sm:p-2 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                           onClick={closeSidebar}
                           onMouseEnter={() =>
                             setHoveredItem(
@@ -497,7 +517,7 @@ const Sidebar = () => {
                             {adminItem.icon}
                           </motion.div>
                           <motion.span
-                            className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                            className={`ml-3 sm:ml-3 text-sm sm:text-sm group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                             whileHover={{
                               x: [0, 3, 0],
                               transition: {
@@ -567,7 +587,7 @@ const Sidebar = () => {
                 >
                   <motion.button
                     onClick={handleLogoutClick}
-                    className={`w-full flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 text-left group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
+                    className={`w-full flex items-center p-2 sm:p-2 rounded-lg transition-all duration-300 text-left group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onMouseEnter={() => setHoveredItem("Logout")}
@@ -615,10 +635,10 @@ const Sidebar = () => {
                         },
                       }}
                     >
-                      <LogOut size={22} />
+                      <LogOut size={18} />
                     </motion.div>
                     <motion.span
-                      className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-red-400" : "text-red-500"}`}
+                      className={`ml-3 sm:ml-3 text-sm sm:text-sm group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-red-400" : "text-red-500"}`}
                       whileHover={{
                         x: [0, 3, 0],
                         transition: {

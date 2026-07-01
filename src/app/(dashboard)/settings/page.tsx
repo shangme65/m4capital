@@ -47,100 +47,266 @@ import {
 
 // Countries list for nationality dropdown
 const COUNTRIES = [
-  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda",
-  "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain",
-  "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan",
-  "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria",
-  "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada",
-  "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros",
-  "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark",
-  "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador",
-  "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland",
-  "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada",
-  "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary",
-  "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
-  "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo",
-  "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia",
-  "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi",
-  "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania",
-  "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro",
-  "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands",
-  "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia",
-  "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea",
-  "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania",
-  "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia",
-  "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe",
-  "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore",
-  "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea",
-  "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland",
-  "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo",
-  "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
-  "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States",
-  "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam",
-  "Yemen", "Zambia", "Zimbabwe"
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Antigua and Barbuda",
+  "Argentina",
+  "Armenia",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahamas",
+  "Bahrain",
+  "Bangladesh",
+  "Barbados",
+  "Belarus",
+  "Belgium",
+  "Belize",
+  "Benin",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Burkina Faso",
+  "Burundi",
+  "Cabo Verde",
+  "Cambodia",
+  "Cameroon",
+  "Canada",
+  "Central African Republic",
+  "Chad",
+  "Chile",
+  "China",
+  "Colombia",
+  "Comoros",
+  "Congo",
+  "Costa Rica",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czech Republic",
+  "Denmark",
+  "Djibouti",
+  "Dominica",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "El Salvador",
+  "Equatorial Guinea",
+  "Eritrea",
+  "Estonia",
+  "Eswatini",
+  "Ethiopia",
+  "Fiji",
+  "Finland",
+  "France",
+  "Gabon",
+  "Gambia",
+  "Georgia",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Grenada",
+  "Guatemala",
+  "Guinea",
+  "Guinea-Bissau",
+  "Guyana",
+  "Haiti",
+  "Honduras",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Jamaica",
+  "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kiribati",
+  "Kosovo",
+  "Kuwait",
+  "Kyrgyzstan",
+  "Laos",
+  "Latvia",
+  "Lebanon",
+  "Lesotho",
+  "Liberia",
+  "Libya",
+  "Liechtenstein",
+  "Lithuania",
+  "Luxembourg",
+  "Madagascar",
+  "Malawi",
+  "Malaysia",
+  "Maldives",
+  "Mali",
+  "Malta",
+  "Marshall Islands",
+  "Mauritania",
+  "Mauritius",
+  "Mexico",
+  "Micronesia",
+  "Moldova",
+  "Monaco",
+  "Mongolia",
+  "Montenegro",
+  "Morocco",
+  "Mozambique",
+  "Myanmar",
+  "Namibia",
+  "Nauru",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nicaragua",
+  "Niger",
+  "Nigeria",
+  "North Korea",
+  "North Macedonia",
+  "Norway",
+  "Oman",
+  "Pakistan",
+  "Palau",
+  "Palestine",
+  "Panama",
+  "Papua New Guinea",
+  "Paraguay",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Qatar",
+  "Romania",
+  "Russia",
+  "Rwanda",
+  "Saint Kitts and Nevis",
+  "Saint Lucia",
+  "Saint Vincent and the Grenadines",
+  "Samoa",
+  "San Marino",
+  "Sao Tome and Principe",
+  "Saudi Arabia",
+  "Senegal",
+  "Serbia",
+  "Seychelles",
+  "Sierra Leone",
+  "Singapore",
+  "Slovakia",
+  "Slovenia",
+  "Solomon Islands",
+  "Somalia",
+  "South Africa",
+  "South Korea",
+  "South Sudan",
+  "Spain",
+  "Sri Lanka",
+  "Sudan",
+  "Suriname",
+  "Sweden",
+  "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Tajikistan",
+  "Tanzania",
+  "Thailand",
+  "Timor-Leste",
+  "Togo",
+  "Tonga",
+  "Trinidad and Tobago",
+  "Tunisia",
+  "Turkey",
+  "Turkmenistan",
+  "Tuvalu",
+  "Uganda",
+  "Ukraine",
+  "United Arab Emirates",
+  "United Kingdom",
+  "United States",
+  "Uruguay",
+  "Uzbekistan",
+  "Vanuatu",
+  "Vatican City",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zambia",
+  "Zimbabwe",
 ];
 
 // Phone number format mapping by country
 const PHONE_FORMATS: Record<string, string> = {
   "United States": "+1 234 567 8900",
-  "Canada": "+1 234 567 8900",
+  Canada: "+1 234 567 8900",
   "United Kingdom": "+44 20 1234 5678",
-  "Australia": "+61 2 1234 5678",
-  "Germany": "+49 30 12345678",
-  "France": "+33 1 23 45 67 89",
-  "Italy": "+39 02 1234 5678",
-  "Spain": "+34 91 123 4567",
-  "Netherlands": "+31 20 123 4567",
-  "Belgium": "+32 2 123 45 67",
-  "Switzerland": "+41 21 123 45 67",
-  "Austria": "+43 1 234567890",
-  "Sweden": "+46 8 123 456 78",
-  "Norway": "+47 12 34 56 78",
-  "Denmark": "+45 12 34 56 78",
-  "Finland": "+358 9 1234567",
-  "Poland": "+48 22 123 4567",
-  "Portugal": "+351 21 123 4567",
-  "Greece": "+30 21 1234 5678",
-  "Ireland": "+353 1 234 5678",
+  Australia: "+61 2 1234 5678",
+  Germany: "+49 30 12345678",
+  France: "+33 1 23 45 67 89",
+  Italy: "+39 02 1234 5678",
+  Spain: "+34 91 123 4567",
+  Netherlands: "+31 20 123 4567",
+  Belgium: "+32 2 123 45 67",
+  Switzerland: "+41 21 123 45 67",
+  Austria: "+43 1 234567890",
+  Sweden: "+46 8 123 456 78",
+  Norway: "+47 12 34 56 78",
+  Denmark: "+45 12 34 56 78",
+  Finland: "+358 9 1234567",
+  Poland: "+48 22 123 4567",
+  Portugal: "+351 21 123 4567",
+  Greece: "+30 21 1234 5678",
+  Ireland: "+353 1 234 5678",
   "Czech Republic": "+420 123 456 789",
-  "Hungary": "+36 1 234 5678",
-  "Romania": "+40 21 123 4567",
-  "Russia": "+7 495 123 4567",
-  "Ukraine": "+380 44 123 4567",
-  "Turkey": "+90 212 123 4567",
-  "Brazil": "+55 11 91234 5678",
-  "Mexico": "+52 55 1234 5678",
-  "Argentina": "+54 11 1234 5678",
-  "Chile": "+56 2 1234 5678",
-  "Colombia": "+57 1 234 5678",
-  "Peru": "+51 1 234 5678",
-  "Venezuela": "+58 212 123 4567",
-  "China": "+86 10 1234 5678",
-  "Japan": "+81 3 1234 5678",
+  Hungary: "+36 1 234 5678",
+  Romania: "+40 21 123 4567",
+  Russia: "+7 495 123 4567",
+  Ukraine: "+380 44 123 4567",
+  Turkey: "+90 212 123 4567",
+  Brazil: "+55 11 91234 5678",
+  Mexico: "+52 55 1234 5678",
+  Argentina: "+54 11 1234 5678",
+  Chile: "+56 2 1234 5678",
+  Colombia: "+57 1 234 5678",
+  Peru: "+51 1 234 5678",
+  Venezuela: "+58 212 123 4567",
+  China: "+86 10 1234 5678",
+  Japan: "+81 3 1234 5678",
   "South Korea": "+82 2 1234 5678",
-  "India": "+91 11 1234 5678",
-  "Indonesia": "+62 21 1234 5678",
-  "Thailand": "+66 2 123 4567",
-  "Malaysia": "+60 3 1234 5678",
-  "Singapore": "+65 1234 5678",
-  "Philippines": "+63 2 1234 5678",
-  "Vietnam": "+84 24 1234 5678",
-  "Pakistan": "+92 21 1234 5678",
-  "Bangladesh": "+880 2 1234 5678",
+  India: "+91 11 1234 5678",
+  Indonesia: "+62 21 1234 5678",
+  Thailand: "+66 2 123 4567",
+  Malaysia: "+60 3 1234 5678",
+  Singapore: "+65 1234 5678",
+  Philippines: "+63 2 1234 5678",
+  Vietnam: "+84 24 1234 5678",
+  Pakistan: "+92 21 1234 5678",
+  Bangladesh: "+880 2 1234 5678",
   "South Africa": "+27 11 123 4567",
-  "Nigeria": "+234 1 234 5678",
-  "Kenya": "+254 20 123 4567",
-  "Egypt": "+20 2 1234 5678",
-  "Israel": "+972 2 123 4567",
+  Nigeria: "+234 1 234 5678",
+  Kenya: "+254 20 123 4567",
+  Egypt: "+20 2 1234 5678",
+  Israel: "+972 2 123 4567",
   "Saudi Arabia": "+966 11 234 5678",
   "United Arab Emirates": "+971 4 123 4567",
-  "Qatar": "+974 1234 5678",
-  "Kuwait": "+965 1234 5678",
+  Qatar: "+974 1234 5678",
+  Kuwait: "+965 1234 5678",
   "New Zealand": "+64 9 123 4567",
 };
 
 // Helper function to get phone placeholder based on country
-const getPhonePlaceholder = (userCountry: string | null | undefined): string => {
+const getPhonePlaceholder = (
+  userCountry: string | null | undefined,
+): string => {
   if (!userCountry) return "+1 234 567 8900";
   return PHONE_FORMATS[userCountry] || "+1 234 567 8900";
 };
@@ -148,106 +314,118 @@ const getPhonePlaceholder = (userCountry: string | null | undefined): string => 
 // Phone formatting patterns by country
 const PHONE_PATTERNS: Record<string, { prefix: string; pattern: number[] }> = {
   "United States": { prefix: "+1", pattern: [3, 3, 4] },
-  "Canada": { prefix: "+1", pattern: [3, 3, 4] },
+  Canada: { prefix: "+1", pattern: [3, 3, 4] },
   "United Kingdom": { prefix: "+44", pattern: [2, 4, 4] },
-  "Australia": { prefix: "+61", pattern: [1, 4, 4] },
-  "Germany": { prefix: "+49", pattern: [2, 8] },
-  "France": { prefix: "+33", pattern: [1, 2, 2, 2, 2] },
-  "Italy": { prefix: "+39", pattern: [2, 4, 4] },
-  "Spain": { prefix: "+34", pattern: [2, 3, 4] },
-  "Netherlands": { prefix: "+31", pattern: [2, 3, 4] },
-  "Belgium": { prefix: "+32", pattern: [1, 3, 2, 2] },
-  "Switzerland": { prefix: "+41", pattern: [2, 3, 2, 2] },
-  "Austria": { prefix: "+43", pattern: [1, 9] },
-  "Sweden": { prefix: "+46", pattern: [1, 3, 3, 2] },
-  "Norway": { prefix: "+47", pattern: [2, 2, 2, 2] },
-  "Denmark": { prefix: "+45", pattern: [2, 2, 2, 2] },
-  "Finland": { prefix: "+358", pattern: [1, 7] },
-  "Poland": { prefix: "+48", pattern: [2, 3, 4] },
-  "Portugal": { prefix: "+351", pattern: [2, 3, 4] },
-  "Greece": { prefix: "+30", pattern: [2, 4, 4] },
-  "Ireland": { prefix: "+353", pattern: [1, 3, 4] },
+  Australia: { prefix: "+61", pattern: [1, 4, 4] },
+  Germany: { prefix: "+49", pattern: [2, 8] },
+  France: { prefix: "+33", pattern: [1, 2, 2, 2, 2] },
+  Italy: { prefix: "+39", pattern: [2, 4, 4] },
+  Spain: { prefix: "+34", pattern: [2, 3, 4] },
+  Netherlands: { prefix: "+31", pattern: [2, 3, 4] },
+  Belgium: { prefix: "+32", pattern: [1, 3, 2, 2] },
+  Switzerland: { prefix: "+41", pattern: [2, 3, 2, 2] },
+  Austria: { prefix: "+43", pattern: [1, 9] },
+  Sweden: { prefix: "+46", pattern: [1, 3, 3, 2] },
+  Norway: { prefix: "+47", pattern: [2, 2, 2, 2] },
+  Denmark: { prefix: "+45", pattern: [2, 2, 2, 2] },
+  Finland: { prefix: "+358", pattern: [1, 7] },
+  Poland: { prefix: "+48", pattern: [2, 3, 4] },
+  Portugal: { prefix: "+351", pattern: [2, 3, 4] },
+  Greece: { prefix: "+30", pattern: [2, 4, 4] },
+  Ireland: { prefix: "+353", pattern: [1, 3, 4] },
   "Czech Republic": { prefix: "+420", pattern: [3, 3, 3] },
-  "Hungary": { prefix: "+36", pattern: [1, 3, 4] },
-  "Romania": { prefix: "+40", pattern: [2, 3, 4] },
-  "Russia": { prefix: "+7", pattern: [3, 3, 4] },
-  "Ukraine": { prefix: "+380", pattern: [2, 3, 4] },
-  "Turkey": { prefix: "+90", pattern: [3, 3, 4] },
-  "Brazil": { prefix: "+55", pattern: [2, 5, 4] },
-  "Mexico": { prefix: "+52", pattern: [2, 4, 4] },
-  "Argentina": { prefix: "+54", pattern: [2, 4, 4] },
-  "Chile": { prefix: "+56", pattern: [1, 4, 4] },
-  "Colombia": { prefix: "+57", pattern: [1, 3, 4] },
-  "Peru": { prefix: "+51", pattern: [1, 3, 4] },
-  "Venezuela": { prefix: "+58", pattern: [3, 3, 4] },
-  "China": { prefix: "+86", pattern: [2, 4, 4] },
-  "Japan": { prefix: "+81", pattern: [1, 4, 4] },
+  Hungary: { prefix: "+36", pattern: [1, 3, 4] },
+  Romania: { prefix: "+40", pattern: [2, 3, 4] },
+  Russia: { prefix: "+7", pattern: [3, 3, 4] },
+  Ukraine: { prefix: "+380", pattern: [2, 3, 4] },
+  Turkey: { prefix: "+90", pattern: [3, 3, 4] },
+  Brazil: { prefix: "+55", pattern: [2, 5, 4] },
+  Mexico: { prefix: "+52", pattern: [2, 4, 4] },
+  Argentina: { prefix: "+54", pattern: [2, 4, 4] },
+  Chile: { prefix: "+56", pattern: [1, 4, 4] },
+  Colombia: { prefix: "+57", pattern: [1, 3, 4] },
+  Peru: { prefix: "+51", pattern: [1, 3, 4] },
+  Venezuela: { prefix: "+58", pattern: [3, 3, 4] },
+  China: { prefix: "+86", pattern: [2, 4, 4] },
+  Japan: { prefix: "+81", pattern: [1, 4, 4] },
   "South Korea": { prefix: "+82", pattern: [1, 4, 4] },
-  "India": { prefix: "+91", pattern: [2, 4, 4] },
-  "Indonesia": { prefix: "+62", pattern: [2, 4, 4] },
-  "Thailand": { prefix: "+66", pattern: [1, 3, 4] },
-  "Malaysia": { prefix: "+60", pattern: [1, 4, 4] },
-  "Singapore": { prefix: "+65", pattern: [4, 4] },
-  "Philippines": { prefix: "+63", pattern: [1, 4, 4] },
-  "Vietnam": { prefix: "+84", pattern: [2, 4, 4] },
-  "Pakistan": { prefix: "+92", pattern: [2, 4, 4] },
-  "Bangladesh": { prefix: "+880", pattern: [1, 4, 4] },
+  India: { prefix: "+91", pattern: [2, 4, 4] },
+  Indonesia: { prefix: "+62", pattern: [2, 4, 4] },
+  Thailand: { prefix: "+66", pattern: [1, 3, 4] },
+  Malaysia: { prefix: "+60", pattern: [1, 4, 4] },
+  Singapore: { prefix: "+65", pattern: [4, 4] },
+  Philippines: { prefix: "+63", pattern: [1, 4, 4] },
+  Vietnam: { prefix: "+84", pattern: [2, 4, 4] },
+  Pakistan: { prefix: "+92", pattern: [2, 4, 4] },
+  Bangladesh: { prefix: "+880", pattern: [1, 4, 4] },
   "South Africa": { prefix: "+27", pattern: [2, 3, 4] },
-  "Nigeria": { prefix: "+234", pattern: [1, 3, 4] },
-  "Kenya": { prefix: "+254", pattern: [2, 3, 4] },
-  "Egypt": { prefix: "+20", pattern: [1, 4, 4] },
-  "Israel": { prefix: "+972", pattern: [1, 3, 4] },
+  Nigeria: { prefix: "+234", pattern: [1, 3, 4] },
+  Kenya: { prefix: "+254", pattern: [2, 3, 4] },
+  Egypt: { prefix: "+20", pattern: [1, 4, 4] },
+  Israel: { prefix: "+972", pattern: [1, 3, 4] },
   "Saudi Arabia": { prefix: "+966", pattern: [2, 3, 4] },
   "United Arab Emirates": { prefix: "+971", pattern: [1, 3, 4] },
-  "Qatar": { prefix: "+974", pattern: [4, 4] },
-  "Kuwait": { prefix: "+965", pattern: [4, 4] },
+  Qatar: { prefix: "+974", pattern: [4, 4] },
+  Kuwait: { prefix: "+965", pattern: [4, 4] },
   "New Zealand": { prefix: "+64", pattern: [1, 3, 4] },
 };
 
 // Helper function to format phone number as user types
-const formatPhoneNumber = (value: string, userCountry: string | null | undefined): string => {
+const formatPhoneNumber = (
+  value: string,
+  userCountry: string | null | undefined,
+): string => {
   // Get the pattern for the country
   const defaultPattern = { prefix: "+1", pattern: [3, 3, 4] };
-  const countryPattern = userCountry ? (PHONE_PATTERNS[userCountry] || defaultPattern) : defaultPattern;
-  
+  const countryPattern = userCountry
+    ? PHONE_PATTERNS[userCountry] || defaultPattern
+    : defaultPattern;
+
   // Extract only digits from the input
-  let digits = value.replace(/\D/g, '');
-  
+  let digits = value.replace(/\D/g, "");
+
   // If no digits, return just the prefix
-  if (!digits) return countryPattern.prefix + ' ';
-  
+  if (!digits) return countryPattern.prefix + " ";
+
   // Strip the country code digits if the user typed them
-  const prefixDigits = countryPattern.prefix.replace(/\D/g, '');
+  const prefixDigits = countryPattern.prefix.replace(/\D/g, "");
   if (digits.startsWith(prefixDigits)) {
     digits = digits.slice(prefixDigits.length);
   }
-  
+
   // Enforce max local digit count based on the pattern
   const maxLocalDigits = countryPattern.pattern.reduce((sum, n) => sum + n, 0);
   digits = digits.slice(0, maxLocalDigits);
-  
-  if (!digits) return countryPattern.prefix + ' ';
-  
+
+  if (!digits) return countryPattern.prefix + " ";
+
   // Start with the country prefix
-  let formatted = countryPattern.prefix + ' ';
+  let formatted = countryPattern.prefix + " ";
   let numberIndex = 0;
-  
+
   // Apply the pattern
-  for (let i = 0; i < countryPattern.pattern.length && numberIndex < digits.length; i++) {
+  for (
+    let i = 0;
+    i < countryPattern.pattern.length && numberIndex < digits.length;
+    i++
+  ) {
     const groupSize = countryPattern.pattern[i];
     const group = digits.substr(numberIndex, groupSize);
-    
+
     if (group) {
       formatted += group;
       numberIndex += groupSize;
-      
+
       // Add space after group if not the last group and we have more digits
-      if (i < countryPattern.pattern.length - 1 && numberIndex < digits.length) {
-        formatted += ' ';
+      if (
+        i < countryPattern.pattern.length - 1 &&
+        numberIndex < digits.length
+      ) {
+        formatted += " ";
       }
     }
   }
-  
+
   return formatted.trim();
 };
 
@@ -371,7 +549,8 @@ function SettingsModal({
   toggleSidebar: () => void;
   isDark?: boolean;
 }) {
-  const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
+  const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] =
+    useState(false);
 
   // Handle browser back button
   useEffect(() => {
@@ -396,14 +575,16 @@ function SettingsModal({
     <div
       className="fixed top-0 left-0 right-0 bottom-0 z-[125] min-h-screen w-screen"
       style={{
-        background: isDark 
+        background: isDark
           ? "linear-gradient(180deg, #0f172a 0%, #020617 100%)"
           : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
       }}
     >
       <div className="h-full overflow-y-auto">
         {/* Custom Header for Modal */}
-        <div className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}>
+        <div
+          className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}
+        >
           <div className="flex justify-between items-center p-3 sm:p-6">
             <Image
               src={isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"}
@@ -419,7 +600,10 @@ function SettingsModal({
                 className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
                 title="Notifications"
               >
-                <Bell size={18} className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6" />
+                <Bell
+                  size={18}
+                  className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6"
+                />
               </button>
               <button
                 type="button"
@@ -427,7 +611,10 @@ function SettingsModal({
                 className="flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5"
                 aria-label="Open sidebar"
               >
-                <Menu size={20} className={`mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                <Menu
+                  size={20}
+                  className={`mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                />
               </button>
             </div>
           </div>
@@ -455,7 +642,7 @@ function SettingsModal({
         onClose={() => setIsNotificationsPanelOpen(false)}
       />
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -468,13 +655,13 @@ export default function SettingsPage() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { language, setLanguage, languages, currentLanguage } = useLanguage();
   const { toggleSidebar } = useSidebar();
-  
+
   // Handle hydration - wait for client to determine theme
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   // Only use resolved theme after mount to prevent hydration mismatch
   const isDark = mounted ? resolvedTheme === "dark" : true;
 
@@ -483,7 +670,6 @@ export default function SettingsPage() {
     const formatted = formatPhoneNumber(e.target.value, session?.user?.country);
     setPhoneNumber(formatted);
   };
-
 
   // Modal state
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -555,30 +741,44 @@ export default function SettingsPage() {
   const [showReVerifyModal, setShowReVerifyModal] = useState(false);
   const [showPersonalDataModal, setShowPersonalDataModal] = useState(false);
   const [showAccountNumberModal, setShowAccountNumberModal] = useState(false);
-  const [isPersonalDataNotificationsPanelOpen, setIsPersonalDataNotificationsPanelOpen] = useState(false);
-  const [isAccountNumberNotificationsPanelOpen, setIsAccountNumberNotificationsPanelOpen] = useState(false);
-  
+  const [
+    isPersonalDataNotificationsPanelOpen,
+    setIsPersonalDataNotificationsPanelOpen,
+  ] = useState(false);
+  const [
+    isAccountNumberNotificationsPanelOpen,
+    setIsAccountNumberNotificationsPanelOpen,
+  ] = useState(false);
+
+  // Avatar upload state
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
   // Security sub-modals
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
   const [showTransferPinModal, setShowTransferPinModal] = useState(false);
-  
+
   // Contact info state
   const [phoneNumber, setPhoneNumber] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [country, setCountry] = useState("");
   const [timezone, setTimezone] = useState("");
   const [citizenship, setCitizenship] = useState("");
-  
+
   // Phone verification state
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [sendingCode, setSendingCode] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
-  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(
+    null,
+  );
   const [codeSent, setCodeSent] = useState(false);
-  const [devVerificationCode, setDevVerificationCode] = useState<string | null>(null);
+  const [devVerificationCode, setDevVerificationCode] = useState<string | null>(
+    null,
+  );
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -604,7 +804,9 @@ export default function SettingsPage() {
   const [disabling2FA, setDisabling2FA] = useState(false);
   const [disable2FAPassword, setDisable2FAPassword] = useState("");
   const [showDisable2FA, setShowDisable2FA] = useState(false);
-  const [selected2FAMethod, setSelected2FAMethod] = useState<string | null>(null); // Track which method view to show;
+  const [selected2FAMethod, setSelected2FAMethod] = useState<string | null>(
+    null,
+  ); // Track which method view to show;
 
   // Transfer PIN state
   const [hasTransferPin, setHasTransferPin] = useState(false);
@@ -687,6 +889,24 @@ export default function SettingsPage() {
               postalCode: kyc.postalCode || "",
               phoneNumber: kyc.phoneNumber || "",
             });
+            // Auto-fill personal data form from approved KYC
+            if (kyc.status === "APPROVED") {
+              const fullName = [kyc.firstName, kyc.lastName]
+                .filter(Boolean)
+                .join(" ");
+              if (fullName) {
+                setProfileName(fullName);
+                setOriginalName(fullName);
+              }
+              if (kyc.phoneNumber) setPhoneNumber(kyc.phoneNumber);
+              if (kyc.dateOfBirth)
+                setDateOfBirth(
+                  new Date(kyc.dateOfBirth).toISOString().split("T")[0],
+                );
+              if (kyc.nationality) {
+                setCitizenship(kyc.nationality);
+              }
+            }
           }
         }
       } catch (error) {
@@ -764,7 +984,7 @@ export default function SettingsPage() {
       setShow2FASetup(false);
       setShowDisable2FA(false);
       setSelected2FAMethod(null);
-      
+
       const refetch2FAStatus = async () => {
         try {
           const response = await fetch("/api/user/profile");
@@ -896,13 +1116,13 @@ export default function SettingsPage() {
 
       setCodeSent(true);
       setShowPhoneVerification(true);
-      
+
       // In development, store the code for easy testing
       if (data.devCode) {
         setDevVerificationCode(data.devCode);
         showInfo(`Development code: ${data.devCode}`);
       }
-      
+
       showSuccess("Verification code sent to your phone number");
     } catch (error: any) {
       showError(error.message || "Failed to send verification code");
@@ -940,7 +1160,7 @@ export default function SettingsPage() {
       setVerificationCode("");
       setCodeSent(false);
       showSuccess("Phone number verified successfully!");
-      
+
       // Update session
       await updateSession();
     } catch (error: any) {
@@ -951,52 +1171,26 @@ export default function SettingsPage() {
     }
   };
 
-
   // Check if profile has been modified
   const hasProfileChanges = useMemo(() => {
-    return (
-      (profileName !== originalName && profileName.trim() !== "") ||
-      phoneNumber.trim() !== "" ||
-      dateOfBirth.trim() !== "" ||
-      country.trim() !== "" ||
-      timezone.trim() !== "" ||
-      citizenship.trim() !== ""
-    );
-  }, [profileName, originalName, phoneNumber, dateOfBirth, country, timezone, citizenship]);
+    return profileName.trim() !== "" && profileName !== originalName;
+  }, [profileName, originalName]);
 
-  // Handle profile save - shows re-verification modal
+  // Save name directly — no re-verify modal needed
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!hasProfileChanges) return;
-    setShowReVerifyModal(true);
-  };
-
-  // Confirm profile save and reset KYC
-  const confirmProfileSave = async () => {
+    if (!hasProfileChanges || kycStatus === "APPROVED") return;
     setSaving(true);
-    setShowReVerifyModal(false);
     try {
       const response = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          name: profileName, 
-          phoneNumber,
-          dateOfBirth,
-          country,
-          timezone,
-          citizenship,
-          resetKyc: true 
-        }),
+        body: JSON.stringify({ name: profileName }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
-
+      if (!response.ok) throw new Error("Failed to update profile");
       setOriginalName(profileName);
-      setKycStatus("NOT_STARTED");
-      showSuccess("Profile updated. Please re-submit your KYC documents.");
+      await updateSession();
+      showSuccess("Display name updated successfully.");
     } catch (error) {
       showError("Failed to update profile. Please try again.");
     } finally {
@@ -1004,10 +1198,13 @@ export default function SettingsPage() {
     }
   };
 
+  // Kept for legacy references — no longer used
+  const confirmProfileSave = async () => {};
+
   // Email preferences handler
   const handleEmailPreferenceChange = async (
     key: keyof typeof emailPreferences,
-    value: boolean
+    value: boolean,
   ) => {
     setSavingEmailPrefs(true);
 
@@ -1069,7 +1266,7 @@ export default function SettingsPage() {
 
       // Dispatch event to notify all components of currency change
       window.dispatchEvent(
-        new CustomEvent("currencyChanged", { detail: { currency } })
+        new CustomEvent("currencyChanged", { detail: { currency } }),
       );
 
       // Optionally reload after a short delay to ensure all state is updated
@@ -1218,7 +1415,7 @@ export default function SettingsPage() {
 
       if (response.ok) {
         showSuccess(
-          "Password reset instructions have been sent to your email address."
+          "Password reset instructions have been sent to your email address.",
         );
       } else {
         showError("Failed to send password reset email. Please try again.");
@@ -1324,7 +1521,7 @@ export default function SettingsPage() {
       setTwoFactorSecret(null);
       setSettingUp2FA(false);
       showSuccess("Two-factor authentication enabled successfully!");
-      
+
       // Refresh session to update user data
       await updateSession();
     } catch (error: any) {
@@ -1359,7 +1556,7 @@ export default function SettingsPage() {
       setShowDisable2FA(false);
       setDisable2FAPassword("");
       showSuccess("Two-factor authentication disabled successfully!");
-      
+
       // Refresh session to update user data
       await updateSession();
     } catch (error: any) {
@@ -1421,7 +1618,7 @@ export default function SettingsPage() {
       showSuccess(
         hasTransferPin
           ? "Transfer PIN changed successfully!"
-          : "Transfer PIN set successfully!"
+          : "Transfer PIN set successfully!",
       );
 
       // Hide success message after 3 seconds
@@ -1435,13 +1632,13 @@ export default function SettingsPage() {
 
   const handleFileChange = (
     type: "idDocumentFront" | "idDocumentBack" | "proofOfAddress" | "selfie",
-    file: File | null
+    file: File | null,
   ) => {
     // Validate individual file size (max 20MB per file - Cloudinary handles large files)
     if (file && file.size > 20 * 1024 * 1024) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       showError(
-        `File "${file.name}" is too large (${sizeMB}MB). Please use a file under 20MB.`
+        `File "${file.name}" is too large (${sizeMB}MB). Please use a file under 20MB.`,
       );
       return;
     }
@@ -1450,7 +1647,7 @@ export default function SettingsPage() {
 
   const handleKycSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate all documents are uploaded
     if (!documents.idDocumentFront) {
       showError("Please upload the front of your government-issued ID");
@@ -1468,11 +1665,18 @@ export default function SettingsPage() {
       showError("Please upload your selfie");
       return;
     }
-    
+
     // Validate required fields
-    if (!kycData.firstName || !kycData.lastName || !kycData.dateOfBirth || 
-        !kycData.nationality || !kycData.phoneNumber || !kycData.address || 
-        !kycData.city || !kycData.postalCode) {
+    if (
+      !kycData.firstName ||
+      !kycData.lastName ||
+      !kycData.dateOfBirth ||
+      !kycData.nationality ||
+      !kycData.phoneNumber ||
+      !kycData.address ||
+      !kycData.city ||
+      !kycData.postalCode
+    ) {
       showError("Please fill in all required fields");
       return;
     }
@@ -1481,26 +1685,30 @@ export default function SettingsPage() {
 
     try {
       // Upload files directly to Cloudinary CDN (bypasses Vercel's 4.5MB limit)
-      console.log('Uploading documents to secure CDN...');
-      
+      console.log("Uploading documents to secure CDN...");
+
       const filesToUpload = [
-        { file: documents.idDocumentFront!, name: 'idDocumentFront' },
-        { file: documents.idDocumentBack!, name: 'idDocumentBack' },
-        { file: documents.proofOfAddress!, name: 'proofOfAddress' },
-        { file: documents.selfie!, name: 'selfie' },
+        { file: documents.idDocumentFront!, name: "idDocumentFront" },
+        { file: documents.idDocumentBack!, name: "idDocumentBack" },
+        { file: documents.proofOfAddress!, name: "proofOfAddress" },
+        { file: documents.selfie!, name: "selfie" },
       ];
-      
+
       let uploadedUrls: Record<string, string>;
       try {
-        uploadedUrls = await uploadMultipleToCloudinary(filesToUpload, 'kyc');
+        uploadedUrls = await uploadMultipleToCloudinary(filesToUpload, "kyc");
       } catch (uploadError: any) {
         console.error("CDN upload failed:", uploadError);
         // Show more specific error message
         const errorMsg = uploadError?.message || "Unknown error";
         if (errorMsg.includes("not configured")) {
-          showError("Upload service is not configured. Please contact support.");
+          showError(
+            "Upload service is not configured. Please contact support.",
+          );
         } else if (errorMsg.includes("signature") || errorMsg.includes("401")) {
-          showError("Upload authentication failed. Please try again or contact support.");
+          showError(
+            "Upload authentication failed. Please try again or contact support.",
+          );
         } else {
           showError(`Failed to upload documents: ${errorMsg}`);
         }
@@ -1536,15 +1744,20 @@ export default function SettingsPage() {
         setKycStatus("PENDING");
         setShowKycDetails(false);
         setShowKycSuccessModal(true);
+        // Refresh session so sidebar/header pick up the new selfie as profile photo
+        await updateSession();
       } else {
-        const errorMessage = data.error || data.message || `Server error: ${response.status}`;
+        const errorMessage =
+          data.error || data.message || `Server error: ${response.status}`;
         console.error("KYC submission failed:", errorMessage, data);
         showError(errorMessage);
       }
     } catch (error: any) {
       console.error("KYC submission error:", error);
       const errorMsg = error.message || error.toString();
-      showError(`Failed to submit KYC: ${errorMsg}. Please try again or contact support.`);
+      showError(
+        `Failed to submit KYC: ${errorMsg}. Please try again or contact support.`,
+      );
     } finally {
       setSubmittingKyc(false);
     }
@@ -1610,7 +1823,10 @@ export default function SettingsPage() {
         <div className="h-10 w-40 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse mobile:mx-2" />
         <div className="mobile:px-3 px-0 space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-20 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
+            <div
+              key={i}
+              className="h-20 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"
+            />
           ))}
         </div>
       </div>
@@ -1624,8 +1840,14 @@ export default function SettingsPage() {
 
       <div className="mobile:max-w-full max-w-4xl mx-auto mobile:p-0 p-6 space-y-3">
         <header className="mobile:px-4 mobile:pt-2 mobile:pb-2">
-          <h1 className={`text-2xl font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>Settings</h1>
-          <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+          <h1
+            className={`text-2xl font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}
+          >
+            Settings
+          </h1>
+          <p
+            className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}
+          >
             Manage your account preferences and platform experience.
           </p>
         </header>
@@ -1715,7 +1937,9 @@ export default function SettingsPage() {
                       0 2px 6px -2px rgba(0, 0, 0, 0.06),
                       inset 0 1px 0 rgba(255, 255, 255, 0.8)
                     `,
-                    border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0, 0, 0, 0.08)",
+                    border: isDark
+                      ? "1px solid rgba(255, 255, 255, 0.06)"
+                      : "1px solid rgba(0, 0, 0, 0.08)",
                   }}
                 >
                   {/* Top highlight edge for 3D effect */}
@@ -1838,10 +2062,14 @@ export default function SettingsPage() {
 
                     {/* Text Content */}
                     <div className="flex-1 min-w-0">
-                      <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
+                      <h3
+                        className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}
+                      >
                         {item.title}
                       </h3>
-                      <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
+                      <p
+                        className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}
+                      >
                         {item.description}
                       </p>
                     </div>
@@ -1879,7 +2107,9 @@ export default function SettingsPage() {
                   inset 0 -1px 0 rgba(0, 0, 0, 0.2)
                 `
                   : `0 2px 8px -2px rgba(0,0,0,0.1)`,
-                border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0,0,0,0.08)",
+                border: isDark
+                  ? "1px solid rgba(255, 255, 255, 0.06)"
+                  : "1px solid rgba(0,0,0,0.08)",
               }}
             >
               <div className="relative z-10 flex items-center gap-2.5">
@@ -1913,10 +2143,14 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
+                  <h3
+                    className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}
+                  >
                     Personal Data
                   </h3>
-                  <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
+                  <p
+                    className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}
+                  >
                     Manage your personal information
                   </p>
                 </div>
@@ -1925,266 +2159,494 @@ export default function SettingsPage() {
           </button>
 
           {/* Personal Data Inner Modal */}
-          {showPersonalDataModal && ReactDOM.createPortal(
-            <div
-              className="fixed top-0 left-0 right-0 bottom-0 z-[135] min-h-screen w-screen"
-              style={{
-                background: isDark 
-                  ? "linear-gradient(180deg, #0f172a 0%, #020617 100%)"
-                  : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
-              }}
-            >
-              <div className="h-full overflow-y-auto">
-                {/* Dashboard Header */}
-                <div className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}>
-                  <div className="flex justify-between items-center p-3 sm:p-6">
-                    <Image
-                      src={isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"}
-                      alt="M4 Capital Logo"
-                      width={120}
-                      height={40}
-                      className="object-contain w-24 md:w-auto"
-                      priority
-                    />
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setIsPersonalDataNotificationsPanelOpen(true)}
-                        className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
-                        title="Notifications"
-                      >
-                        <Bell size={18} className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={toggleSidebar}
-                        className={`flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
-                        aria-label="Open sidebar"
-                      >
-                        <Menu size={20} className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px]" />
-                      </button>
+          {showPersonalDataModal &&
+            ReactDOM.createPortal(
+              <div
+                className="fixed top-0 left-0 right-0 bottom-0 z-[135] min-h-screen w-screen"
+                style={{
+                  background: isDark
+                    ? "linear-gradient(180deg, #0f172a 0%, #020617 100%)"
+                    : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
+                }}
+              >
+                <div className="h-full overflow-y-auto">
+                  {/* Dashboard Header */}
+                  <div
+                    className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}
+                  >
+                    <div className="flex justify-between items-center p-3 sm:p-6">
+                      <Image
+                        src={
+                          isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"
+                        }
+                        alt="M4 Capital Logo"
+                        width={120}
+                        height={40}
+                        className="object-contain w-24 md:w-auto"
+                        priority
+                      />
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() =>
+                            setIsPersonalDataNotificationsPanelOpen(true)
+                          }
+                          className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
+                          title="Notifications"
+                        >
+                          <Bell
+                            size={18}
+                            className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6"
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={toggleSidebar}
+                          className={`flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                          aria-label="Open sidebar"
+                        >
+                          <Menu
+                            size={20}
+                            className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px]"
+                          />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Back Button */}
-                <div className="max-w-4xl mx-auto px-4 pt-4">
-                  <button
-                    onClick={() => setShowPersonalDataModal(false)}
-                    className={`flex items-center gap-2 transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
-                  >
-                    <ArrowLeft size={20} />
-                    <span className="text-sm font-medium">Back to Profile</span>
-                  </button>
-                </div>
+                  {/* Back Button */}
+                  <div className="max-w-4xl mx-auto px-4 pt-4">
+                    <button
+                      onClick={() => setShowPersonalDataModal(false)}
+                      className={`flex items-center gap-2 transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
+                    >
+                      <ArrowLeft size={20} />
+                      <span className="text-sm font-medium">
+                        Back to Profile
+                      </span>
+                    </button>
+                  </div>
 
-                {/* Content */}
-                <div className="max-w-4xl mx-auto px-4 pt-4 pb-4">
-                  <div
-                    className="relative rounded-2xl p-5 overflow-hidden"
-                    style={isDark ? {
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                      boxShadow:
-                        "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                    } : {
-                      background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                      boxShadow: "0 4px 16px -4px rgba(0,0,0,0.1)",
-                      border: "1px solid rgba(0, 0, 0, 0.08)",
-                    }}
-                  >
-                    <form onSubmit={handleProfileSave} className="space-y-4 max-w-md">
-                      <div>
+                  {/* Content */}
+                  <div className="max-w-4xl mx-auto px-4 pt-4 pb-4">
+                    <div
+                      className="relative rounded-2xl p-5 overflow-hidden"
+                      style={
+                        isDark
+                          ? {
+                              background:
+                                "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                              boxShadow:
+                                "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                              border: "1px solid rgba(255, 255, 255, 0.08)",
+                            }
+                          : {
+                              background:
+                                "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                              boxShadow: "0 4px 16px -4px rgba(0,0,0,0.1)",
+                              border: "1px solid rgba(0, 0, 0, 0.08)",
+                            }
+                      }
+                    >
+                      {/* ── Profile Picture ── */}
+                      <div className="mb-6">
                         <label
-                          className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                          htmlFor="name"
+                          className={`block text-sm font-semibold mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}
                         >
-                          Name
+                          Profile Picture
                         </label>
-                        <input
-                          id="name"
-                          type="text"
-                          value={profileName}
-                          onChange={(e) => setProfileName(e.target.value)}
-                          className={`w-full rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isDark ? "bg-gray-700/80 text-white border border-gray-600/50" : "bg-white border border-gray-300 text-gray-900"}`}
-                          placeholder="Your full name"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                          htmlFor="email"
-                        >
-                          Email
-                        </label>
-                        <input
-                          id="email"
-                          type="email"
-                          disabled
-                          defaultValue={session?.user?.email || ""}
-                          className={`w-full rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed ${isDark ? "bg-gray-700/80 text-gray-300 border border-gray-600/50" : "bg-gray-100 text-gray-600 border border-gray-300"}`}
-                        />
-                      </div>
-                      <div>
-                        <label
-                          className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                          htmlFor="accountType"
-                        >
-                          Account Type
-                        </label>
-                        <input
-                          id="accountType"
-                          type="text"
-                          disabled
-                          value={
-                            session?.user?.accountType
-                              ? session.user.accountType.charAt(0) +
-                                session.user.accountType.slice(1).toLowerCase()
-                              : "Investor"
-                          }
-                          className={`w-full rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed ${isDark ? "bg-gray-700/80 text-gray-300 border border-gray-600/50" : "bg-gray-100 text-gray-600 border border-gray-300"}`}
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Account type is chosen at signup. Contact support to change.
-                        </p>
-                      </div>
-
-                      {/* Phone Number Section */}
-                      <div className={`pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
-                        <label
-                          className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                          htmlFor="phoneNumber"
-                        >
-                          Phone Number
-                        </label>
-                        <input
-                          id="phoneNumber"
-                          type="tel"
-                          value={phoneNumber}
-                          onChange={handlePhoneNumberChange}
-                          disabled={phoneVerified}
-                          className={`w-full rounded-lg px-3 py-2.5 border ${
-                            phoneVerified
-                              ? isDark ? "bg-gray-700/80 text-gray-300 opacity-70 cursor-not-allowed border-gray-600/50" : "bg-gray-100 text-gray-600 opacity-70 cursor-not-allowed border-gray-300"
-                              : isDark ? "bg-gray-700/80 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-600/50" : "bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-300"
-                          }`}
-                          placeholder={getPhonePlaceholder(session?.user?.country)}
-                        />
-                        {phoneVerified ? (
-                          <div className="flex items-center gap-2 mt-2">
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                            <span className="text-xs text-green-500 font-medium">
-                              Phone number verified
-                            </span>
+                        <div className="flex items-center gap-4">
+                          {/* Avatar preview */}
+                          <div className="relative flex-shrink-0">
+                            {avatarPreview || session?.user?.image ? (
+                              <img
+                                src={
+                                  avatarPreview || session?.user?.image || ""
+                                }
+                                alt="Profile"
+                                className="w-20 h-20 rounded-full object-cover ring-2 ring-orange-500/40"
+                              />
+                            ) : (
+                              <div
+                                className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white bg-gradient-to-br from-orange-500 to-orange-600`}
+                              >
+                                {(session?.user?.name || "U")
+                                  .split(" ")
+                                  .slice(0, 2)
+                                  .map((p: string) => p[0])
+                                  .join("")
+                                  .toUpperCase()}
+                              </div>
+                            )}
+                            {uploadingAvatar && (
+                              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                                <Loader2 className="w-6 h-6 text-white animate-spin" />
+                              </div>
+                            )}
                           </div>
-                        ) : phoneNumber.length >= 10 ? (
-                          <button
-                            type="button"
-                            onClick={handleSendVerificationCode}
-                            disabled={sendingCode}
-                            className="mt-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-                          >
-                            {sendingCode ? "Sending..." : "Verify Phone Number"}
-                          </button>
-                        ) : (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Increase account security by verifying your phone number
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Contact Info Section */}
-                      <div className={`pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
-                        <h3 className={`text-base font-semibold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>Contact info:</h3>
-                        <div className="space-y-4">
-                          <div>
+                          {/* Upload controls */}
+                          <div className="flex flex-col gap-2">
                             <label
-                              className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                              htmlFor="dateOfBirth"
+                              htmlFor="avatarUpload"
+                              className={`cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                uploadingAvatar
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : isDark
+                                    ? "bg-gray-700 hover:bg-gray-600 text-white"
+                                    : "bg-gray-100 hover:bg-gray-200 text-gray-800"
+                              }`}
                             >
-                              Date of Birth
+                              <Upload className="w-4 h-4" />
+                              {uploadingAvatar
+                                ? "Uploading..."
+                                : "Upload Photo"}
                             </label>
                             <input
-                              id="dateOfBirth"
-                              type="date"
-                              value={dateOfBirth}
-                              onChange={(e) => setDateOfBirth(e.target.value)}
-                              className={`w-full rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isDark ? "bg-gray-700/80 text-white border border-gray-600/50" : "bg-white text-gray-900 border border-gray-300"}`}
+                              id="avatarUpload"
+                              type="file"
+                              accept="image/*"
+                              disabled={uploadingAvatar}
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                if (file.size > 10 * 1024 * 1024) {
+                                  showError("Image must be under 10MB");
+                                  return;
+                                }
+                                // Show local preview immediately
+                                setAvatarPreview(URL.createObjectURL(file));
+                                setUploadingAvatar(true);
+                                try {
+                                  const { uploadToCloudinary } =
+                                    await import("@/lib/cloudinary-upload");
+                                  const result = await uploadToCloudinary(
+                                    file,
+                                    {
+                                      folder: "avatars",
+                                      maxWidth: 400,
+                                      maxHeight: 400,
+                                      maxSizeKB: 300,
+                                    },
+                                  );
+                                  const res = await fetch("/api/user/avatar", {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      imageUrl: result.secureUrl,
+                                    }),
+                                  });
+                                  if (!res.ok) throw new Error("Upload failed");
+                                  setAvatarPreview(result.secureUrl);
+                                  await updateSession();
+                                  showSuccess("Profile picture updated!");
+                                } catch (err: any) {
+                                  showError(
+                                    err.message || "Failed to upload photo",
+                                  );
+                                  setAvatarPreview(null);
+                                } finally {
+                                  setUploadingAvatar(false);
+                                  e.target.value = "";
+                                }
+                              }}
                             />
-                          </div>
-                          <div>
-                            <label
-                              className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                              htmlFor="country"
+                            <p
+                              className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}
                             >
-                              Country
-                            </label>
-                            <input
-                              id="country"
-                              type="text"
-                              disabled
-                              value={country || "Not set"}
-                              className={`w-full rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed ${isDark ? "bg-gray-700/80 text-gray-300 border border-gray-600/50" : "bg-gray-100 text-gray-600 border border-gray-300"}`}
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Country is set during account creation. Contact support to change.
+                              PNG or JPG, max 10MB
                             </p>
-                          </div>
-                          <div>
-                            <label
-                              className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                              htmlFor="timezone"
-                            >
-                              Timezone
-                            </label>
-                            <input
-                              id="timezone"
-                              type="text"
-                              value={timezone}
-                              onChange={(e) => setTimezone(e.target.value)}
-                              className={`w-full rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isDark ? "bg-gray-700/80 text-white border border-gray-600/50" : "bg-white text-gray-900 border border-gray-300"}`}
-                              placeholder="e.g., America/Sao_Paulo"
-                            />
-                          </div>
-                          <div>
-                            <label
-                              className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                              htmlFor="citizenship"
-                            >
-                              Citizenship
-                            </label>
-                            <input
-                              id="citizenship"
-                              type="text"
-                              value={citizenship}
-                              onChange={(e) => setCitizenship(e.target.value)}
-                              className={`w-full rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border ${isDark ? "bg-gray-700/80 text-white border-gray-600/50" : "bg-white text-gray-900 border-gray-300"}`}
-                              placeholder="Enter citizenship"
-                            />
                           </div>
                         </div>
                       </div>
 
-                      {hasProfileChanges && (
-                        <button
-                          type="submit"
-                          disabled={saving}
-                          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors w-full"
+                      {/* KYC locked notice */}
+                      {kycStatus === "APPROVED" && (
+                        <div
+                          className={`mb-4 flex items-start gap-2.5 rounded-xl px-4 py-3 border ${
+                            isDark
+                              ? "bg-green-900/20 border-green-700/40 text-green-300"
+                              : "bg-green-50 border-green-200 text-green-800"
+                          }`}
                         >
-                          {saving ? "Saving..." : "Save Changes"}
-                        </button>
+                          <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                          <p className="text-xs">
+                            Your identity has been <strong>verified</strong>.
+                            Personal details are locked. You can still change
+                            your profile picture at any time.
+                          </p>
+                        </div>
                       )}
-                    </form>
+
+                      <form
+                        onSubmit={handleProfileSave}
+                        className="space-y-4 max-w-md"
+                      >
+                        <div>
+                          <label
+                            className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                            htmlFor="name"
+                          >
+                            Name
+                          </label>
+                          <input
+                            id="name"
+                            type="text"
+                            value={profileName}
+                            onChange={(e) => setProfileName(e.target.value)}
+                            disabled={kycStatus === "APPROVED"}
+                            className={`w-full rounded-lg px-3 py-2.5 ${
+                              kycStatus === "APPROVED"
+                                ? `opacity-70 cursor-not-allowed ${
+                                    isDark
+                                      ? "bg-gray-700/80 text-gray-300 border border-gray-600/50"
+                                      : "bg-gray-100 text-gray-600 border border-gray-300"
+                                  }`
+                                : `focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                                    isDark
+                                      ? "bg-gray-700/80 text-white border border-gray-600/50"
+                                      : "bg-white border border-gray-300 text-gray-900"
+                                  }`
+                            }`}
+                            placeholder="Your full name"
+                          />
+                        </div>
+                        <div>
+                          <label
+                            className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                            htmlFor="email"
+                          >
+                            Email
+                          </label>
+                          <input
+                            id="email"
+                            type="email"
+                            disabled
+                            defaultValue={session?.user?.email || ""}
+                            className={`w-full rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed ${isDark ? "bg-gray-700/80 text-gray-300 border border-gray-600/50" : "bg-gray-100 text-gray-600 border border-gray-300"}`}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                            htmlFor="accountType"
+                          >
+                            Account Type
+                          </label>
+                          <input
+                            id="accountType"
+                            type="text"
+                            disabled
+                            value={
+                              session?.user?.accountType
+                                ? session.user.accountType.charAt(0) +
+                                  session.user.accountType
+                                    .slice(1)
+                                    .toLowerCase()
+                                : "Investor"
+                            }
+                            className={`w-full rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed ${isDark ? "bg-gray-700/80 text-gray-300 border border-gray-600/50" : "bg-gray-100 text-gray-600 border border-gray-300"}`}
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Account type is chosen at signup. Contact support to
+                            change.
+                          </p>
+                        </div>
+
+                        {/* Phone Number Section */}
+                        <div
+                          className={`pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}
+                        >
+                          <label
+                            className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                            htmlFor="phoneNumber"
+                          >
+                            Phone Number
+                          </label>
+                          <input
+                            id="phoneNumber"
+                            type="tel"
+                            value={phoneNumber}
+                            onChange={handlePhoneNumberChange}
+                            disabled={phoneVerified || kycStatus === "APPROVED"}
+                            className={`w-full rounded-lg px-3 py-2.5 border ${
+                              phoneVerified || kycStatus === "APPROVED"
+                                ? isDark
+                                  ? "bg-gray-700/80 text-gray-300 opacity-70 cursor-not-allowed border-gray-600/50"
+                                  : "bg-gray-100 text-gray-600 opacity-70 cursor-not-allowed border-gray-300"
+                                : isDark
+                                  ? "bg-gray-700/80 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-600/50"
+                                  : "bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-300"
+                            }`}
+                            placeholder={getPhonePlaceholder(
+                              session?.user?.country,
+                            )}
+                          />
+                          {phoneVerified ? (
+                            <div className="flex items-center gap-2 mt-2">
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                              <span className="text-xs text-green-500 font-medium">
+                                Phone number verified
+                              </span>
+                            </div>
+                          ) : phoneNumber.length >= 10 ? (
+                            <button
+                              type="button"
+                              onClick={handleSendVerificationCode}
+                              disabled={sendingCode}
+                              className="mt-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                            >
+                              {sendingCode
+                                ? "Sending..."
+                                : "Verify Phone Number"}
+                            </button>
+                          ) : (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Increase account security by verifying your phone
+                              number
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Contact Info Section */}
+                        <div
+                          className={`pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}
+                        >
+                          <h3
+                            className={`text-base font-semibold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
+                            Contact info:
+                          </h3>
+                          <div className="space-y-4">
+                            <div>
+                              <label
+                                className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                                htmlFor="dateOfBirth"
+                              >
+                                Date of Birth
+                              </label>
+                              <input
+                                id="dateOfBirth"
+                                type="date"
+                                value={dateOfBirth}
+                                onChange={(e) => setDateOfBirth(e.target.value)}
+                                disabled={kycStatus === "APPROVED"}
+                                className={`w-full rounded-lg px-3 py-2.5 ${
+                                  kycStatus === "APPROVED"
+                                    ? `opacity-70 cursor-not-allowed ${
+                                        isDark
+                                          ? "bg-gray-700/80 text-gray-300 border border-gray-600/50"
+                                          : "bg-gray-100 text-gray-600 border border-gray-300"
+                                      }`
+                                    : `focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                                        isDark
+                                          ? "bg-gray-700/80 text-white border border-gray-600/50"
+                                          : "bg-white text-gray-900 border border-gray-300"
+                                      }`
+                                }`}
+                              />
+                            </div>
+                            <div>
+                              <label
+                                className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                                htmlFor="country"
+                              >
+                                Country
+                              </label>
+                              <input
+                                id="country"
+                                type="text"
+                                disabled
+                                value={country || "Not set"}
+                                className={`w-full rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed ${isDark ? "bg-gray-700/80 text-gray-300 border border-gray-600/50" : "bg-gray-100 text-gray-600 border border-gray-300"}`}
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Country is set during account creation. Contact
+                                support to change.
+                              </p>
+                            </div>
+                            <div>
+                              <label
+                                className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                                htmlFor="timezone"
+                              >
+                                Timezone
+                              </label>
+                              <input
+                                id="timezone"
+                                type="text"
+                                value={timezone}
+                                onChange={(e) => setTimezone(e.target.value)}
+                                disabled={kycStatus === "APPROVED"}
+                                className={`w-full rounded-lg px-3 py-2.5 ${
+                                  kycStatus === "APPROVED"
+                                    ? `opacity-70 cursor-not-allowed ${
+                                        isDark
+                                          ? "bg-gray-700/80 text-gray-300 border border-gray-600/50"
+                                          : "bg-gray-100 text-gray-600 border border-gray-300"
+                                      }`
+                                    : `focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                                        isDark
+                                          ? "bg-gray-700/80 text-white border border-gray-600/50"
+                                          : "bg-white text-gray-900 border border-gray-300"
+                                      }`
+                                }`}
+                                placeholder="e.g., America/Sao_Paulo"
+                              />
+                            </div>
+                            <div>
+                              <label
+                                className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                                htmlFor="citizenship"
+                              >
+                                Citizenship
+                              </label>
+                              <input
+                                id="citizenship"
+                                type="text"
+                                value={citizenship}
+                                onChange={(e) => setCitizenship(e.target.value)}
+                                disabled={kycStatus === "APPROVED"}
+                                className={`w-full rounded-lg px-3 py-2.5 ${
+                                  kycStatus === "APPROVED"
+                                    ? `opacity-70 cursor-not-allowed ${
+                                        isDark
+                                          ? "bg-gray-700/80 text-gray-300 border border-gray-600/50"
+                                          : "bg-gray-100 text-gray-600 border border-gray-300"
+                                      }`
+                                    : `focus:outline-none focus:ring-2 focus:ring-indigo-500 border ${
+                                        isDark
+                                          ? "bg-gray-700/80 text-white border-gray-600/50"
+                                          : "bg-white text-gray-900 border-gray-300"
+                                      }`
+                                }`}
+                                placeholder="Enter citizenship"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {kycStatus !== "APPROVED" && hasProfileChanges && (
+                          <button
+                            type="submit"
+                            disabled={saving}
+                            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors w-full"
+                          >
+                            {saving ? "Saving..." : "Save Changes"}
+                          </button>
+                        )}
+                      </form>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <NotificationsPanel
-                isOpen={isPersonalDataNotificationsPanelOpen}
-                onClose={() => setIsPersonalDataNotificationsPanelOpen(false)}
-              />
-            </div>,
-            document.body
-          )}
+                <NotificationsPanel
+                  isOpen={isPersonalDataNotificationsPanelOpen}
+                  onClose={() => setIsPersonalDataNotificationsPanelOpen(false)}
+                />
+              </div>,
+              document.body,
+            )}
 
           {/* Re-verification Warning Modal */}
           {showReVerifyModal && (
@@ -2195,19 +2657,27 @@ export default function SettingsPage() {
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)"
                     : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                  boxShadow: isDark ? "0 25px 50px -12px rgba(0, 0, 0, 0.8)" : "0 10px 40px -10px rgba(0, 0, 0, 0.15)",
-                  border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.08)",
+                  boxShadow: isDark
+                    ? "0 25px 50px -12px rgba(0, 0, 0, 0.8)"
+                    : "0 10px 40px -10px rgba(0, 0, 0, 0.15)",
+                  border: isDark
+                    ? "1px solid rgba(255, 255, 255, 0.1)"
+                    : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
                     <AlertCircle className="w-6 h-6 text-amber-500" />
                   </div>
-                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <h3
+                    className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
                     Re-verification Required
                   </h3>
                 </div>
-                <p className={`text-sm mb-6 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                <p
+                  className={`text-sm mb-6 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                >
                   Changing your name requires you to re-verify your account by
                   submitting new KYC documents. Your current verification status
                   will be reset.
@@ -2238,21 +2708,26 @@ export default function SettingsPage() {
           >
             <div
               className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
-              style={isDark ? {
-                background:
-                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
-                boxShadow: `
+              style={
+                isDark
+                  ? {
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
+                      boxShadow: `
                   0 10px 20px -10px rgba(0, 0, 0, 0.5),
                   0 4px 8px -2px rgba(0, 0, 0, 0.3),
                   inset 0 1px 0 rgba(255, 255, 255, 0.06),
                   inset 0 -1px 0 rgba(0, 0, 0, 0.2)
                 `,
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-              } : {
-                background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                boxShadow: `0 2px 8px -2px rgba(0,0,0,0.1)`,
-                border: "1px solid rgba(0,0,0,0.08)",
-              }}
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                    }
+                  : {
+                      background:
+                        "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow: `0 2px 8px -2px rgba(0,0,0,0.1)`,
+                      border: "1px solid rgba(0,0,0,0.08)",
+                    }
+              }
             >
               <div className="relative z-10 flex items-center gap-2.5">
                 <div className="relative">
@@ -2285,10 +2760,14 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
+                  <h3
+                    className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}
+                  >
                     Account Number
                   </h3>
-                  <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
+                  <p
+                    className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}
+                  >
                     Share to receive P2P transfers
                   </p>
                 </div>
@@ -2297,133 +2776,159 @@ export default function SettingsPage() {
           </button>
 
           {/* Account Number Full-Screen Modal */}
-          {showAccountNumberModal && ReactDOM.createPortal(
-            <div 
-              className="fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen"
-              style={{
-                background: isDark
-                  ? "linear-gradient(180deg, #0f172a 0%, #020617 100%)"
-                  : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
-              }}
-            >
-              <div className="h-full overflow-y-auto">
-                {/* Dashboard Header */}
-                <div className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}>
-                  <div className="flex justify-between items-center p-3 sm:p-6">
-                    <Image
-                      src={isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"}
-                      alt="M4 Capital Logo"
-                      width={120}
-                      height={40}
-                      className="object-contain w-24 md:w-auto"
-                      priority
-                    />
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setIsAccountNumberNotificationsPanelOpen(true)}
-                        className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
-                        title="Notifications"
-                      >
-                        <Bell size={18} className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={toggleSidebar}
-                        className={`flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
-                        aria-label="Open sidebar"
-                      >
-                        <Menu size={20} className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px]" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Back Button */}
-                <div className="max-w-4xl mx-auto px-4 pt-4">
-                  <button
-                    onClick={() => setShowAccountNumberModal(false)}
-                    className={`flex items-center gap-2 transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
-                  >
-                    <ArrowLeft size={20} />
-                    <span className="text-sm font-medium">Back to Profile</span>
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div className="max-w-4xl mx-auto px-4 pt-4 pb-4">
+          {showAccountNumberModal &&
+            ReactDOM.createPortal(
+              <div
+                className="fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen"
+                style={{
+                  background: isDark
+                    ? "linear-gradient(180deg, #0f172a 0%, #020617 100%)"
+                    : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
+                }}
+              >
+                <div className="h-full overflow-y-auto">
+                  {/* Dashboard Header */}
                   <div
-                    className="relative rounded-2xl p-6 overflow-hidden"
-                    style={isDark ? {
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                      boxShadow:
-                        "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                    } : {
-                      background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                      boxShadow: "0 4px 16px -4px rgba(0,0,0,0.1)",
-                      border: "1px solid rgba(0, 0, 0, 0.08)",
-                    }}
+                    className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}
                   >
-                    <div className="flex items-center gap-3 mb-6">
-                      <div
-                        className="w-11 h-11 rounded-xl flex items-center justify-center"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-                          boxShadow:
-                            "0 6px 16px -3px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.2)",
-                        }}
-                      >
-                        <Copy className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-                          Account Number
-                        </h3>
-                        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                          Share to receive P2P transfers
-                        </p>
+                    <div className="flex justify-between items-center p-3 sm:p-6">
+                      <Image
+                        src={
+                          isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"
+                        }
+                        alt="M4 Capital Logo"
+                        width={120}
+                        height={40}
+                        className="object-contain w-24 md:w-auto"
+                        priority
+                      />
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() =>
+                            setIsAccountNumberNotificationsPanelOpen(true)
+                          }
+                          className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
+                          title="Notifications"
+                        >
+                          <Bell
+                            size={18}
+                            className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6"
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={toggleSidebar}
+                          className={`flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                          aria-label="Open sidebar"
+                        >
+                          <Menu
+                            size={20}
+                            className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px]"
+                          />
+                        </button>
                       </div>
                     </div>
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        disabled
-                        value={accountNumber || "Loading..."}
-                        className={`w-full rounded-lg px-2 py-3 cursor-not-allowed font-mono text-lg font-bold border text-center ${isDark ? "bg-gray-900/80 text-white border-gray-600/50" : "bg-gray-100 text-gray-900 border-gray-300"}`}
-                        style={{ letterSpacing: '0.5em' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={copyAccountNumber}
-                        disabled={!accountNumber}
-                        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
-                        title="Copy account number"
-                      >
-                        {copiedAccountNumber ? (
-                          <>
-                            <Check className="w-4 h-4" />
-                            <span>Copied!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-4 h-4" />
-                            <span>Copy Account Number</span>
-                          </>
-                        )}
-                      </button>
+                  </div>
+
+                  {/* Back Button */}
+                  <div className="max-w-4xl mx-auto px-4 pt-4">
+                    <button
+                      onClick={() => setShowAccountNumberModal(false)}
+                      className={`flex items-center gap-2 transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
+                    >
+                      <ArrowLeft size={20} />
+                      <span className="text-sm font-medium">
+                        Back to Profile
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Content */}
+                  <div className="max-w-4xl mx-auto px-4 pt-4 pb-4">
+                    <div
+                      className="relative rounded-2xl p-6 overflow-hidden"
+                      style={
+                        isDark
+                          ? {
+                              background:
+                                "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                              boxShadow:
+                                "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                              border: "1px solid rgba(255, 255, 255, 0.08)",
+                            }
+                          : {
+                              background:
+                                "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                              boxShadow: "0 4px 16px -4px rgba(0,0,0,0.1)",
+                              border: "1px solid rgba(0, 0, 0, 0.08)",
+                            }
+                      }
+                    >
+                      <div className="flex items-center gap-3 mb-6">
+                        <div
+                          className="w-11 h-11 rounded-xl flex items-center justify-center"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                            boxShadow:
+                              "0 6px 16px -3px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.2)",
+                          }}
+                        >
+                          <Copy className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3
+                            className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
+                            Account Number
+                          </h3>
+                          <p
+                            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
+                            Share to receive P2P transfers
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          disabled
+                          value={accountNumber || "Loading..."}
+                          className={`w-full rounded-lg px-2 py-3 cursor-not-allowed font-mono text-lg font-bold border text-center ${isDark ? "bg-gray-900/80 text-white border-gray-600/50" : "bg-gray-100 text-gray-900 border-gray-300"}`}
+                          style={{ letterSpacing: "0.5em" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={copyAccountNumber}
+                          disabled={!accountNumber}
+                          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+                          title="Copy account number"
+                        >
+                          {copiedAccountNumber ? (
+                            <>
+                              <Check className="w-4 h-4" />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-4 h-4" />
+                              <span>Copy Account Number</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <NotificationsPanel
-                isOpen={isAccountNumberNotificationsPanelOpen}
-                onClose={() => setIsAccountNumberNotificationsPanelOpen(false)}
-              />
-            </div>,
-            document.body
-          )}
+                <NotificationsPanel
+                  isOpen={isAccountNumberNotificationsPanelOpen}
+                  onClose={() =>
+                    setIsAccountNumberNotificationsPanelOpen(false)
+                  }
+                />
+              </div>,
+              document.body,
+            )}
         </SettingsModal>
 
         {/* Security Modal */}
@@ -2453,7 +2958,9 @@ export default function SettingsPage() {
                   inset 0 -1px 0 rgba(0, 0, 0, 0.2)
                 `
                   : `0 2px 8px -2px rgba(0,0,0,0.1)`,
-                border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0,0,0,0.08)",
+                border: isDark
+                  ? "1px solid rgba(255, 255, 255, 0.06)"
+                  : "1px solid rgba(0,0,0,0.08)",
               }}
             >
               <div className="relative z-10 flex items-center gap-2.5">
@@ -2487,10 +2994,14 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
+                  <h3
+                    className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}
+                  >
                     Change Password
                   </h3>
-                  <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
+                  <p
+                    className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}
+                  >
                     Update your account password
                   </p>
                 </div>
@@ -2517,7 +3028,9 @@ export default function SettingsPage() {
                   inset 0 -1px 0 rgba(0, 0, 0, 0.2)
                 `
                   : `0 2px 8px -2px rgba(0,0,0,0.1)`,
-                border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0,0,0,0.08)",
+                border: isDark
+                  ? "1px solid rgba(255, 255, 255, 0.06)"
+                  : "1px solid rgba(0,0,0,0.08)",
               }}
             >
               <div className="relative z-10 flex items-center gap-2.5">
@@ -2551,11 +3064,17 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
+                  <h3
+                    className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}
+                  >
                     Two-Factor Authentication
                   </h3>
-                  <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
-                    {twoFactorEnabled ? "Manage 2FA settings" : "Add extra layer of security"}
+                  <p
+                    className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}
+                  >
+                    {twoFactorEnabled
+                      ? "Manage 2FA settings"
+                      : "Add extra layer of security"}
                   </p>
                 </div>
               </div>
@@ -2581,7 +3100,9 @@ export default function SettingsPage() {
                   inset 0 -1px 0 rgba(0, 0, 0, 0.2)
                 `
                   : `0 2px 8px -2px rgba(0,0,0,0.1)`,
-                border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0,0,0,0.08)",
+                border: isDark
+                  ? "1px solid rgba(255, 255, 255, 0.06)"
+                  : "1px solid rgba(0,0,0,0.08)",
               }}
             >
               <div className="relative z-10 flex items-center gap-2.5">
@@ -2615,11 +3136,17 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
+                  <h3
+                    className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}
+                  >
                     Transfer PIN
                   </h3>
-                  <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
-                    {hasTransferPin ? "Manage transfer PIN" : "Set up 4-digit PIN"}
+                  <p
+                    className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}
+                  >
+                    {hasTransferPin
+                      ? "Manage transfer PIN"
+                      : "Set up 4-digit PIN"}
                   </p>
                 </div>
               </div>
@@ -2630,20 +3157,34 @@ export default function SettingsPage() {
         {/* Change Password Portal Modal */}
         {showChangePasswordModal &&
           ReactDOM.createPortal(
-            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+            <div
+              className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}
+            >
               {/* Header */}
-              <div className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}>
+              <div
+                className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}
+              >
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setShowChangePasswordModal(false)}
                       className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"}`}
                     >
-                      <X className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                      <X
+                        className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                      />
                     </button>
                     <div>
-                      <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Change Password</h2>
-                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Update your account password</p>
+                      <h2
+                        className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Change Password
+                      </h2>
+                      <p
+                        className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        Update your account password
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -2654,7 +3195,10 @@ export default function SettingsPage() {
                 <form onSubmit={handlePasswordChange} className="space-y-6">
                   {/* Current Password */}
                   <div>
-                    <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`} htmlFor="currentPassword">
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                      htmlFor="currentPassword"
+                    >
                       Current Password
                     </label>
                     <div className="relative">
@@ -2668,17 +3212,26 @@ export default function SettingsPage() {
                       />
                       <button
                         type="button"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        onClick={() =>
+                          setShowCurrentPassword(!showCurrentPassword)
+                        }
                         className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                       >
-                        {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        {showCurrentPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
                       </button>
                     </div>
                   </div>
 
                   {/* New Password */}
                   <div>
-                    <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`} htmlFor="newPassword">
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                      htmlFor="newPassword"
+                    >
                       New Password
                     </label>
                     <div className="relative">
@@ -2695,14 +3248,21 @@ export default function SettingsPage() {
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                       >
-                        {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        {showNewPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
                       </button>
                     </div>
                   </div>
 
                   {/* Confirm Password */}
                   <div>
-                    <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`} htmlFor="confirmPassword">
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                      htmlFor="confirmPassword"
+                    >
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -2716,10 +3276,16 @@ export default function SettingsPage() {
                       />
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                       >
-                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -2733,7 +3299,9 @@ export default function SettingsPage() {
 
                   {passwordSuccess && (
                     <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
-                      <p className="text-sm text-green-400">{passwordSuccess}</p>
+                      <p className="text-sm text-green-400">
+                        {passwordSuccess}
+                      </p>
                     </div>
                   )}
 
@@ -2755,26 +3323,40 @@ export default function SettingsPage() {
                 </form>
               </div>
             </div>,
-            document.body
+            document.body,
           )}
 
         {/* Two-Factor Authentication Portal Modal */}
         {showTwoFactorModal &&
           ReactDOM.createPortal(
-            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+            <div
+              className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}
+            >
               {/* Header */}
-              <div className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}>
+              <div
+                className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}
+              >
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setShowTwoFactorModal(false)}
                       className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"}`}
                     >
-                      <X className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                      <X
+                        className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                      />
                     </button>
                     <div>
-                      <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Two-Factor Authentication</h2>
-                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Add an extra layer of security</p>
+                      <h2
+                        className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Two-Factor Authentication
+                      </h2>
+                      <p
+                        className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        Add an extra layer of security
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -2786,8 +3368,10 @@ export default function SettingsPage() {
                   {/* Method Selection Screen - Always show first unless setting up or a method is selected */}
                   {!settingUp2FA && !selected2FAMethod && (
                     <div className="space-y-4">
-                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                        {twoFactorEnabled 
+                      <p
+                        className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                      >
+                        {twoFactorEnabled
                           ? "Your 2FA settings. Tap on your active method to manage it."
                           : "Choose your preferred method for two-factor authentication:"}
                       </p>
@@ -2796,82 +3380,129 @@ export default function SettingsPage() {
                         {/* Authenticator App Option */}
                         <button
                           onClick={() => {
-                            if (twoFactorEnabled && twoFactorMethod === "authenticator") {
+                            if (
+                              twoFactorEnabled &&
+                              twoFactorMethod === "authenticator"
+                            ) {
                               setSelected2FAMethod("authenticator");
                             } else if (!twoFactorEnabled) {
                               handleEnable2FA("authenticator");
                             }
                           }}
-                          disabled={twoFactorEnabled && twoFactorMethod !== "authenticator"}
+                          disabled={
+                            twoFactorEnabled &&
+                            twoFactorMethod !== "authenticator"
+                          }
                           className={`${
-                            twoFactorEnabled && twoFactorMethod === "authenticator"
+                            twoFactorEnabled &&
+                            twoFactorMethod === "authenticator"
                               ? "bg-green-900/20 border-green-700"
                               : twoFactorEnabled
-                              ? isDark ? "bg-gray-800/50 border-gray-700 opacity-50 cursor-not-allowed" : "bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed"
-                              : isDark ? "bg-gray-800 hover:bg-gray-750 border-gray-700 hover:border-orange-500/50" : "bg-white hover:bg-gray-50 border-gray-200 hover:border-orange-500/50"
+                                ? isDark
+                                  ? "bg-gray-800/50 border-gray-700 opacity-50 cursor-not-allowed"
+                                  : "bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed"
+                                : isDark
+                                  ? "bg-gray-800 hover:bg-gray-750 border-gray-700 hover:border-orange-500/50"
+                                  : "bg-white hover:bg-gray-50 border-gray-200 hover:border-orange-500/50"
                           } border p-4 rounded-lg text-left transition-all duration-300 group`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className={`${
-                              twoFactorEnabled && twoFactorMethod === "authenticator"
-                                ? "bg-green-500/20"
-                                : "bg-orange-500/10 group-hover:bg-orange-500/20"
-                            } p-3 rounded-lg transition-colors`}>
-                              <Smartphone className={`w-6 h-6 ${
-                                twoFactorEnabled && twoFactorMethod === "authenticator"
-                                  ? "text-green-500"
-                                  : "text-orange-500"
-                              }`} />
+                            <div
+                              className={`${
+                                twoFactorEnabled &&
+                                twoFactorMethod === "authenticator"
+                                  ? "bg-green-500/20"
+                                  : "bg-orange-500/10 group-hover:bg-orange-500/20"
+                              } p-3 rounded-lg transition-colors`}
+                            >
+                              <Smartphone
+                                className={`w-6 h-6 ${
+                                  twoFactorEnabled &&
+                                  twoFactorMethod === "authenticator"
+                                    ? "text-green-500"
+                                    : "text-orange-500"
+                                }`}
+                              />
                             </div>
                             <div className="flex-1">
-                              <h4 className={`font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>Authenticator App</h4>
-                              <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                              <h4
+                                className={`font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}
+                              >
+                                Authenticator App
+                              </h4>
+                              <p
+                                className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                              >
                                 Use apps like Google Authenticator or Authy
                               </p>
                             </div>
-                            {twoFactorEnabled && twoFactorMethod === "authenticator" && (
-                              <CheckCircle className="w-5 h-5 text-green-500" />
-                            )}
+                            {twoFactorEnabled &&
+                              twoFactorMethod === "authenticator" && (
+                                <CheckCircle className="w-5 h-5 text-green-500" />
+                              )}
                           </div>
                         </button>
 
                         {/* Email Option */}
                         <button
                           onClick={() => {
-                            if (twoFactorEnabled && twoFactorMethod === "email") {
+                            if (
+                              twoFactorEnabled &&
+                              twoFactorMethod === "email"
+                            ) {
                               setSelected2FAMethod("email");
                             } else if (!twoFactorEnabled) {
                               handleEnable2FA("email");
                             }
                           }}
-                          disabled={twoFactorEnabled && twoFactorMethod !== "email"}
+                          disabled={
+                            twoFactorEnabled && twoFactorMethod !== "email"
+                          }
                           className={`${
                             twoFactorEnabled && twoFactorMethod === "email"
                               ? "bg-green-900/20 border-green-700"
                               : twoFactorEnabled
-                              ? isDark ? "bg-gray-800/50 border-gray-700 opacity-50 cursor-not-allowed" : "bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed"
-                              : isDark ? "bg-gray-800 hover:bg-gray-750 border-gray-700 hover:border-orange-500/50" : "bg-white hover:bg-gray-50 border-gray-200 hover:border-orange-500/50"
+                                ? isDark
+                                  ? "bg-gray-800/50 border-gray-700 opacity-50 cursor-not-allowed"
+                                  : "bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed"
+                                : isDark
+                                  ? "bg-gray-800 hover:bg-gray-750 border-gray-700 hover:border-orange-500/50"
+                                  : "bg-white hover:bg-gray-50 border-gray-200 hover:border-orange-500/50"
                           } border p-4 rounded-lg text-left transition-all duration-300 group`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className={`${
-                              twoFactorEnabled && twoFactorMethod === "email"
-                                ? "bg-green-500/20"
-                                : "bg-orange-500/10 group-hover:bg-orange-500/20"
-                            } p-3 rounded-lg transition-colors`}>
-                              <Mail className={`w-6 h-6 ${
+                            <div
+                              className={`${
                                 twoFactorEnabled && twoFactorMethod === "email"
-                                  ? "text-green-500"
-                                  : "text-orange-500"
-                              }`} />
+                                  ? "bg-green-500/20"
+                                  : "bg-orange-500/10 group-hover:bg-orange-500/20"
+                              } p-3 rounded-lg transition-colors`}
+                            >
+                              <Mail
+                                className={`w-6 h-6 ${
+                                  twoFactorEnabled &&
+                                  twoFactorMethod === "email"
+                                    ? "text-green-500"
+                                    : "text-orange-500"
+                                }`}
+                              />
                             </div>
                             <div className="flex-1">
-                              <h4 className={`font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>Email Verification</h4>
-                              <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>Receive codes via email</p>
+                              <h4
+                                className={`font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}
+                              >
+                                Email Verification
+                              </h4>
+                              <p
+                                className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                              >
+                                Receive codes via email
+                              </p>
                             </div>
-                            {twoFactorEnabled && twoFactorMethod === "email" && (
-                              <CheckCircle className="w-5 h-5 text-green-500" />
-                            )}
+                            {twoFactorEnabled &&
+                              twoFactorMethod === "email" && (
+                                <CheckCircle className="w-5 h-5 text-green-500" />
+                              )}
                           </div>
                         </button>
                       </div>
@@ -2892,25 +3523,42 @@ export default function SettingsPage() {
                       <div className="bg-green-900/20 border border-green-700 rounded-lg p-3">
                         <div className="flex items-center gap-2 text-green-400 mb-1">
                           <CheckCircle className="w-4 h-4" />
-                          <span className="text-sm font-medium">2FA is enabled</span>
+                          <span className="text-sm font-medium">
+                            2FA is enabled
+                          </span>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                           {twoFactorMethod === "authenticator" ? (
                             <>
                               <Smartphone className="w-4 h-4 text-orange-500" />
-                              <span className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>Using Authenticator App</span>
+                              <span
+                                className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                              >
+                                Using Authenticator App
+                              </span>
                             </>
                           ) : twoFactorMethod === "email" ? (
                             <>
                               <Mail className="w-4 h-4 text-orange-500" />
-                              <span className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>Using Email Verification</span>
+                              <span
+                                className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                              >
+                                Using Email Verification
+                              </span>
                             </>
                           ) : (
-                            <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>Method: {twoFactorMethod}</span>
+                            <span
+                              className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                            >
+                              Method: {twoFactorMethod}
+                            </span>
                           )}
                         </div>
-                        <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                          Your account is protected with two-factor authentication.
+                        <p
+                          className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          Your account is protected with two-factor
+                          authentication.
                         </p>
                       </div>
 
@@ -2923,19 +3571,29 @@ export default function SettingsPage() {
                           Disable Two-Factor Authentication
                         </button>
                       ) : (
-                        <form onSubmit={handle2FADisable} className={`space-y-3 p-4 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}>
-                          <p className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                            Enter your password to confirm disabling two-factor authentication.
+                        <form
+                          onSubmit={handle2FADisable}
+                          className={`space-y-3 p-4 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}
+                        >
+                          <p
+                            className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                          >
+                            Enter your password to confirm disabling two-factor
+                            authentication.
                           </p>
 
                           <div>
-                            <label className={`block text-xs font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                            <label
+                              className={`block text-xs font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                            >
                               Password
                             </label>
                             <input
                               type="password"
                               value={disable2FAPassword}
-                              onChange={(e) => setDisable2FAPassword(e.target.value)}
+                              onChange={(e) =>
+                                setDisable2FAPassword(e.target.value)
+                              }
                               className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                               placeholder="Enter your password"
                               required
@@ -2944,7 +3602,9 @@ export default function SettingsPage() {
 
                           {twoFactorError && (
                             <div className="bg-red-900/20 border border-red-700 rounded-lg p-2.5">
-                              <p className="text-xs text-red-400">{twoFactorError}</p>
+                              <p className="text-xs text-red-400">
+                                {twoFactorError}
+                              </p>
                             </div>
                           )}
 
@@ -2986,20 +3646,37 @@ export default function SettingsPage() {
                       {twoFactorCode === null ? (
                         /* Step 1: QR Code */
                         <div className="space-y-3">
-                          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-800" : "bg-gray-100 border border-gray-200"}`}>
-                            <p className={`text-xs mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                          <div
+                            className={`p-3 rounded-lg ${isDark ? "bg-gray-800" : "bg-gray-100 border border-gray-200"}`}
+                          >
+                            <p
+                              className={`text-xs mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                            >
                               1. Scan this QR code with your authenticator app:
                             </p>
                             {twoFactorQRCode && (
                               <div className="flex justify-center bg-white p-3 rounded-lg">
-                                <Image src={twoFactorQRCode} alt="2FA QR Code" width={160} height={160} />
+                                <Image
+                                  src={twoFactorQRCode}
+                                  alt="2FA QR Code"
+                                  width={160}
+                                  height={160}
+                                />
                               </div>
                             )}
                           </div>
 
-                          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-800" : "bg-gray-100 border border-gray-200"}`}>
-                            <p className={`text-xs mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Or enter this code manually:</p>
-                            <code className={`px-2 py-1.5 rounded text-orange-400 text-xs font-mono block break-all ${isDark ? "bg-gray-900" : "bg-gray-200"}`}>
+                          <div
+                            className={`p-3 rounded-lg ${isDark ? "bg-gray-800" : "bg-gray-100 border border-gray-200"}`}
+                          >
+                            <p
+                              className={`text-xs mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                            >
+                              Or enter this code manually:
+                            </p>
+                            <code
+                              className={`px-2 py-1.5 rounded text-orange-400 text-xs font-mono block break-all ${isDark ? "bg-gray-900" : "bg-gray-200"}`}
+                            >
                               {twoFactorSecret}
                             </code>
                           </div>
@@ -3015,14 +3692,18 @@ export default function SettingsPage() {
                         /* Step 2: Verify Code */
                         <form onSubmit={handleVerify2FA} className="space-y-3">
                           <div>
-                            <label className={`block text-xs font-medium mb-1.5 ${isDark ? "text-white" : "text-gray-700"}`}>
+                            <label
+                              className={`block text-xs font-medium mb-1.5 ${isDark ? "text-white" : "text-gray-700"}`}
+                            >
                               2. Enter the 6-digit code from your app:
                             </label>
                             <input
                               type="text"
                               value={twoFactorCode}
                               onChange={(e) =>
-                                setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                                setTwoFactorCode(
+                                  e.target.value.replace(/\D/g, "").slice(0, 6),
+                                )
                               }
                               className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-wider ${isDark ? "bg-gray-800 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                               placeholder="000000"
@@ -3033,7 +3714,9 @@ export default function SettingsPage() {
 
                           {twoFactorError && (
                             <div className="bg-red-900/20 border border-red-700 rounded-lg p-2.5">
-                              <p className="text-xs text-red-400">{twoFactorError}</p>
+                              <p className="text-xs text-red-400">
+                                {twoFactorError}
+                              </p>
                             </div>
                           )}
 
@@ -3051,7 +3734,9 @@ export default function SettingsPage() {
                             </button>
                             <button
                               type="submit"
-                              disabled={verifying2FA || twoFactorCode.length !== 6}
+                              disabled={
+                                verifying2FA || twoFactorCode.length !== 6
+                              }
                               className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2"
                             >
                               {verifying2FA ? (
@@ -3072,15 +3757,24 @@ export default function SettingsPage() {
                   {/* Email Setup Flow */}
                   {settingUp2FA && twoFactorMethod === "email" && (
                     <div className="space-y-3">
-                      <div className={`rounded-lg p-3 ${isDark ? "bg-blue-900/20 border border-blue-700" : "bg-blue-50 border border-blue-200"}`}>
+                      <div
+                        className={`rounded-lg p-3 ${isDark ? "bg-blue-900/20 border border-blue-700" : "bg-blue-50 border border-blue-200"}`}
+                      >
                         <div className="flex items-start gap-2">
-                          <Mail className={`w-4 h-4 mt-0.5 ${isDark ? "text-blue-400" : "text-blue-600"}`} />
+                          <Mail
+                            className={`w-4 h-4 mt-0.5 ${isDark ? "text-blue-400" : "text-blue-600"}`}
+                          />
                           <div>
-                            <p className={`text-xs font-medium ${isDark ? "text-blue-300" : "text-blue-700"}`}>
+                            <p
+                              className={`text-xs font-medium ${isDark ? "text-blue-300" : "text-blue-700"}`}
+                            >
                               Email verification code sent!
                             </p>
-                            <p className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                              Check your email ({session?.user?.email}) for the code.
+                            <p
+                              className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                            >
+                              Check your email ({session?.user?.email}) for the
+                              code.
                             </p>
                           </div>
                         </div>
@@ -3088,14 +3782,18 @@ export default function SettingsPage() {
 
                       <form onSubmit={handleVerify2FA} className="space-y-3">
                         <div>
-                          <label className={`block text-xs font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                          <label
+                            className={`block text-xs font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                          >
                             Enter the 6-digit code from your email:
                           </label>
                           <input
                             type="text"
                             value={twoFactorCode || ""}
                             onChange={(e) =>
-                              setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                              setTwoFactorCode(
+                                e.target.value.replace(/\D/g, "").slice(0, 6),
+                              )
                             }
                             className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-wider ${isDark ? "bg-gray-800 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                             placeholder="000000"
@@ -3106,7 +3804,9 @@ export default function SettingsPage() {
 
                         {twoFactorError && (
                           <div className="bg-red-900/20 border border-red-700 rounded-lg p-2.5">
-                            <p className="text-xs text-red-400">{twoFactorError}</p>
+                            <p className="text-xs text-red-400">
+                              {twoFactorError}
+                            </p>
                           </div>
                         )}
 
@@ -3124,7 +3824,11 @@ export default function SettingsPage() {
                           </button>
                           <button
                             type="submit"
-                            disabled={verifying2FA || !twoFactorCode || twoFactorCode.length !== 6}
+                            disabled={
+                              verifying2FA ||
+                              !twoFactorCode ||
+                              twoFactorCode.length !== 6
+                            }
                             className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2"
                           >
                             {verifying2FA ? (
@@ -3143,27 +3847,41 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>,
-            document.body
+            document.body,
           )}
 
         {/* Transfer PIN Portal Modal */}
         {showTransferPinModal &&
           ReactDOM.createPortal(
-            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+            <div
+              className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}
+            >
               {/* Header */}
-              <div className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}>
+              <div
+                className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}
+              >
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setShowTransferPinModal(false)}
                       className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"}`}
                     >
-                      <X className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                      <X
+                        className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                      />
                     </button>
                     <div>
-                      <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Transfer PIN</h2>
-                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                        {hasTransferPin ? "Manage your transfer PIN" : "Set up a 4-digit PIN"}
+                      <h2
+                        className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Transfer PIN
+                      </h2>
+                      <p
+                        className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        {hasTransferPin
+                          ? "Manage your transfer PIN"
+                          : "Set up a 4-digit PIN"}
                       </p>
                     </div>
                   </div>
@@ -3175,26 +3893,41 @@ export default function SettingsPage() {
                 {hasTransferPin ? (
                   /* PIN Exists - Change PIN Form */
                   <div className="space-y-4">
-                    <div className={`rounded-lg p-3 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}>
-                      <div className={`flex items-center gap-2 mb-1 ${isDark ? "text-green-400" : "text-green-700"}`}>
+                    <div
+                      className={`rounded-lg p-3 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}
+                    >
+                      <div
+                        className={`flex items-center gap-2 mb-1 ${isDark ? "text-green-400" : "text-green-700"}`}
+                      >
                         <CheckCircle className="w-4 h-4" />
-                        <span className="font-medium text-sm">Transfer PIN is enabled</span>
+                        <span className="font-medium text-sm">
+                          Transfer PIN is enabled
+                        </span>
                       </div>
-                      <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                      <p
+                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                      >
                         Your transfers are protected with a 4-digit PIN.
                       </p>
                     </div>
 
-                    <form onSubmit={handleChangePIN} className={`space-y-4 p-4 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}>
+                    <form
+                      onSubmit={handleChangePIN}
+                      className={`space-y-4 p-4 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}
+                    >
                       <div>
-                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <label
+                          className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                        >
                           Current PIN
                         </label>
                         <input
                           type="password"
                           value={currentTransferPin}
                           onChange={(e) =>
-                            setCurrentTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+                            setCurrentTransferPin(
+                              e.target.value.replace(/\D/g, "").slice(0, 4),
+                            )
                           }
                           className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           placeholder="••••"
@@ -3203,14 +3936,18 @@ export default function SettingsPage() {
                       </div>
 
                       <div>
-                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <label
+                          className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                        >
                           New PIN
                         </label>
                         <input
                           type="password"
                           value={transferPin}
                           onChange={(e) =>
-                            setTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+                            setTransferPin(
+                              e.target.value.replace(/\D/g, "").slice(0, 4),
+                            )
                           }
                           className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           placeholder="••••"
@@ -3219,14 +3956,18 @@ export default function SettingsPage() {
                       </div>
 
                       <div>
-                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <label
+                          className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                        >
                           Confirm New PIN
                         </label>
                         <input
                           type="password"
                           value={confirmTransferPin}
                           onChange={(e) =>
-                            setConfirmTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+                            setConfirmTransferPin(
+                              e.target.value.replace(/\D/g, "").slice(0, 4),
+                            )
                           }
                           className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           placeholder="••••"
@@ -3235,14 +3976,26 @@ export default function SettingsPage() {
                       </div>
 
                       {transferPinError && (
-                        <div className={`rounded-lg p-3 ${isDark ? "bg-red-900/20 border border-red-700" : "bg-red-50 border border-red-200"}`}>
-                          <p className={`text-sm ${isDark ? "text-red-400" : "text-red-700"}`}>{transferPinError}</p>
+                        <div
+                          className={`rounded-lg p-3 ${isDark ? "bg-red-900/20 border border-red-700" : "bg-red-50 border border-red-200"}`}
+                        >
+                          <p
+                            className={`text-sm ${isDark ? "text-red-400" : "text-red-700"}`}
+                          >
+                            {transferPinError}
+                          </p>
                         </div>
                       )}
 
                       {transferPinSuccess && (
-                        <div className={`rounded-lg p-3 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}>
-                          <p className={`text-sm ${isDark ? "text-green-400" : "text-green-700"}`}>{transferPinSuccess}</p>
+                        <div
+                          className={`rounded-lg p-3 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}
+                        >
+                          <p
+                            className={`text-sm ${isDark ? "text-green-400" : "text-green-700"}`}
+                          >
+                            {transferPinSuccess}
+                          </p>
                         </div>
                       )}
 
@@ -3264,20 +4017,29 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   /* No PIN - Setup Form */
-                  <form onSubmit={handleSetupPIN} className={`space-y-4 p-4 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}>
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                  <form
+                    onSubmit={handleSetupPIN}
+                    className={`space-y-4 p-4 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}
+                  >
+                    <p
+                      className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                    >
                       Set up a 4-digit PIN to secure your transfers.
                     </p>
 
                     <div>
-                      <label className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      <label
+                        className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                      >
                         New PIN
                       </label>
                       <input
                         type="password"
                         value={transferPin}
                         onChange={(e) =>
-                          setTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+                          setTransferPin(
+                            e.target.value.replace(/\D/g, "").slice(0, 4),
+                          )
                         }
                         className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                         placeholder="••••"
@@ -3286,14 +4048,18 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      <label
+                        className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                      >
                         Confirm PIN
                       </label>
                       <input
                         type="password"
                         value={confirmTransferPin}
                         onChange={(e) =>
-                          setConfirmTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+                          setConfirmTransferPin(
+                            e.target.value.replace(/\D/g, "").slice(0, 4),
+                          )
                         }
                         className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                         placeholder="••••"
@@ -3302,14 +4068,26 @@ export default function SettingsPage() {
                     </div>
 
                     {transferPinError && (
-                      <div className={`rounded-lg p-3 ${isDark ? "bg-red-900/20 border border-red-700" : "bg-red-50 border border-red-200"}`}>
-                        <p className={`text-sm ${isDark ? "text-red-400" : "text-red-700"}`}>{transferPinError}</p>
+                      <div
+                        className={`rounded-lg p-3 ${isDark ? "bg-red-900/20 border border-red-700" : "bg-red-50 border border-red-200"}`}
+                      >
+                        <p
+                          className={`text-sm ${isDark ? "text-red-400" : "text-red-700"}`}
+                        >
+                          {transferPinError}
+                        </p>
                       </div>
                     )}
 
                     {transferPinSuccess && (
-                      <div className={`rounded-lg p-3 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}>
-                        <p className={`text-sm ${isDark ? "text-green-400" : "text-green-700"}`}>{transferPinSuccess}</p>
+                      <div
+                        className={`rounded-lg p-3 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}
+                      >
+                        <p
+                          className={`text-sm ${isDark ? "text-green-400" : "text-green-700"}`}
+                        >
+                          {transferPinSuccess}
+                        </p>
                       </div>
                     )}
 
@@ -3331,7 +4109,7 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>,
-            document.body
+            document.body,
           )}
 
         {/* KYC Modal */}
@@ -3347,34 +4125,56 @@ export default function SettingsPage() {
             <div
               className={`rounded-lg p-3 border ${
                 kycStatus === "APPROVED"
-                  ? isDark ? "bg-green-900/20 border-green-700" : "bg-green-50 border-green-300"
+                  ? isDark
+                    ? "bg-green-900/20 border-green-700"
+                    : "bg-green-50 border-green-300"
                   : kycStatus === "PENDING"
-                  ? isDark ? "bg-yellow-900/20 border-yellow-700" : "bg-yellow-50 border-yellow-300"
-                  : kycStatus === "UNDER_REVIEW"
-                  ? isDark ? "bg-blue-900/20 border-blue-700" : "bg-blue-50 border-blue-300"
-                  : kycStatus === "REJECTED"
-                  ? isDark ? "bg-red-900/20 border-red-700" : "bg-red-50 border-red-300"
-                  : isDark ? "bg-gray-900/20 border-gray-700" : "bg-gray-100 border-gray-300"
+                    ? isDark
+                      ? "bg-yellow-900/20 border-yellow-700"
+                      : "bg-yellow-50 border-yellow-300"
+                    : kycStatus === "UNDER_REVIEW"
+                      ? isDark
+                        ? "bg-blue-900/20 border-blue-700"
+                        : "bg-blue-50 border-blue-300"
+                      : kycStatus === "REJECTED"
+                        ? isDark
+                          ? "bg-red-900/20 border-red-700"
+                          : "bg-red-50 border-red-300"
+                        : isDark
+                          ? "bg-gray-900/20 border-gray-700"
+                          : "bg-gray-100 border-gray-300"
               }`}
             >
               <div className="flex items-start gap-3 mb-2">
                 {kycStatus === "APPROVED" && (
-                  <CheckCircle className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-green-400" : "text-green-600"}`} />
+                  <CheckCircle
+                    className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-green-400" : "text-green-600"}`}
+                  />
                 )}
                 {kycStatus === "PENDING" && (
-                  <Clock className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-yellow-400" : "text-yellow-600"}`} />
+                  <Clock
+                    className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-yellow-400" : "text-yellow-600"}`}
+                  />
                 )}
                 {kycStatus === "UNDER_REVIEW" && (
-                  <Eye className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-blue-400" : "text-blue-600"}`} />
+                  <Eye
+                    className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-blue-400" : "text-blue-600"}`}
+                  />
                 )}
                 {kycStatus === "REJECTED" && (
-                  <XCircle className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <XCircle
+                    className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-red-400" : "text-red-600"}`}
+                  />
                 )}
                 {kycStatus === "NOT_STARTED" && (
-                  <AlertCircle className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                  <AlertCircle
+                    className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                  />
                 )}
 
-                <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                <h3
+                  className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                >
                   {kycStatus === "APPROVED" && "Verification Approved"}
                   {kycStatus === "PENDING" && "Verification Pending"}
                   {kycStatus === "UNDER_REVIEW" && "Under Review"}
@@ -3382,7 +4182,9 @@ export default function SettingsPage() {
                   {kycStatus === "NOT_STARTED" && "Verification Required"}
                 </h3>
               </div>
-              <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+              <p
+                className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
+              >
                 {kycStatus === "APPROVED" &&
                   "Your identity has been verified. You have full access to all platform features."}
                 {kycStatus === "PENDING" &&
@@ -3400,7 +4202,9 @@ export default function SettingsPage() {
             {kycStatus !== "APPROVED" && (
               <form onSubmit={handleKycSubmit} className="space-y-4">
                 {/* Stage Title */}
-                <p className={`text-sm text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                <p
+                  className={`text-sm text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                >
                   {kycStage === 1 && "Step 1 of 3: Personal Information"}
                   {kycStage === 2 && "Step 2 of 3: Address Information"}
                   {kycStage === 3 && "Step 3 of 3: Document Upload"}
@@ -3412,35 +4216,49 @@ export default function SettingsPage() {
                     className={`flex items-center justify-center w-8 h-8 rounded-full ${
                       kycStage >= 1
                         ? "bg-orange-500 text-white"
-                        : isDark ? "bg-gray-600 text-gray-400" : "bg-gray-300 text-gray-500"
+                        : isDark
+                          ? "bg-gray-600 text-gray-400"
+                          : "bg-gray-300 text-gray-500"
                     }`}
                   >
                     {kycStage > 1 ? "✓" : "1"}
                   </div>
                   <div
                     className={`h-1 w-16 ${
-                      kycStage >= 2 ? "bg-orange-500" : isDark ? "bg-gray-600" : "bg-gray-300"
+                      kycStage >= 2
+                        ? "bg-orange-500"
+                        : isDark
+                          ? "bg-gray-600"
+                          : "bg-gray-300"
                     }`}
                   />
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full ${
                       kycStage >= 2
                         ? "bg-orange-500 text-white"
-                        : isDark ? "bg-gray-600 text-gray-400" : "bg-gray-300 text-gray-500"
+                        : isDark
+                          ? "bg-gray-600 text-gray-400"
+                          : "bg-gray-300 text-gray-500"
                     }`}
                   >
                     {kycStage > 2 ? "✓" : "2"}
                   </div>
                   <div
                     className={`h-1 w-16 ${
-                      kycStage >= 3 ? "bg-orange-500" : isDark ? "bg-gray-600" : "bg-gray-300"
+                      kycStage >= 3
+                        ? "bg-orange-500"
+                        : isDark
+                          ? "bg-gray-600"
+                          : "bg-gray-300"
                     }`}
                   />
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full ${
                       kycStage >= 3
                         ? "bg-orange-500 text-white"
-                        : isDark ? "bg-gray-600 text-gray-400" : "bg-gray-300 text-gray-500"
+                        : isDark
+                          ? "bg-gray-600 text-gray-400"
+                          : "bg-gray-300 text-gray-500"
                     }`}
                   >
                     3
@@ -3461,20 +4279,28 @@ export default function SettingsPage() {
                             <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
                               <FileCheck className="w-5 h-5 text-orange-500" />
                             </div>
-                            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                            <h4
+                              className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                            >
                               View Documents
                             </h4>
                           </div>
-                          <ChevronRight className={`w-5 h-5 group-hover:text-orange-500 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                          <ChevronRight
+                            className={`w-5 h-5 group-hover:text-orange-500 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          />
                         </div>
-                        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                        <p
+                          className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
                           Click to enter your personal information
                         </p>
                       </button>
                     ) : (
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <h4
+                            className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
                             Personal Information
                           </h4>
                           <button
@@ -3485,179 +4311,210 @@ export default function SettingsPage() {
                             Hide
                           </button>
                         </div>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      <div>
-                        <label
-                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
-                          htmlFor="firstName"
-                        >
-                          First Name *
-                        </label>
-                        <input
-                          id="firstName"
-                          type="text"
-                          required
-                          value={kycData.firstName}
-                          onChange={(e) =>
-                            setKycData({
-                              ...kycData,
-                              firstName: e.target.value,
-                            })
-                          }
-                          className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                          placeholder="Enter your first name"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
-                          htmlFor="lastName"
-                        >
-                          Last Name (Surname) *
-                        </label>
-                        <input
-                          id="lastName"
-                          type="text"
-                          required
-                          value={kycData.lastName}
-                          onChange={(e) =>
-                            setKycData({ ...kycData, lastName: e.target.value })
-                          }
-                          className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                          placeholder="Enter your surname"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
-                          htmlFor="dateOfBirth"
-                        >
-                          Date of Birth *
-                        </label>
-                        <input
-                          id="dateOfBirth"
-                          type="date"
-                          required
-                          value={kycData.dateOfBirth}
-                          onChange={(e) =>
-                            setKycData({
-                              ...kycData,
-                              dateOfBirth: e.target.value,
-                            })
-                          }
-                          className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
-                          htmlFor="nationality"
-                        >
-                          Nationality *
-                        </label>
-                        <select
-                          id="nationality"
-                          required
-                          value={kycData.nationality}
-                          onChange={(e) => {
-                            const newCountry = e.target.value;
-                            const newPrefix = PHONE_PATTERNS[newCountry]?.prefix || "+1";
-                            setKycData({
-                              ...kycData,
-                              nationality: newCountry,
-                              phoneNumber: newPrefix + " ",
-                            });
-                          }}
-                          className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                        >
-                          <option value="" disabled className="text-gray-500">
-                            Select your country
-                          </option>
-                          {COUNTRIES.map((country) => (
-                            <option key={country} value={country}>
-                              {country}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label
-                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
-                          htmlFor="phoneNumber"
-                        >
-                          Phone Number *
-                        </label>
-                        <input
-                          id="phoneNumber"
-                          type="tel"
-                          required
-                          value={kycData.phoneNumber}
-                          onChange={(e) => {
-                            const formatted = formatPhoneNumber(e.target.value, kycData.nationality || country);
-                            setKycData({
-                              ...kycData,
-                              phoneNumber: formatted,
-                            });
-                          }}
-                          className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                          placeholder={getPhonePlaceholder(kycData.nationality || country)}
-                        />
-                      </div>
-                    </div>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <div>
+                            <label
+                              className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
+                              htmlFor="firstName"
+                            >
+                              First Name *
+                            </label>
+                            <input
+                              id="firstName"
+                              type="text"
+                              required
+                              value={kycData.firstName}
+                              onChange={(e) =>
+                                setKycData({
+                                  ...kycData,
+                                  firstName: e.target.value,
+                                })
+                              }
+                              className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                              placeholder="Enter your first name"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
+                              htmlFor="lastName"
+                            >
+                              Last Name (Surname) *
+                            </label>
+                            <input
+                              id="lastName"
+                              type="text"
+                              required
+                              value={kycData.lastName}
+                              onChange={(e) =>
+                                setKycData({
+                                  ...kycData,
+                                  lastName: e.target.value,
+                                })
+                              }
+                              className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                              placeholder="Enter your surname"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
+                              htmlFor="dateOfBirth"
+                            >
+                              Date of Birth *
+                            </label>
+                            <input
+                              id="dateOfBirth"
+                              type="date"
+                              required
+                              value={kycData.dateOfBirth}
+                              onChange={(e) =>
+                                setKycData({
+                                  ...kycData,
+                                  dateOfBirth: e.target.value,
+                                })
+                              }
+                              className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
+                              htmlFor="nationality"
+                            >
+                              Nationality *
+                            </label>
+                            <select
+                              id="nationality"
+                              required
+                              value={kycData.nationality}
+                              onChange={(e) => {
+                                const newCountry = e.target.value;
+                                const newPrefix =
+                                  PHONE_PATTERNS[newCountry]?.prefix || "+1";
+                                setKycData({
+                                  ...kycData,
+                                  nationality: newCountry,
+                                  phoneNumber: newPrefix + " ",
+                                });
+                              }}
+                              className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                            >
+                              <option
+                                value=""
+                                disabled
+                                className="text-gray-500"
+                              >
+                                Select your country
+                              </option>
+                              {COUNTRIES.map((country) => (
+                                <option key={country} value={country}>
+                                  {country}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label
+                              className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
+                              htmlFor="phoneNumber"
+                            >
+                              Phone Number *
+                            </label>
+                            <input
+                              id="phoneNumber"
+                              type="tel"
+                              required
+                              value={kycData.phoneNumber}
+                              onChange={(e) => {
+                                const formatted = formatPhoneNumber(
+                                  e.target.value,
+                                  kycData.nationality || country,
+                                );
+                                setKycData({
+                                  ...kycData,
+                                  phoneNumber: formatted,
+                                });
+                              }}
+                              className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                              placeholder={getPhonePlaceholder(
+                                kycData.nationality || country,
+                              )}
+                            />
+                          </div>
+                        </div>
 
-                    {/* Navigation Buttons */}
-                    <div className={`flex justify-end mt-6 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          // Validate all required fields
-                          if (!kycData.firstName.trim()) {
-                            showWarning("Please enter your First Name");
-                            return;
-                          }
-                          if (!kycData.lastName.trim()) {
-                            showWarning(
-                              "Please enter your Last Name (Surname)"
-                            );
-                            return;
-                          }
-                          if (!kycData.dateOfBirth) {
-                            showWarning("Please select your Date of Birth");
-                            return;
-                          }
-                          if (!kycData.nationality.trim()) {
-                            showWarning("Please enter your Nationality");
-                            return;
-                          }
-                          if (!kycData.phoneNumber.trim()) {
-                            showWarning("Please enter your Phone Number");
-                            return;
-                          }
-                          // Validate phone number matches the selected country
-                          const selectedCountry = kycData.nationality.trim();
-                          const expectedPattern = PHONE_PATTERNS[selectedCountry];
-                          if (expectedPattern) {
-                            const phoneDigits = kycData.phoneNumber.replace(/\D/g, '');
-                            const prefixDigits = expectedPattern.prefix.replace(/\D/g, '');
-                            if (!phoneDigits.startsWith(prefixDigits)) {
-                              showWarning(`Phone number must start with ${expectedPattern.prefix} for ${selectedCountry}`);
-                              return;
-                            }
-                            const localDigits = phoneDigits.slice(prefixDigits.length);
-                            const expectedLength = expectedPattern.pattern.reduce((sum, n) => sum + n, 0);
-                            if (localDigits.length < expectedLength) {
-                              showWarning(`Please enter a complete phone number for ${selectedCountry}`);
-                              return;
-                            }
-                          }
-                          setKycStage(2);
-                        }}
-                        className="bg-orange-600 hover:bg-orange-500 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[40px]"
-                      >
-                        Next
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
+                        {/* Navigation Buttons */}
+                        <div
+                          className={`flex justify-end mt-6 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Validate all required fields
+                              if (!kycData.firstName.trim()) {
+                                showWarning("Please enter your First Name");
+                                return;
+                              }
+                              if (!kycData.lastName.trim()) {
+                                showWarning(
+                                  "Please enter your Last Name (Surname)",
+                                );
+                                return;
+                              }
+                              if (!kycData.dateOfBirth) {
+                                showWarning("Please select your Date of Birth");
+                                return;
+                              }
+                              if (!kycData.nationality.trim()) {
+                                showWarning("Please enter your Nationality");
+                                return;
+                              }
+                              if (!kycData.phoneNumber.trim()) {
+                                showWarning("Please enter your Phone Number");
+                                return;
+                              }
+                              // Validate phone number matches the selected country
+                              const selectedCountry =
+                                kycData.nationality.trim();
+                              const expectedPattern =
+                                PHONE_PATTERNS[selectedCountry];
+                              if (expectedPattern) {
+                                const phoneDigits = kycData.phoneNumber.replace(
+                                  /\D/g,
+                                  "",
+                                );
+                                const prefixDigits =
+                                  expectedPattern.prefix.replace(/\D/g, "");
+                                if (!phoneDigits.startsWith(prefixDigits)) {
+                                  showWarning(
+                                    `Phone number must start with ${expectedPattern.prefix} for ${selectedCountry}`,
+                                  );
+                                  return;
+                                }
+                                const localDigits = phoneDigits.slice(
+                                  prefixDigits.length,
+                                );
+                                const expectedLength =
+                                  expectedPattern.pattern.reduce(
+                                    (sum, n) => sum + n,
+                                    0,
+                                  );
+                                if (localDigits.length < expectedLength) {
+                                  showWarning(
+                                    `Please enter a complete phone number for ${selectedCountry}`,
+                                  );
+                                  return;
+                                }
+                              }
+                              setKycStage(2);
+                            }}
+                            className="bg-orange-600 hover:bg-orange-500 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[40px]"
+                          >
+                            Next
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -3677,20 +4534,28 @@ export default function SettingsPage() {
                             <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
                               <FileCheck className="w-5 h-5 text-orange-500" />
                             </div>
-                            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                            <h4
+                              className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                            >
                               View Documents
                             </h4>
                           </div>
-                          <ChevronRight className={`w-5 h-5 group-hover:text-orange-500 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                          <ChevronRight
+                            className={`w-5 h-5 group-hover:text-orange-500 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          />
                         </div>
-                        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                        <p
+                          className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
                           Click to enter your address information
                         </p>
                       </button>
                     ) : (
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <h4
+                            className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
                             Address Information
                           </h4>
                           <button
@@ -3701,105 +4566,113 @@ export default function SettingsPage() {
                             Hide
                           </button>
                         </div>
-                    <div className="space-y-3">
-                      <div>
-                        <label
-                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
-                          htmlFor="address"
-                        >
-                          Street Address *
-                        </label>
-                        <input
-                          id="address"
-                          type="text"
-                          required
-                          value={kycData.address}
-                          onChange={(e) =>
-                            setKycData({ ...kycData, address: e.target.value })
-                          }
-                          className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                          placeholder="e.g., 123 Main Street, Apt 4B"
-                        />
-                      </div>
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        <div>
-                          <label
-                            className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
-                            htmlFor="city"
-                          >
-                            City *
-                          </label>
-                          <input
-                            id="city"
-                            type="text"
-                            required
-                            value={kycData.city}
-                            onChange={(e) =>
-                              setKycData({ ...kycData, city: e.target.value })
-                            }
-                            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                            placeholder="e.g., New York, London, Toronto"
-                          />
+                        <div className="space-y-3">
+                          <div>
+                            <label
+                              className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
+                              htmlFor="address"
+                            >
+                              Street Address *
+                            </label>
+                            <input
+                              id="address"
+                              type="text"
+                              required
+                              value={kycData.address}
+                              onChange={(e) =>
+                                setKycData({
+                                  ...kycData,
+                                  address: e.target.value,
+                                })
+                              }
+                              className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                              placeholder="e.g., 123 Main Street, Apt 4B"
+                            />
+                          </div>
+                          <div className="grid sm:grid-cols-2 gap-3">
+                            <div>
+                              <label
+                                className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
+                                htmlFor="city"
+                              >
+                                City *
+                              </label>
+                              <input
+                                id="city"
+                                type="text"
+                                required
+                                value={kycData.city}
+                                onChange={(e) =>
+                                  setKycData({
+                                    ...kycData,
+                                    city: e.target.value,
+                                  })
+                                }
+                                className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                                placeholder="e.g., New York, London, Toronto"
+                              />
+                            </div>
+                            <div>
+                              <label
+                                className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
+                                htmlFor="postalCode"
+                              >
+                                Postal Code *
+                              </label>
+                              <input
+                                id="postalCode"
+                                type="text"
+                                required
+                                value={kycData.postalCode}
+                                onChange={(e) =>
+                                  setKycData({
+                                    ...kycData,
+                                    postalCode: e.target.value,
+                                  })
+                                }
+                                className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                                placeholder="e.g., 10001, 100001, SW1A 1AA"
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <label
-                            className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
-                            htmlFor="postalCode"
-                          >
-                            Postal Code *
-                          </label>
-                          <input
-                            id="postalCode"
-                            type="text"
-                            required
-                            value={kycData.postalCode}
-                            onChange={(e) =>
-                              setKycData({
-                                ...kycData,
-                                postalCode: e.target.value,
-                              })
-                            }
-                            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                            placeholder="e.g., 10001, 100001, SW1A 1AA"
-                          />
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Navigation Buttons */}
-                    <div className={`flex justify-between mt-6 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
-                      <button
-                        type="button"
-                        onClick={() => setKycStage(1)}
-                        className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 min-h-[40px] ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
-                      >
-                        <ChevronRight className="w-4 h-4 rotate-180" />
-                        Previous
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          // Validate all required address fields
-                          if (!kycData.address.trim()) {
-                            showWarning("Please enter your Street Address");
-                            return;
-                          }
-                          if (!kycData.city.trim()) {
-                            showWarning("Please enter your City");
-                            return;
-                          }
-                          if (!kycData.postalCode.trim()) {
-                            showWarning("Please enter your Postal Code");
-                            return;
-                          }
-                          setKycStage(3);
-                        }}
-                        className="bg-orange-600 hover:bg-orange-500 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[40px]"
-                      >
-                        Next
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
+                        {/* Navigation Buttons */}
+                        <div
+                          className={`flex justify-between mt-6 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setKycStage(1)}
+                            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 min-h-[40px] ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
+                          >
+                            <ChevronRight className="w-4 h-4 rotate-180" />
+                            Previous
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Validate all required address fields
+                              if (!kycData.address.trim()) {
+                                showWarning("Please enter your Street Address");
+                                return;
+                              }
+                              if (!kycData.city.trim()) {
+                                showWarning("Please enter your City");
+                                return;
+                              }
+                              if (!kycData.postalCode.trim()) {
+                                showWarning("Please enter your Postal Code");
+                                return;
+                              }
+                              setKycStage(3);
+                            }}
+                            className="bg-orange-600 hover:bg-orange-500 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[40px]"
+                          >
+                            Next
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -3819,20 +4692,28 @@ export default function SettingsPage() {
                             <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
                               <FileCheck className="w-5 h-5 text-orange-500" />
                             </div>
-                            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                            <h4
+                              className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                            >
                               View Documents
                             </h4>
                           </div>
-                          <ChevronRight className={`w-5 h-5 group-hover:text-orange-500 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                          <ChevronRight
+                            className={`w-5 h-5 group-hover:text-orange-500 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          />
                         </div>
-                        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                        <p
+                          className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
                           Click to upload your verification documents
                         </p>
                       </button>
                     ) : (
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <h4
+                            className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
                             Document Upload
                           </h4>
                           <button
@@ -3843,260 +4724,368 @@ export default function SettingsPage() {
                             Hide
                           </button>
                         </div>
-                    <div className="space-y-3">
-                      {/* ID Document - Front and Back */}
-                      <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
-                          Government-Issued ID * (Passport, Driver's License, or
-                          National ID)
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {/* Front Side */}
+                        <div className="space-y-3">
+                          {/* ID Document - Front and Back */}
                           <div>
-                            <p className={`text-xs mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Front Side</p>
-                            <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-                              documents.idDocumentFront
-                                ? isDark ? "border-green-500 bg-green-900/10" : "border-green-500 bg-green-50"
-                                : isDark ? "border-gray-600 hover:border-orange-500" : "border-gray-300 hover:border-orange-500"
-                            }`}>
+                            <label
+                              className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}
+                            >
+                              Government-Issued ID * (Passport, Driver's
+                              License, or National ID)
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {/* Front Side */}
+                              <div>
+                                <p
+                                  className={`text-xs mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                >
+                                  Front Side
+                                </p>
+                                <div
+                                  className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+                                    documents.idDocumentFront
+                                      ? isDark
+                                        ? "border-green-500 bg-green-900/10"
+                                        : "border-green-500 bg-green-50"
+                                      : isDark
+                                        ? "border-gray-600 hover:border-orange-500"
+                                        : "border-gray-300 hover:border-orange-500"
+                                  }`}
+                                >
+                                  <input
+                                    type="file"
+                                    accept="image/*,.pdf"
+                                    onChange={(e) =>
+                                      handleFileChange(
+                                        "idDocumentFront",
+                                        e.target.files?.[0] || null,
+                                      )
+                                    }
+                                    className="hidden"
+                                    id="idDocumentFront"
+                                    required
+                                  />
+                                  <label
+                                    htmlFor="idDocumentFront"
+                                    className="cursor-pointer block"
+                                  >
+                                    {documents.idDocumentFront ? (
+                                      <div className="space-y-2">
+                                        <CheckCircle className="w-6 h-6 mx-auto text-green-400" />
+                                        <p
+                                          className={`text-xs truncate ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                        >
+                                          {documents.idDocumentFront.name}
+                                        </p>
+                                        <p className="text-xs text-green-400">
+                                          Uploaded
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-2">
+                                        <Upload
+                                          className={`w-6 h-6 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                        />
+                                        <p
+                                          className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                        >
+                                          Upload Front
+                                        </p>
+                                        <p
+                                          className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                        >
+                                          PNG, JPG or PDF
+                                        </p>
+                                      </div>
+                                    )}
+                                  </label>
+                                </div>
+                              </div>
+
+                              {/* Back Side */}
+                              <div>
+                                <p
+                                  className={`text-xs mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                >
+                                  Back Side
+                                </p>
+                                <div
+                                  className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+                                    documents.idDocumentBack
+                                      ? isDark
+                                        ? "border-green-500 bg-green-900/10"
+                                        : "border-green-500 bg-green-50"
+                                      : isDark
+                                        ? "border-gray-600 hover:border-orange-500"
+                                        : "border-gray-300 hover:border-orange-500"
+                                  }`}
+                                >
+                                  <input
+                                    type="file"
+                                    accept="image/*,.pdf"
+                                    onChange={(e) =>
+                                      handleFileChange(
+                                        "idDocumentBack",
+                                        e.target.files?.[0] || null,
+                                      )
+                                    }
+                                    className="hidden"
+                                    id="idDocumentBack"
+                                    required
+                                  />
+                                  <label
+                                    htmlFor="idDocumentBack"
+                                    className="cursor-pointer block"
+                                  >
+                                    {documents.idDocumentBack ? (
+                                      <div className="space-y-2">
+                                        <CheckCircle className="w-6 h-6 mx-auto text-green-400" />
+                                        <p
+                                          className={`text-xs truncate ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                        >
+                                          {documents.idDocumentBack.name}
+                                        </p>
+                                        <p className="text-xs text-green-400">
+                                          Uploaded
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-2">
+                                        <Upload
+                                          className={`w-6 h-6 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                        />
+                                        <p
+                                          className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                        >
+                                          Upload Back
+                                        </p>
+                                        <p
+                                          className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                        >
+                                          PNG, JPG or PDF
+                                        </p>
+                                      </div>
+                                    )}
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+                            <p
+                              className={`text-xs mt-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                            >
+                              Please upload clear images of both sides of your
+                              ID
+                            </p>
+                          </div>
+
+                          {/* Proof of Address */}
+                          <div>
+                            <label
+                              className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}
+                            >
+                              Proof of Address * (Utility Bill, Bank Statement -
+                              less than 3 months old)
+                            </label>
+                            <div
+                              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                                documents.proofOfAddress
+                                  ? isDark
+                                    ? "border-green-500 bg-green-900/10"
+                                    : "border-green-500 bg-green-50"
+                                  : isDark
+                                    ? "border-gray-600 hover:border-orange-500"
+                                    : "border-gray-300 hover:border-orange-500"
+                              }`}
+                            >
                               <input
                                 type="file"
                                 accept="image/*,.pdf"
                                 onChange={(e) =>
                                   handleFileChange(
-                                    "idDocumentFront",
-                                    e.target.files?.[0] || null
+                                    "proofOfAddress",
+                                    e.target.files?.[0] || null,
                                   )
                                 }
                                 className="hidden"
-                                id="idDocumentFront"
+                                id="proofOfAddress"
                                 required
                               />
                               <label
-                                htmlFor="idDocumentFront"
-                                className="cursor-pointer block"
+                                htmlFor="proofOfAddress"
+                                className="cursor-pointer"
                               >
-                                {documents.idDocumentFront ? (
+                                {documents.proofOfAddress ? (
                                   <div className="space-y-2">
-                                    <CheckCircle className="w-6 h-6 mx-auto text-green-400" />
-                                    <p className={`text-xs truncate ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                                      {documents.idDocumentFront.name}
+                                    <CheckCircle
+                                      className={`w-8 h-8 mx-auto ${isDark ? "text-green-400" : "text-green-500"}`}
+                                    />
+                                    <p
+                                      className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                    >
+                                      {documents.proofOfAddress.name}
                                     </p>
-                                    <p className="text-xs text-green-400">Uploaded</p>
+                                    <p
+                                      className={`text-xs ${isDark ? "text-green-400" : "text-green-600"}`}
+                                    >
+                                      Uploaded
+                                    </p>
                                   </div>
                                 ) : (
                                   <div className="space-y-2">
-                                    <Upload className={`w-6 h-6 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`} />
-                                    <p className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>Upload Front</p>
-                                    <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>PNG, JPG or PDF</p>
+                                    <Upload
+                                      className={`w-8 h-8 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                    />
+                                    <p
+                                      className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                    >
+                                      Click to upload or drag and drop
+                                    </p>
+                                    <p
+                                      className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                    >
+                                      PNG, JPG or PDF
+                                    </p>
                                   </div>
                                 )}
                               </label>
                             </div>
                           </div>
-                          
-                          {/* Back Side */}
+
+                          {/* Selfie */}
                           <div>
-                            <p className={`text-xs mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Back Side</p>
-                            <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-                              documents.idDocumentBack
-                                ? isDark ? "border-green-500 bg-green-900/10" : "border-green-500 bg-green-50"
-                                : isDark ? "border-gray-600 hover:border-orange-500" : "border-gray-300 hover:border-orange-500"
-                            }`}>
+                            <label
+                              className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}
+                            >
+                              Selfie Photo * — Hold your ID next to your face.
+                              This photo will become your profile picture.
+                            </label>
+                            <div
+                              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                                documents.selfie
+                                  ? isDark
+                                    ? "border-green-500 bg-green-900/10"
+                                    : "border-green-500 bg-green-50"
+                                  : isDark
+                                    ? "border-gray-600 hover:border-orange-500"
+                                    : "border-gray-300 hover:border-orange-500"
+                              }`}
+                            >
                               <input
                                 type="file"
-                                accept="image/*,.pdf"
+                                accept="image/*"
                                 onChange={(e) =>
                                   handleFileChange(
-                                    "idDocumentBack",
-                                    e.target.files?.[0] || null
+                                    "selfie",
+                                    e.target.files?.[0] || null,
                                   )
                                 }
                                 className="hidden"
-                                id="idDocumentBack"
+                                id="selfie"
                                 required
                               />
                               <label
-                                htmlFor="idDocumentBack"
-                                className="cursor-pointer block"
+                                htmlFor="selfie"
+                                className="cursor-pointer"
                               >
-                                {documents.idDocumentBack ? (
+                                {documents.selfie ? (
                                   <div className="space-y-2">
-                                    <CheckCircle className="w-6 h-6 mx-auto text-green-400" />
-                                    <p className={`text-xs truncate ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                                      {documents.idDocumentBack.name}
+                                    <CheckCircle
+                                      className={`w-8 h-8 mx-auto ${isDark ? "text-green-400" : "text-green-500"}`}
+                                    />
+                                    <p
+                                      className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                    >
+                                      {documents.selfie.name}
                                     </p>
-                                    <p className="text-xs text-green-400">Uploaded</p>
+                                    <p
+                                      className={`text-xs ${isDark ? "text-green-400" : "text-green-600"}`}
+                                    >
+                                      Uploaded
+                                    </p>
                                   </div>
                                 ) : (
                                   <div className="space-y-2">
-                                    <Upload className={`w-6 h-6 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`} />
-                                    <p className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>Upload Back</p>
-                                    <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>PNG, JPG or PDF</p>
+                                    <Upload
+                                      className={`w-8 h-8 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                    />
+                                    <p
+                                      className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                    >
+                                      Click to upload or drag and drop
+                                    </p>
+                                    <p
+                                      className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                    >
+                                      PNG or JPG
+                                    </p>
                                   </div>
                                 )}
                               </label>
                             </div>
                           </div>
                         </div>
-                        <p className={`text-xs mt-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                          Please upload clear images of both sides of your ID
-                        </p>
-                      </div>
 
-                      {/* Proof of Address */}
-                      <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
-                          Proof of Address * (Utility Bill, Bank Statement -
-                          less than 3 months old)
-                        </label>
-                        <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                          documents.proofOfAddress
-                            ? isDark ? "border-green-500 bg-green-900/10" : "border-green-500 bg-green-50"
-                            : isDark ? "border-gray-600 hover:border-orange-500" : "border-gray-300 hover:border-orange-500"
-                        }`}>
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            onChange={(e) =>
-                              handleFileChange(
-                                "proofOfAddress",
-                                e.target.files?.[0] || null
-                              )
-                            }
-                            className="hidden"
-                            id="proofOfAddress"
-                            required
-                          />
-                          <label
-                            htmlFor="proofOfAddress"
-                            className="cursor-pointer"
-                          >
-                            {documents.proofOfAddress ? (
-                              <div className="space-y-2">
-                                <CheckCircle className={`w-8 h-8 mx-auto ${isDark ? "text-green-400" : "text-green-500"}`} />
-                                <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                                  {documents.proofOfAddress.name}
-                                </p>
-                                <p className={`text-xs ${isDark ? "text-green-400" : "text-green-600"}`}>Uploaded</p>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                <Upload className={`w-8 h-8 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`} />
-                                <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                                  Click to upload or drag and drop
-                                </p>
-                                <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                                  PNG, JPG or PDF
-                                </p>
-                              </div>
-                            )}
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* Selfie */}
-                      <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
-                          Selfie with ID * (Hold your ID next to your face)
-                        </label>
-                        <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                          documents.selfie
-                            ? isDark ? "border-green-500 bg-green-900/10" : "border-green-500 bg-green-50"
-                            : isDark ? "border-gray-600 hover:border-orange-500" : "border-gray-300 hover:border-orange-500"
-                        }`}>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) =>
-                              handleFileChange(
-                                "selfie",
-                                e.target.files?.[0] || null
-                              )
-                            }
-                            className="hidden"
-                            id="selfie"
-                            required
-                          />
-                          <label htmlFor="selfie" className="cursor-pointer">
-                            {documents.selfie ? (
-                              <div className="space-y-2">
-                                <CheckCircle className={`w-8 h-8 mx-auto ${isDark ? "text-green-400" : "text-green-500"}`} />
-                                <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                                  {documents.selfie.name}
-                                </p>
-                                <p className={`text-xs ${isDark ? "text-green-400" : "text-green-600"}`}>Uploaded</p>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                <Upload className={`w-8 h-8 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`} />
-                                <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                                  Click to upload or drag and drop
-                                </p>
-                                <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                                  PNG or JPG
-                                </p>
-                              </div>
-                            )}
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Terms & Conditions */}
-                    <div className={`rounded-lg p-4 mt-6 ${isDark ? "bg-gray-700/30" : "bg-gray-100"}`}>
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          id="kycTerms"
-                          required
-                          className={`mt-1 w-4 h-4 rounded border-0 focus:ring-0 focus:outline-none accent-orange-500 ${isDark ? "bg-gray-700" : "bg-gray-200"}`}
-                        />
-                        <label
-                          htmlFor="kycTerms"
-                          className={`text-sm flex-1 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                        {/* Terms & Conditions */}
+                        <div
+                          className={`rounded-lg p-4 mt-6 ${isDark ? "bg-gray-700/30" : "bg-gray-100"}`}
                         >
-                          I certify that all information provided is accurate
-                          and complete. I understand that providing false
-                          information may result in account suspension or legal
-                          action.
-                        </label>
-                      </div>
-                    </div>
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              id="kycTerms"
+                              required
+                              className={`mt-1 w-4 h-4 rounded border-0 focus:ring-0 focus:outline-none accent-orange-500 ${isDark ? "bg-gray-700" : "bg-gray-200"}`}
+                            />
+                            <label
+                              htmlFor="kycTerms"
+                              className={`text-sm flex-1 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                            >
+                              I certify that all information provided is
+                              accurate and complete. I understand that providing
+                              false information may result in account suspension
+                              or legal action.
+                            </label>
+                          </div>
+                        </div>
 
-                    {/* Navigation Buttons with Submit */}
-                    <div className={`flex justify-between mt-6 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
-                      <button
-                        type="button"
-                        onClick={() => setKycStage(2)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 min-h-[40px] ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
-                      >
-                        <ChevronRight className="w-4 h-4 rotate-180" />
-                        Previous
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={
-                          submittingKyc ||
-                          kycStatus === "PENDING" ||
-                          kycStatus === "UNDER_REVIEW" ||
-                          !documents.idDocumentFront ||
-                          !documents.idDocumentBack ||
-                          !documents.proofOfAddress ||
-                          !documents.selfie
-                        }
-                        className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-medium transition-colors text-white min-h-[40px]"
-                      >
-                        {submittingKyc
-                          ? "Submitting..."
-                          : kycStatus === "PENDING" ||
-                            kycStatus === "UNDER_REVIEW"
-                          ? "Under Review"
-                          : !documents.idDocumentFront || !documents.idDocumentBack || !documents.proofOfAddress || !documents.selfie
-                          ? "Upload Documents"
-                          : "Submit for Verification"}
-                      </button>
-                    </div>
+                        {/* Navigation Buttons with Submit */}
+                        <div
+                          className={`flex justify-between mt-6 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setKycStage(2)}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 min-h-[40px] ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
+                          >
+                            <ChevronRight className="w-4 h-4 rotate-180" />
+                            Previous
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={
+                              submittingKyc ||
+                              kycStatus === "PENDING" ||
+                              kycStatus === "UNDER_REVIEW" ||
+                              !documents.idDocumentFront ||
+                              !documents.idDocumentBack ||
+                              !documents.proofOfAddress ||
+                              !documents.selfie
+                            }
+                            className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-medium transition-colors text-white min-h-[40px]"
+                          >
+                            {submittingKyc
+                              ? "Submitting..."
+                              : kycStatus === "PENDING" ||
+                                  kycStatus === "UNDER_REVIEW"
+                                ? "Under Review"
+                                : !documents.idDocumentFront ||
+                                    !documents.idDocumentBack ||
+                                    !documents.proofOfAddress ||
+                                    !documents.selfie
+                                  ? "Upload Documents"
+                                  : "Submit for Verification"}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -4107,8 +5096,12 @@ export default function SettingsPage() {
             {/* Approved Status */}
             {kycStatus === "APPROVED" && (
               <div className="text-center py-8">
-                <CheckCircle className={`w-16 h-16 mx-auto mb-4 ${isDark ? "text-green-400" : "text-green-500"}`} />
-                <h3 className={`text-xl font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                <CheckCircle
+                  className={`w-16 h-16 mx-auto mb-4 ${isDark ? "text-green-400" : "text-green-500"}`}
+                />
+                <h3
+                  className={`text-xl font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+                >
                   You're all set!
                 </h3>
                 <p className={isDark ? "text-gray-400" : "text-gray-600"}>
@@ -4121,50 +5114,66 @@ export default function SettingsPage() {
         </SettingsModal>
 
         {/* KYC Success Modal */}
-        {showKycSuccessModal && ReactDOM.createPortal(
-          <div className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen flex flex-col items-center justify-center px-6 ${isDark ? "bg-gray-900" : "bg-gradient-to-b from-gray-50 to-white"}`}>
-            {/* Background Gradient Effect */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-[100px] animate-pulse ${isDark ? "bg-green-500/10" : "bg-green-500/20"}`} />
-              <div className={`absolute bottom-1/4 left-1/3 w-[300px] h-[300px] rounded-full blur-[80px] animate-pulse delay-1000 ${isDark ? "bg-orange-500/10" : "bg-orange-500/15"}`} />
-            </div>
-
-            {/* Content */}
-            <div className="relative z-10 w-full max-w-md text-center">
-              {/* Success Icon */}
-              <div className="relative mb-8">
-                <div className="w-24 h-24 mx-auto relative">
-                  {/* Outer ring with 3D shadow */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-b from-green-400 to-green-600 shadow-[0_10px_30px_rgba(34,197,94,0.4),inset_0_-5px_20px_rgba(0,0,0,0.3)] animate-pulse" />
-                  {/* Inner ring */}
-                  <div className={`absolute inset-2 rounded-full flex items-center justify-center ${isDark ? "bg-gray-900 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)]" : "bg-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.1)]"}`}>
-                    <CheckCircle className={`w-12 h-12 ${isDark ? "text-green-400" : "text-green-500"}`} />
-                  </div>
-                </div>
+        {showKycSuccessModal &&
+          ReactDOM.createPortal(
+            <div
+              className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen flex flex-col items-center justify-center px-6 ${isDark ? "bg-gray-900" : "bg-gradient-to-b from-gray-50 to-white"}`}
+            >
+              {/* Background Gradient Effect */}
+              <div className="absolute inset-0 overflow-hidden">
+                <div
+                  className={`absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-[100px] animate-pulse ${isDark ? "bg-green-500/10" : "bg-green-500/20"}`}
+                />
+                <div
+                  className={`absolute bottom-1/4 left-1/3 w-[300px] h-[300px] rounded-full blur-[80px] animate-pulse delay-1000 ${isDark ? "bg-orange-500/10" : "bg-orange-500/15"}`}
+                />
               </div>
 
-              {/* Title */}
-              <h2 className={`text-2xl font-bold mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
-                Verification Submitted!
-              </h2>
-              <p className={`text-sm mb-8 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                Thank you for submitting your documents. We'll review your KYC verification within 24-48 hours and notify you once complete.
-              </p>
+              {/* Content */}
+              <div className="relative z-10 w-full max-w-md text-center">
+                {/* Success Icon */}
+                <div className="relative mb-8">
+                  <div className="w-24 h-24 mx-auto relative">
+                    {/* Outer ring with 3D shadow */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-b from-green-400 to-green-600 shadow-[0_10px_30px_rgba(34,197,94,0.4),inset_0_-5px_20px_rgba(0,0,0,0.3)] animate-pulse" />
+                    {/* Inner ring */}
+                    <div
+                      className={`absolute inset-2 rounded-full flex items-center justify-center ${isDark ? "bg-gray-900 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)]" : "bg-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.1)]"}`}
+                    >
+                      <CheckCircle
+                        className={`w-12 h-12 ${isDark ? "text-green-400" : "text-green-500"}`}
+                      />
+                    </div>
+                  </div>
+                </div>
 
-              {/* Action Button */}
-              <button
-                onClick={() => {
-                  setShowKycSuccessModal(false);
-                  closeModal();
-                }}
-                className="bg-green-600 hover:bg-green-500 px-6 py-2.5 rounded-lg font-medium transition-colors text-white"
-              >
-                Got it
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
+                {/* Title */}
+                <h2
+                  className={`text-2xl font-bold mb-3 ${isDark ? "text-white" : "text-gray-900"}`}
+                >
+                  Verification Submitted!
+                </h2>
+                <p
+                  className={`text-sm mb-8 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                >
+                  Thank you for submitting your documents. We'll review your KYC
+                  verification within 24-48 hours and notify you once complete.
+                </p>
+
+                {/* Action Button */}
+                <button
+                  onClick={() => {
+                    setShowKycSuccessModal(false);
+                    closeModal();
+                  }}
+                  className="bg-green-600 hover:bg-green-500 px-6 py-2.5 rounded-lg font-medium transition-colors text-white"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )}
 
         {/* Email Notifications Modal */}
         <SettingsModal
@@ -4180,18 +5189,30 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              <p className={`text-sm mb-4 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+              <p
+                className={`text-sm mb-4 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+              >
                 Control which email notifications you receive from M4 Capital.
               </p>
 
               {/* Master toggle */}
-              <div className={`p-4 rounded-lg border ${isDark ? "bg-gray-700/50 border-gray-600" : "bg-white border-gray-200"}`}>
-                <div className={`flex items-start justify-between mb-1 pb-3 border-b ${isDark ? "border-gray-600" : "border-gray-200"}`}>
+              <div
+                className={`p-4 rounded-lg border ${isDark ? "bg-gray-700/50 border-gray-600" : "bg-white border-gray-200"}`}
+              >
+                <div
+                  className={`flex items-start justify-between mb-1 pb-3 border-b ${isDark ? "border-gray-600" : "border-gray-200"}`}
+                >
                   <div className="flex items-center gap-3">
-                    <h3 className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}>
+                    <h3
+                      className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
                       Email Notifications
                     </h3>
-                    <span className={`text-xs px-2 py-0.5 rounded ${isDark ? "text-gray-400 bg-gray-800" : "text-gray-500 bg-gray-100"}`}>Main Toggle</span>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded ${isDark ? "text-gray-400 bg-gray-800" : "text-gray-500 bg-gray-100"}`}
+                    >
+                      Main Toggle
+                    </span>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -4201,112 +5222,145 @@ export default function SettingsPage() {
                       onChange={(e) =>
                         handleEmailPreferenceChange(
                           "emailNotifications",
-                          e.target.checked
+                          e.target.checked,
                         )
                       }
                       disabled={savingEmailPrefs}
                     />
-                    <div className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}></div>
+                    <div
+                      className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}
+                    ></div>
                   </label>
                 </div>
-                <p className={`text-sm mb-4 mt-3 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                  Receive all email notifications. Turning this off will
-                  disable all email alerts.
+                <p
+                  className={`text-sm mb-4 mt-3 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                >
+                  Receive all email notifications. Turning this off will disable
+                  all email alerts.
                 </p>
 
-              {/* Sub-toggles */}
-              <div className="space-y-0 -mx-4">
-                {/* KYC Notifications */}
-                <div className={`flex items-start justify-between px-4 py-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
-                  <div>
-                    <h4 className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
-                      KYC Verification
-                    </h4>
-                    <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                      Updates about your identity verification status
-                    </p>
+                {/* Sub-toggles */}
+                <div className="space-y-0 -mx-4">
+                  {/* KYC Notifications */}
+                  <div
+                    className={`flex items-start justify-between px-4 py-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}
+                  >
+                    <div>
+                      <h4
+                        className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        KYC Verification
+                      </h4>
+                      <p
+                        className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        Updates about your identity verification status
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={emailPreferences.kycNotifications}
+                        onChange={(e) =>
+                          handleEmailPreferenceChange(
+                            "kycNotifications",
+                            e.target.checked,
+                          )
+                        }
+                        disabled={
+                          savingEmailPrefs ||
+                          !emailPreferences.emailNotifications
+                        }
+                      />
+                      <div
+                        className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}
+                      ></div>
+                    </label>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={emailPreferences.kycNotifications}
-                      onChange={(e) =>
-                        handleEmailPreferenceChange(
-                          "kycNotifications",
-                          e.target.checked
-                        )
-                      }
-                      disabled={
-                        savingEmailPrefs || !emailPreferences.emailNotifications
-                      }
-                    />
-                    <div className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}></div>
-                  </label>
-                </div>
 
-                {/* Trading Notifications */}
-                <div className={`flex items-start justify-between px-4 py-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
-                  <div>
-                    <h4 className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
-                      Trading & Transactions
-                    </h4>
-                    <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                      Alerts for deposits, withdrawals, and trade executions
-                    </p>
+                  {/* Trading Notifications */}
+                  <div
+                    className={`flex items-start justify-between px-4 py-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}
+                  >
+                    <div>
+                      <h4
+                        className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Trading & Transactions
+                      </h4>
+                      <p
+                        className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        Alerts for deposits, withdrawals, and trade executions
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={emailPreferences.tradingNotifications}
+                        onChange={(e) =>
+                          handleEmailPreferenceChange(
+                            "tradingNotifications",
+                            e.target.checked,
+                          )
+                        }
+                        disabled={
+                          savingEmailPrefs ||
+                          !emailPreferences.emailNotifications
+                        }
+                      />
+                      <div
+                        className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}
+                      ></div>
+                    </label>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={emailPreferences.tradingNotifications}
-                      onChange={(e) =>
-                        handleEmailPreferenceChange(
-                          "tradingNotifications",
-                          e.target.checked
-                        )
-                      }
-                      disabled={
-                        savingEmailPrefs || !emailPreferences.emailNotifications
-                      }
-                    />
-                    <div className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}></div>
-                  </label>
-                </div>
 
-                {/* Security Notifications */}
-                <div className={`flex items-start justify-between px-4 py-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
-                  <div>
-                    <h4 className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
-                      Security Alerts
-                    </h4>
-                    <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                      Important security notifications and account changes
-                    </p>
+                  {/* Security Notifications */}
+                  <div
+                    className={`flex items-start justify-between px-4 py-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}
+                  >
+                    <div>
+                      <h4
+                        className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Security Alerts
+                      </h4>
+                      <p
+                        className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        Important security notifications and account changes
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={emailPreferences.securityNotifications}
+                        onChange={(e) =>
+                          handleEmailPreferenceChange(
+                            "securityNotifications",
+                            e.target.checked,
+                          )
+                        }
+                        disabled={
+                          savingEmailPrefs ||
+                          !emailPreferences.emailNotifications
+                        }
+                      />
+                      <div
+                        className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}
+                      ></div>
+                    </label>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={emailPreferences.securityNotifications}
-                      onChange={(e) =>
-                        handleEmailPreferenceChange(
-                          "securityNotifications",
-                          e.target.checked
-                        )
-                      }
-                      disabled={
-                        savingEmailPrefs || !emailPreferences.emailNotifications
-                      }
-                    />
-                    <div className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}></div>
-                  </label>
                 </div>
-              </div>
               </div>
 
               {savingEmailPrefs && (
-                <div className={`text-sm flex items-center gap-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                <div
+                  className={`text-sm flex items-center gap-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                >
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
                   Saving preferences...
                 </div>
@@ -4338,11 +5392,15 @@ export default function SettingsPage() {
                     height={40}
                     className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
                   />
-                  <h3 className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <h3
+                    className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
                     Connect your Telegram account
                   </h3>
                 </div>
-                <p className={`text-sm mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                <p
+                  className={`text-sm mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                >
                   Link your M4 Capital account to Telegram to receive instant
                   notifications, view your portfolio, and get real-time price
                   alerts directly in Telegram.
@@ -4352,31 +5410,39 @@ export default function SettingsPage() {
               {!telegramLinked ? (
                 <>
                   {/* Linking Instructions */}
-                  <div className={`rounded-lg p-3 border ${isDark ? "bg-gray-700/50 border-gray-600" : "bg-gray-50 border-gray-200"}`}>
-                    <h4 className={`font-medium mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <div
+                    className={`rounded-lg p-3 border ${isDark ? "bg-gray-700/50 border-gray-600" : "bg-gray-50 border-gray-200"}`}
+                  >
+                    <h4
+                      className={`font-medium mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
                       How to link:
                     </h4>
-                    <ol className={`space-y-1.5 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                    <ol
+                      className={`space-y-1.5 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                    >
                       <li className="flex gap-2">
                         <span className="font-semibold text-blue-400">1.</span>
                         <span>
                           Click{" "}
-                          <a 
-                            href="https://t.me/m4capital_bot" 
-                            target="_blank" 
+                          <a
+                            href="https://t.me/m4capital_bot"
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-400 hover:text-blue-300 underline font-medium"
                           >
                             here
-                          </a>
-                          {" "}to open our Telegram bot
+                          </a>{" "}
+                          to open our Telegram bot
                         </span>
                       </li>
                       <li className="flex gap-2">
                         <span className="font-semibold text-blue-400">2.</span>
                         <span>
                           Send the command{" "}
-                          <span className={`font-mono px-2 py-0.5 rounded ${isDark ? "bg-gray-800" : "bg-gray-200"}`}>
+                          <span
+                            className={`font-mono px-2 py-0.5 rounded ${isDark ? "bg-gray-800" : "bg-gray-200"}`}
+                          >
                             /link
                           </span>
                         </span>
@@ -4446,17 +5512,25 @@ export default function SettingsPage() {
               ) : (
                 <>
                   {/* Linked Status */}
-                  <div className={`rounded-lg p-4 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}>
+                  <div
+                    className={`rounded-lg p-4 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}
+                  >
                     <div className="flex items-start gap-3">
                       <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <h3 className={`font-semibold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <h3
+                          className={`font-semibold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           Telegram Connected
                         </h3>
-                        <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                        <p
+                          className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                        >
                           Your account is linked to{" "}
                           {telegramUsername ? (
-                            <span className={`font-mono px-2 py-0.5 rounded ${isDark ? "bg-gray-800" : "bg-gray-200"}`}>
+                            <span
+                              className={`font-mono px-2 py-0.5 rounded ${isDark ? "bg-gray-800" : "bg-gray-200"}`}
+                            >
                               @{telegramUsername}
                             </span>
                           ) : (
@@ -4468,11 +5542,17 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Features Available */}
-                  <div className={`rounded-lg p-4 ${isDark ? "bg-gray-700/30" : "bg-gray-50"}`}>
-                    <h4 className={`font-medium mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <div
+                    className={`rounded-lg p-4 ${isDark ? "bg-gray-700/30" : "bg-gray-50"}`}
+                  >
+                    <h4
+                      className={`font-medium mb-3 ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
                       What you can do in Telegram:
                     </h4>
-                    <ul className={`space-y-2 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                    <ul
+                      className={`space-y-2 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                    >
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-green-400" />
                         <span>View your portfolio balance and holdings</span>
@@ -4520,7 +5600,9 @@ export default function SettingsPage() {
           <div className="space-y-4">
             {/* Theme Preference */}
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+              >
                 Theme
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -4529,7 +5611,7 @@ export default function SettingsPage() {
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 ${
                     theme === "light"
                       ? "bg-blue-500/20 border-2 border-blue-500 text-blue-600"
-                      : isDark 
+                      : isDark
                         ? "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
                         : "bg-gray-100 border-2 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
@@ -4542,7 +5624,7 @@ export default function SettingsPage() {
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 ${
                     theme === "dark"
                       ? "bg-blue-500/20 border-2 border-blue-500 text-blue-600"
-                      : isDark 
+                      : isDark
                         ? "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
                         : "bg-gray-100 border-2 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
@@ -4555,7 +5637,7 @@ export default function SettingsPage() {
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 ${
                     theme === "system"
                       ? "bg-blue-500/20 border-2 border-blue-500 text-blue-600"
-                      : isDark 
+                      : isDark
                         ? "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
                         : "bg-gray-100 border-2 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
@@ -4564,7 +5646,9 @@ export default function SettingsPage() {
                   <span className="text-xs font-medium">System</span>
                 </button>
               </div>
-              <p className={`text-xs mt-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <p
+                className={`text-xs mt-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+              >
                 {theme === "system"
                   ? `Using system preference (currently ${resolvedTheme})`
                   : `Currently using ${theme} theme`}
@@ -4573,7 +5657,9 @@ export default function SettingsPage() {
 
             {/* Language Preference */}
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+              >
                 Preferred Language
               </label>
               <div className="relative">
@@ -4591,9 +5677,13 @@ export default function SettingsPage() {
                     </option>
                   ))}
                 </select>
-                <Globe className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                <Globe
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                />
               </div>
-              <p className={`text-xs mt-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <p
+                className={`text-xs mt-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+              >
                 This will be used for displaying content throughout the
                 platform.
               </p>
@@ -4601,11 +5691,15 @@ export default function SettingsPage() {
 
             {/* Currency Preference */}
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+              >
                 Preferred Currency
               </label>
               {loadingCurrency ? (
-                <div className={`animate-pulse h-10 rounded-lg ${isDark ? "bg-gray-700" : "bg-gray-200"}`}></div>
+                <div
+                  className={`animate-pulse h-10 rounded-lg ${isDark ? "bg-gray-700" : "bg-gray-200"}`}
+                ></div>
               ) : (
                 <CurrencySelector
                   value={preferredCurrency}
@@ -4613,7 +5707,9 @@ export default function SettingsPage() {
                   disabled={savingCurrency}
                 />
               )}
-              <p className={`text-xs mt-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <p
+                className={`text-xs mt-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+              >
                 This will be used for displaying balances and portfolio values
                 throughout the platform.
               </p>
@@ -4631,14 +5727,21 @@ export default function SettingsPage() {
         >
           <div className="space-y-4">
             {/* Download Account Data */}
-            <div className={`rounded-lg p-4 border ${isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white border-gray-200"}`}>
+            <div
+              className={`rounded-lg p-4 border ${isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white border-gray-200"}`}
+            >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className={`text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <h3
+                    className={`text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
                     Download Your Data
                   </h3>
-                  <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                    Export all your account information, portfolio history, and transaction records
+                  <p
+                    className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                  >
+                    Export all your account information, portfolio history, and
+                    transaction records
                   </p>
                 </div>
               </div>
@@ -4647,7 +5750,7 @@ export default function SettingsPage() {
                   try {
                     const response = await fetch("/api/user/export-data");
                     if (!response.ok) throw new Error("Failed to export data");
-                    
+
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement("a");
@@ -4657,7 +5760,7 @@ export default function SettingsPage() {
                     a.click();
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
-                    
+
                     showSuccess("Data exported successfully");
                   } catch (error) {
                     showError("Failed to export data");
@@ -4670,14 +5773,21 @@ export default function SettingsPage() {
             </div>
 
             {/* Delete Account */}
-            <div className={`rounded-lg p-4 border ${isDark ? "bg-gray-800/50 border-red-900/30" : "bg-red-50 border-red-200"}`}>
+            <div
+              className={`rounded-lg p-4 border ${isDark ? "bg-gray-800/50 border-red-900/30" : "bg-red-50 border-red-200"}`}
+            >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className={`text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <h3
+                    className={`text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
                     Delete Account
                   </h3>
-                  <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                    Submit a request to permanently delete your account. Our team will review your request.
+                  <p
+                    className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                  >
+                    Submit a request to permanently delete your account. Our
+                    team will review your request.
                   </p>
                 </div>
               </div>
@@ -4690,31 +5800,42 @@ export default function SettingsPage() {
             </div>
 
             {/* Privacy & Consent */}
-            <div className={`rounded-lg p-4 border ${isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white border-gray-200"}`}>
-              <h3 className={`text-sm font-medium mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
+            <div
+              className={`rounded-lg p-4 border ${isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white border-gray-200"}`}
+            >
+              <h3
+                className={`text-sm font-medium mb-3 ${isDark ? "text-white" : "text-gray-900"}`}
+              >
                 Privacy & Consent
               </h3>
-              <div className={`space-y-3 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <div
+                className={`space-y-3 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+              >
                 <div className="flex items-start space-x-2">
                   <div className="w-1 h-1 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
                   <p>
-                    We collect and process your data in accordance with GDPR and other applicable privacy regulations.
+                    We collect and process your data in accordance with GDPR and
+                    other applicable privacy regulations.
                   </p>
                 </div>
                 <div className="flex items-start space-x-2">
                   <div className="w-1 h-1 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
                   <p>
-                    Your data is encrypted at rest and in transit. We never sell your personal information to third parties.
+                    Your data is encrypted at rest and in transit. We never sell
+                    your personal information to third parties.
                   </p>
                 </div>
                 <div className="flex items-start space-x-2">
                   <div className="w-1 h-1 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
                   <p>
-                    You have the right to access, rectify, or delete your personal data at any time.
+                    You have the right to access, rectify, or delete your
+                    personal data at any time.
                   </p>
                 </div>
               </div>
-              <div className={`mt-4 pt-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
+              <div
+                className={`mt-4 pt-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}
+              >
                 <a
                   href="/privacy"
                   target="_blank"
@@ -4723,7 +5844,11 @@ export default function SettingsPage() {
                 >
                   Read our Privacy Policy
                 </a>
-                <span className={`mx-2 ${isDark ? "text-gray-600" : "text-gray-400"}`}>•</span>
+                <span
+                  className={`mx-2 ${isDark ? "text-gray-600" : "text-gray-400"}`}
+                >
+                  •
+                </span>
                 <a
                   href="/terms"
                   target="_blank"
@@ -4750,7 +5875,9 @@ export default function SettingsPage() {
         {/* Phone Verification Modal */}
         {showPhoneVerification &&
           ReactDOM.createPortal(
-            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[120] min-h-screen w-screen flex items-center justify-center px-4 ${isDark ? "bg-gray-900" : "bg-gray-100"}`}>
+            <div
+              className={`fixed top-0 left-0 right-0 bottom-0 z-[120] min-h-screen w-screen flex items-center justify-center px-4 ${isDark ? "bg-gray-900" : "bg-gray-100"}`}
+            >
               <div className="w-full max-w-md">
                 {/* Card */}
                 <div
@@ -4762,7 +5889,9 @@ export default function SettingsPage() {
                     boxShadow: isDark
                       ? "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
                       : "0 10px 40px -10px rgba(0, 0, 0, 0.15)",
-                    border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+                    border: isDark
+                      ? "1px solid rgba(255, 255, 255, 0.08)"
+                      : "1px solid rgba(0, 0, 0, 0.08)",
                   }}
                 >
                   {/* Close Button */}
@@ -4781,19 +5910,28 @@ export default function SettingsPage() {
                     <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Smartphone className="w-8 h-8 text-white" />
                     </div>
-                    <h2 className={`text-2xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                    <h2
+                      className={`text-2xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
                       Verify Phone Number
                     </h2>
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    <p
+                      className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    >
                       Enter the 6-digit code sent to
                     </p>
-                    <p className={`font-medium mt-1 ${isDark ? "text-white" : "text-gray-900"}`}>{phoneNumber}</p>
+                    <p
+                      className={`font-medium mt-1 ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
+                      {phoneNumber}
+                    </p>
                   </div>
 
                   {devVerificationCode && (
                     <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                       <p className="text-xs text-yellow-500 text-center">
-                        Development Mode: Code is <strong>{devVerificationCode}</strong>
+                        Development Mode: Code is{" "}
+                        <strong>{devVerificationCode}</strong>
                       </p>
                     </div>
                   )}
@@ -4853,110 +5991,131 @@ export default function SettingsPage() {
                     </button>
                   </div>
 
-                  <p className={`text-xs text-center mt-4 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                  <p
+                    className={`text-xs text-center mt-4 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                  >
                     Didn't receive the code? Check your phone and try resending.
                   </p>
                 </div>
               </div>
             </div>,
-            document.body
+            document.body,
           )}
 
-      {/* Account Deletion Request Modal */}
-      {showDeletionModal &&
-        ReactDOM.createPortal(
-          <div className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen backdrop-blur-sm flex items-center justify-center p-4 ${isDark ? "bg-gray-900/95" : "bg-gray-100/95"}`}>
-            <div className={`rounded-xl border max-w-md w-full p-6 ${isDark ? "bg-gray-800 border-red-900/30" : "bg-white border-red-200"}`}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Request Account Deletion</h2>
-                <button
-                  onClick={() => {
-                    setShowDeletionModal(false);
-                    setDeletionReason("");
-                  }}
-                  className={`transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <p className="text-xs text-red-400">
-                  This will submit a request to delete your account. Our team will review and process your request within 24-48 hours.
-                </p>
-              </div>
-
-              <div className="mb-4">
-                <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
-                  Reason for Deletion <span className="text-red-400">*</span>
-                </label>
-                <textarea
-                  value={deletionReason}
-                  onChange={(e) => setDeletionReason(e.target.value)}
-                  placeholder="Please tell us why you want to delete your account..."
-                  rows={4}
-                  className={`w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-red-500 resize-none border ${isDark ? "bg-gray-900 border-gray-700 text-white placeholder-gray-500" : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"}`}
-                  maxLength={500}
-                />
-                <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                  {deletionReason.length}/500 characters
-                </p>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowDeletionModal(false);
-                    setDeletionReason("");
-                  }}
-                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
-                  disabled={submittingDeletion}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    if (!deletionReason.trim()) {
-                      showError("Please provide a reason for deletion");
-                      return;
-                    }
-
-                    setSubmittingDeletion(true);
-                    try {
-                      const response = await fetch("/api/user/request-deletion", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ reason: deletionReason }),
-                      });
-
-                      if (!response.ok) throw new Error("Failed to submit deletion request");
-
-                      showSuccess("Deletion request submitted successfully. You will receive a confirmation email.");
+        {/* Account Deletion Request Modal */}
+        {showDeletionModal &&
+          ReactDOM.createPortal(
+            <div
+              className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen backdrop-blur-sm flex items-center justify-center p-4 ${isDark ? "bg-gray-900/95" : "bg-gray-100/95"}`}
+            >
+              <div
+                className={`rounded-xl border max-w-md w-full p-6 ${isDark ? "bg-gray-800 border-red-900/30" : "bg-white border-red-200"}`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2
+                    className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
+                    Request Account Deletion
+                  </h2>
+                  <button
+                    onClick={() => {
                       setShowDeletionModal(false);
                       setDeletionReason("");
-                    } catch (error) {
-                      showError("Failed to submit deletion request");
-                    } finally {
-                      setSubmittingDeletion(false);
-                    }
-                  }}
-                  disabled={submittingDeletion || !deletionReason.trim()}
-                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  {submittingDeletion ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    "Submit Request"
-                  )}
-                </button>
+                    }}
+                    className={`transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <p className="text-xs text-red-400">
+                    This will submit a request to delete your account. Our team
+                    will review and process your request within 24-48 hours.
+                  </p>
+                </div>
+
+                <div className="mb-4">
+                  <label
+                    className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}
+                  >
+                    Reason for Deletion <span className="text-red-400">*</span>
+                  </label>
+                  <textarea
+                    value={deletionReason}
+                    onChange={(e) => setDeletionReason(e.target.value)}
+                    placeholder="Please tell us why you want to delete your account..."
+                    rows={4}
+                    className={`w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-red-500 resize-none border ${isDark ? "bg-gray-900 border-gray-700 text-white placeholder-gray-500" : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"}`}
+                    maxLength={500}
+                  />
+                  <p
+                    className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                  >
+                    {deletionReason.length}/500 characters
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeletionModal(false);
+                      setDeletionReason("");
+                    }}
+                    className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
+                    disabled={submittingDeletion}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!deletionReason.trim()) {
+                        showError("Please provide a reason for deletion");
+                        return;
+                      }
+
+                      setSubmittingDeletion(true);
+                      try {
+                        const response = await fetch(
+                          "/api/user/request-deletion",
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ reason: deletionReason }),
+                          },
+                        );
+
+                        if (!response.ok)
+                          throw new Error("Failed to submit deletion request");
+
+                        showSuccess(
+                          "Deletion request submitted successfully. You will receive a confirmation email.",
+                        );
+                        setShowDeletionModal(false);
+                        setDeletionReason("");
+                      } catch (error) {
+                        showError("Failed to submit deletion request");
+                      } finally {
+                        setSubmittingDeletion(false);
+                      }
+                    }}
+                    disabled={submittingDeletion || !deletionReason.trim()}
+                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    {submittingDeletion ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Request"
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>,
-          document.body
-        )}
+            </div>,
+            document.body,
+          )}
       </div>
     </>
   );

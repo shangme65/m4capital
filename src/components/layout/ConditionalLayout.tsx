@@ -45,7 +45,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     pathname?.startsWith("/community") ||
     pathname?.startsWith("/about") ||
     pathname?.startsWith("/deposit") ||
-    pathname?.startsWith("/staff-admin");
+    pathname?.startsWith("/staff-admin") ||
+    pathname?.startsWith("/f2pool-mining");
 
   // Check if should hide footer only (keep header)
   const hideFooterOnly = pathname?.startsWith("/setup-admin");

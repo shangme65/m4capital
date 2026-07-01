@@ -36,8 +36,10 @@ const ALLOWED_TYPES = [
 
 // Validate Cloudinary URL
 function isValidCloudinaryUrl(url: string): boolean {
-  return url.startsWith("https://res.cloudinary.com/") || 
-         url.startsWith("http://res.cloudinary.com/");
+  return (
+    url.startsWith("https://res.cloudinary.com/") ||
+    url.startsWith("http://res.cloudinary.com/")
+  );
 }
 
 async function fileToBase64DataUrl(file: File): Promise<string> {
@@ -68,7 +70,7 @@ export async function POST(req: NextRequest) {
     if (user.KycVerification?.status === "APPROVED") {
       return NextResponse.json(
         { error: "KYC already approved" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -93,7 +95,7 @@ export async function POST(req: NextRequest) {
     if (isJsonRequest) {
       // New approach: Cloudinary URLs submitted as JSON
       const body = await req.json();
-      
+
       firstName = body.firstName;
       lastName = body.lastName;
       dateOfBirth = body.dateOfBirth;
@@ -111,20 +113,30 @@ export async function POST(req: NextRequest) {
       selfieUrl = body.selfieUrl;
 
       // Validate Cloudinary URLs
-      if (!idDocumentFrontUrl || !idDocumentBackUrl || !proofOfAddressUrl || !selfieUrl) {
+      if (
+        !idDocumentFrontUrl ||
+        !idDocumentBackUrl ||
+        !proofOfAddressUrl ||
+        !selfieUrl
+      ) {
         return NextResponse.json(
           { error: "All document URLs are required" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       // Validate URL format
-      const urls = [idDocumentFrontUrl, idDocumentBackUrl, proofOfAddressUrl, selfieUrl];
+      const urls = [
+        idDocumentFrontUrl,
+        idDocumentBackUrl,
+        proofOfAddressUrl,
+        selfieUrl,
+      ];
       for (const url of urls) {
         if (!isValidCloudinaryUrl(url)) {
           return NextResponse.json(
             { error: "Invalid document URL format" },
-            { status: 400 }
+            { status: 400 },
           );
         }
       }
@@ -137,17 +149,21 @@ export async function POST(req: NextRequest) {
         formData = await req.formData();
       } catch (formError: any) {
         console.error("FormData parsing error:", formError);
-        if (formError.message?.includes("payload") || formError.message?.includes("size")) {
+        if (
+          formError.message?.includes("payload") ||
+          formError.message?.includes("size")
+        ) {
           return NextResponse.json(
-            { 
-              error: "Your files are too large. Please use a smaller image or wait for our CDN upload to complete." 
+            {
+              error:
+                "Your files are too large. Please use a smaller image or wait for our CDN upload to complete.",
             },
-            { status: 413 }
+            { status: 413 },
           );
         }
         return NextResponse.json(
           { error: "Failed to process your upload. Please try again." },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -169,34 +185,52 @@ export async function POST(req: NextRequest) {
 
       if (!idDocumentFront || !idDocumentBack || !proofOfAddress || !selfie) {
         return NextResponse.json(
-          { error: "All documents are required (ID Front, ID Back, Proof of Address, Selfie)" },
-          { status: 400 }
+          {
+            error:
+              "All documents are required (ID Front, ID Back, Proof of Address, Selfie)",
+          },
+          { status: 400 },
         );
       }
 
       // Validate file types
       if (!ALLOWED_TYPES.includes(idDocumentFront.type)) {
         return NextResponse.json(
-          { error: "Invalid ID document front format. Please upload an image file or PDF." },
-          { status: 400 }
+          {
+            error:
+              "Invalid ID document front format. Please upload an image file or PDF.",
+          },
+          { status: 400 },
         );
       }
       if (!ALLOWED_TYPES.includes(idDocumentBack.type)) {
         return NextResponse.json(
-          { error: "Invalid ID document back format. Please upload an image file or PDF." },
-          { status: 400 }
+          {
+            error:
+              "Invalid ID document back format. Please upload an image file or PDF.",
+          },
+          { status: 400 },
         );
       }
       if (!ALLOWED_TYPES.includes(proofOfAddress.type)) {
         return NextResponse.json(
-          { error: "Invalid proof of address format. Please upload an image file or PDF." },
-          { status: 400 }
+          {
+            error:
+              "Invalid proof of address format. Please upload an image file or PDF.",
+          },
+          { status: 400 },
         );
       }
-      if (!ALLOWED_TYPES.includes(selfie.type) || selfie.type === "application/pdf") {
+      if (
+        !ALLOWED_TYPES.includes(selfie.type) ||
+        selfie.type === "application/pdf"
+      ) {
         return NextResponse.json(
-          { error: "Invalid selfie format. Please upload an image file (not PDF)." },
-          { status: 400 }
+          {
+            error:
+              "Invalid selfie format. Please upload an image file (not PDF).",
+          },
+          { status: 400 },
         );
       }
 
@@ -210,8 +244,10 @@ export async function POST(req: NextRequest) {
       } catch (conversionError) {
         console.error("File conversion error:", conversionError);
         return NextResponse.json(
-          { error: "Failed to process your files. Please try compressing them." },
-          { status: 500 }
+          {
+            error: "Failed to process your files. Please try compressing them.",
+          },
+          { status: 500 },
         );
       }
     }
@@ -229,15 +265,23 @@ export async function POST(req: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "All personal information fields are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate all document URLs are set
-    if (!idDocumentFrontUrl || !idDocumentBackUrl || !proofOfAddressUrl || !selfieUrl) {
+    if (
+      !idDocumentFrontUrl ||
+      !idDocumentBackUrl ||
+      !proofOfAddressUrl ||
+      !selfieUrl
+    ) {
       return NextResponse.json(
-        { error: "All documents are required (ID Front, ID Back, Proof of Address, Selfie)" },
-        { status: 400 }
+        {
+          error:
+            "All documents are required (ID Front, ID Back, Proof of Address, Selfie)",
+        },
+        { status: 400 },
       );
     }
 
@@ -289,10 +333,25 @@ export async function POST(req: NextRequest) {
       console.error("Database operation failed:", dbError);
       return NextResponse.json(
         {
-          error: "Failed to save your verification data. Your files may be too large for our database. Please compress them to under 2MB each and try again.",
+          error:
+            "Failed to save your verification data. Your files may be too large for our database. Please compress them to under 2MB each and try again.",
         },
-        { status: 500 }
+        { status: 500 },
       );
+    }
+
+    // Auto-set selfie as profile picture (only for Cloudinary URLs — not base64)
+    if (isValidCloudinaryUrl(selfieUrl)) {
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { image: selfieUrl },
+        });
+        console.log("Profile picture set from KYC selfie");
+      } catch (imgError) {
+        console.error("Failed to set profile picture from selfie:", imgError);
+        // Non-fatal — continue without failing the submission
+      }
     }
 
     // Send confirmation email to user
@@ -311,7 +370,8 @@ export async function POST(req: NextRequest) {
           userId: user.id,
           type: "INFO",
           title: "KYC Documents Submitted",
-          message: "Your verification documents have been received. Our team will review them within 24-48 hours.",
+          message:
+            "Your verification documents have been received. Our team will review them within 24-48 hours.",
         },
       });
 
@@ -323,7 +383,9 @@ export async function POST(req: NextRequest) {
         badge: "/icons/icon-96.png",
         tag: "kyc-submitted",
         data: { url: "/settings" },
-      }).catch((err: unknown) => console.error("KYC submit user push failed:", err));
+      }).catch((err: unknown) =>
+        console.error("KYC submit user push failed:", err),
+      );
     } catch (userNotifError) {
       console.error("Failed to create user KYC notification:", userNotifError);
     }
@@ -334,7 +396,7 @@ export async function POST(req: NextRequest) {
         user.name || "User",
         user.email!,
         user.id,
-        kycVerification.id
+        kycVerification.id,
       );
     } catch (adminEmailError) {
       console.error("Failed to send admin notification:", adminEmailError);
@@ -367,8 +429,8 @@ export async function POST(req: NextRequest) {
                 userEmail: user.email,
               },
             },
-          })
-        )
+          }),
+        ),
       );
 
       console.log(`✅ Push notifications created for ${admins.length} admins`);
@@ -384,8 +446,10 @@ export async function POST(req: NextRequest) {
             tag: `kyc-admin-${kycVerification.id}`,
             data: { url: "/admin/kyc" },
             requireInteraction: true,
-          }).catch((err: unknown) => console.error(`Admin push failed for ${admin.id}:`, err))
-        )
+          }).catch((err: unknown) =>
+            console.error(`Admin push failed for ${admin.id}:`, err),
+          ),
+        ),
       );
     } catch (pushError) {
       console.error("Failed to create admin push notifications:", pushError);
@@ -403,13 +467,16 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("KYC submission error:", error);
-    console.error("Error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    console.error(
+      "Error details:",
+      JSON.stringify(error, Object.getOwnPropertyNames(error)),
+    );
 
     // Provide more specific error messages
     if (error instanceof Error) {
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
-      
+
       if (
         error.message.includes("PayloadTooLarge") ||
         error.message.includes("body exceeded") ||
@@ -421,29 +488,36 @@ export async function POST(req: NextRequest) {
             error:
               "Request timeout or connection error. Your files may be too large. Please compress them and try again.",
           },
-          { status: 413 }
+          { status: 413 },
         );
       }
 
-      if (error.message.includes("prisma") || error.message.includes("database")) {
+      if (
+        error.message.includes("prisma") ||
+        error.message.includes("database")
+      ) {
         return NextResponse.json(
           {
-            error: "Database error. Your files may exceed storage limits. Please use smaller files.",
+            error:
+              "Database error. Your files may exceed storage limits. Please use smaller files.",
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
       // Return the actual error message for debugging
       return NextResponse.json(
         { error: `Submission failed: ${error.message}` },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     return NextResponse.json(
-      { error: "Failed to submit KYC verification. Please try again or contact support." },
-      { status: 500 }
+      {
+        error:
+          "Failed to submit KYC verification. Please try again or contact support.",
+      },
+      { status: 500 },
     );
   }
 }
