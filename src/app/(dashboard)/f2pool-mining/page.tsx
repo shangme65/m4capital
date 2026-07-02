@@ -33,6 +33,10 @@ import {
   X,
   Calculator,
   Server,
+  Home,
+  Gift,
+  Menu,
+  HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -208,48 +212,95 @@ function CircularProgress({
 function HashrateChart({ isDark }: { isDark: boolean }) {
   const [activePoint, setActivePoint] = useState<number | null>(null);
   const [timeRange, setTimeRange] = useState("7 Days");
-  const W = 500;
-  const H = 160;
-  const pad = { top: 16, right: 20, bottom: 32, left: 44 };
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // Compact dimensions — ratio ≈ 560:185 → paddingTop ~33%
+  const W = 560;
+  const H = 185;
+  const pad = { top: 20, right: 20, bottom: 30, left: 54 };
 
   const data = HASHRATE_DATA;
-  const maxVal = Math.max(...data.map((d) => d.value)) * 1.15;
-  const minVal = 0;
+
+  // Fixed, clean Y-axis values
+  const Y_MAX = 160;
+  const Y_TICKS = [0, 40, 80, 120];
 
   const toX = (i: number) =>
     pad.left + (i / (data.length - 1)) * (W - pad.left - pad.right);
   const toY = (v: number) =>
-    pad.top + ((maxVal - v) / (maxVal - minVal)) * (H - pad.top - pad.bottom);
+    pad.top + ((Y_MAX - v) / Y_MAX) * (H - pad.top - pad.bottom);
 
-  const pathD = data
-    .map((d, i) => `${i === 0 ? "M" : "L"} ${toX(i)} ${toY(d.value)}`)
-    .join(" ");
+  const pts = data.map((d, i) => ({ x: toX(i), y: toY(d.value), ...d }));
 
-  const areaD =
-    pathD +
-    ` L ${toX(data.length - 1)} ${H - pad.bottom} L ${toX(0)} ${H - pad.bottom} Z`;
+  // Catmull-Rom → cubic Bézier
+  const smoothPath = (points: { x: number; y: number }[]) => {
+    let d = `M ${points[0].x.toFixed(2)},${points[0].y.toFixed(2)}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(i - 1, 0)];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[Math.min(i + 2, points.length - 1)];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`;
+    }
+    return d;
+  };
 
-  const gridLines = [0, 40, 80, 120, 160].filter((v) => v <= maxVal);
+  const linePath = smoothPath(pts);
+  const lastPt = pts[pts.length - 1];
+  const areaPath =
+    linePath +
+    ` L ${lastPt.x},${H - pad.bottom} L ${pts[0].x},${H - pad.bottom} Z`;
+
+  // Full-chart mouse tracking: converts pixel → SVG coords
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const svgX = ((e.clientX - rect.left) / rect.width) * W;
+    const chartW = W - pad.left - pad.right;
+    const relX = Math.max(0, Math.min(chartW, svgX - pad.left));
+    const idx = Math.round((relX / chartW) * (data.length - 1));
+    setActivePoint(Math.max(0, Math.min(data.length - 1, idx)));
+  };
+
+  const activePt = activePoint !== null ? pts[activePoint] : null;
+  const activeData = activePoint !== null ? data[activePoint] : null;
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
-        <h3
-          className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
+      {/* ── Compact header ── */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <h3
+            className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}
+          >
+            Hashrate Chart
+          </h3>
+          {/* Live indicator */}
+          <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[9px] font-bold text-green-500 uppercase tracking-wide">
+              Live
+            </span>
+          </span>
+        </div>
+        <div
+          className={`flex p-0.5 rounded-lg ${isDark ? "bg-gray-700/50" : "bg-gray-100"}`}
         >
-          Hashrate Chart
-        </h3>
-        <div className="flex gap-2">
           {["24H", "7 Days", "30 Days"].map((r) => (
             <button
               key={r}
               onClick={() => setTimeRange(r)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
                 timeRange === r
-                  ? "bg-orange-500 text-white"
+                  ? "bg-orange-500 text-white shadow-sm"
                   : isDark
-                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "text-gray-400 hover:text-white"
+                    : "text-gray-500 hover:text-gray-700"
               }`}
             >
               {r}
@@ -258,109 +309,362 @@ function HashrateChart({ isDark }: { isDark: boolean }) {
         </div>
       </div>
 
-      <div className="relative w-full" style={{ paddingTop: "35%" }}>
+      {/* ── SVG chart (fixed aspect ratio for undistorted text) ── */}
+      <div className="relative w-full" style={{ aspectRatio: `${W} / ${H}` }}>
         <svg
+          ref={svgRef}
           viewBox={`0 0 ${W} ${H}`}
-          className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="none"
+          className="absolute inset-0 w-full h-full cursor-crosshair"
+          preserveAspectRatio="xMidYMid meet"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setActivePoint(null)}
         >
           <defs>
-            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F97316" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#F97316" stopOpacity="0.01" />
+            <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#F97316" stopOpacity="0.18" />
+              <stop offset="60%" stopColor="#F97316" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#F97316" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient
+              id="lineStroke"
+              x1={pts[0].x}
+              y1="0"
+              x2={lastPt.x}
+              y2="0"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor="#FB923C" stopOpacity="0.4" />
+              <stop offset="50%" stopColor="#F97316" />
+              <stop offset="100%" stopColor="#EA580C" />
             </linearGradient>
           </defs>
 
-          {/* Grid lines */}
-          {[0.25, 0.5, 0.75, 1].map((frac) => {
-            const y = pad.top + frac * (H - pad.top - pad.bottom);
-            const val = Math.round(maxVal * (1 - frac));
+          {/* ── Y-axis grid + labels ── */}
+          {Y_TICKS.map((tick) => {
+            const y = toY(tick);
             return (
-              <g key={frac}>
+              <g key={tick}>
                 <line
                   x1={pad.left}
                   y1={y}
                   x2={W - pad.right}
                   y2={y}
-                  stroke={isDark ? "#374151" : "#E5E7EB"}
+                  stroke={isDark ? "#1E2A3A" : "#F0F4F8"}
                   strokeWidth="1"
-                  strokeDasharray="4 4"
                 />
                 <text
-                  x={pad.left - 6}
+                  x={pad.left - 7}
                   y={y + 4}
                   textAnchor="end"
                   fontSize="9"
-                  fill={isDark ? "#6B7280" : "#9CA3AF"}
+                  fontFamily="monospace"
+                  fill={isDark ? "#3D4F66" : "#C4CDDA"}
                 >
-                  {val}
+                  {tick}
                 </text>
               </g>
             );
           })}
 
-          {/* Area fill */}
-          <path d={areaD} fill="url(#areaGrad)" />
+          {/* Y-axis unit label */}
+          <text
+            x={pad.left - 7}
+            y={pad.top - 6}
+            textAnchor="end"
+            fontSize="8"
+            fontWeight="600"
+            fill={isDark ? "#4B6280" : "#94A3B8"}
+          >
+            PH/s
+          </text>
 
-          {/* Line */}
-          <path
-            d={pathD}
+          {/* Left border line */}
+          <line
+            x1={pad.left}
+            y1={pad.top}
+            x2={pad.left}
+            y2={H - pad.bottom}
+            stroke={isDark ? "#1E2A3A" : "#F0F4F8"}
+            strokeWidth="1"
+          />
+
+          {/* ── Area fill ── */}
+          <motion.path
+            d={areaPath}
+            fill="url(#areaFill)"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.5 }}
+          />
+
+          {/* ── Line glow ── */}
+          <motion.path
+            d={linePath}
             fill="none"
-            stroke="#F97316"
+            stroke="url(#lineStroke)"
+            strokeWidth="8"
+            strokeOpacity={isDark ? 0.06 : 0.05}
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
+          />
+
+          {/* ── Main line ── */}
+          <motion.path
+            d={linePath}
+            fill="none"
+            stroke="url(#lineStroke)"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
           />
 
-          {/* Data points */}
-          {data.map((d, i) => (
-            <g key={i}>
-              <circle
-                cx={toX(i)}
-                cy={toY(d.value)}
-                r="5"
-                fill={activePoint === i ? "#F97316" : "white"}
-                stroke="#F97316"
-                strokeWidth="2.5"
-                className="cursor-pointer"
-                onMouseEnter={() => setActivePoint(i)}
-                onMouseLeave={() => setActivePoint(null)}
+          {/* ── Crosshair (vertical + horizontal) ── */}
+          {activePt && (
+            <>
+              <line
+                x1={activePt.x}
+                y1={pad.top}
+                x2={activePt.x}
+                y2={H - pad.bottom}
+                stroke={isDark ? "#F97316" : "#F97316"}
+                strokeWidth="1"
+                strokeOpacity="0.35"
+                strokeDasharray="3 3"
               />
-              {/* X-axis label */}
+              <line
+                x1={pad.left}
+                y1={activePt.y}
+                x2={W - pad.right}
+                y2={activePt.y}
+                stroke={isDark ? "#374151" : "#E2E8F0"}
+                strokeWidth="1"
+                strokeDasharray="3 3"
+              />
+              {/* Y-axis value indicator */}
+              <rect
+                x={2}
+                y={activePt.y - 8}
+                width={pad.left - 5}
+                height={16}
+                rx={3}
+                fill="#F97316"
+              />
               <text
-                x={toX(i)}
-                y={H - 4}
+                x={pad.left / 2}
+                y={activePt.y + 4}
                 textAnchor="middle"
-                fontSize="9"
-                fill={isDark ? "#6B7280" : "#9CA3AF"}
+                fontSize="8"
+                fontWeight="700"
+                fill="white"
               >
-                {d.label}
+                {activeData?.value}
               </text>
-              {/* Tooltip */}
-              {activePoint === i && (
-                <g>
-                  <rect
-                    x={toX(i) - 42}
-                    y={toY(d.value) - 30}
-                    width="84"
-                    height="24"
-                    rx="4"
-                    fill={isDark ? "#1F2937" : "#111827"}
-                  />
-                  <text
-                    x={toX(i)}
-                    y={toY(d.value) - 14}
-                    textAnchor="middle"
-                    fontSize="10"
-                    fill="white"
-                    fontWeight="600"
+            </>
+          )}
+
+          {/* ── Data points ── */}
+          {pts.map((pt, i) => {
+            const isLast = i === pts.length - 1;
+            const isActive = activePoint === i;
+            return (
+              <g key={i}>
+                {/* Pulse on last point */}
+                {isLast && !isActive && (
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r="4"
+                    fill="none"
+                    stroke="#F97316"
+                    strokeWidth="1.5"
                   >
-                    {d.label}: {d.value} PH/s
+                    <animate
+                      attributeName="r"
+                      from="5"
+                      to="13"
+                      dur="2s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="stroke-opacity"
+                      from="0.5"
+                      to="0"
+                      dur="2s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                )}
+
+                {/* Active outer ring */}
+                {isActive && (
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r="10"
+                    fill="#F97316"
+                    fillOpacity="0.12"
+                    stroke="#F97316"
+                    strokeWidth="1"
+                    strokeOpacity="0.3"
+                  />
+                )}
+
+                {/* Main dot */}
+                <circle
+                  cx={pt.x}
+                  cy={pt.y}
+                  r={isActive ? 6 : isLast ? 5 : 4}
+                  fill={isActive ? "#F97316" : isDark ? "#0F172A" : "white"}
+                  stroke="#F97316"
+                  strokeWidth={isActive ? 0 : 2}
+                />
+                {isActive && <circle cx={pt.x} cy={pt.y} r="2" fill="white" />}
+
+                {/* X-axis label */}
+                <text
+                  x={pt.x}
+                  y={H - 5}
+                  textAnchor="middle"
+                  fontSize="8.5"
+                  fontFamily="monospace"
+                  fill={isActive ? "#F97316" : isDark ? "#3D4F66" : "#C4CDDA"}
+                  fontWeight={isActive ? "700" : "400"}
+                >
+                  {pt.label}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* ── Tooltip card ── */}
+          {activePt &&
+            activeData &&
+            (() => {
+              const TW = 96;
+              const TH = 44;
+              const isRight = activePt.x > W * 0.55;
+              const TX = isRight ? activePt.x - TW - 12 : activePt.x + 12;
+              const TY = Math.max(
+                pad.top,
+                Math.min(H - pad.bottom - TH, activePt.y - TH / 2),
+              );
+              return (
+                <g>
+                  {/* Shadow */}
+                  <rect
+                    x={TX + 1}
+                    y={TY + 2}
+                    width={TW}
+                    height={TH}
+                    rx={7}
+                    fill="#000"
+                    fillOpacity="0.15"
+                  />
+                  {/* Card */}
+                  <rect
+                    x={TX}
+                    y={TY}
+                    width={TW}
+                    height={TH}
+                    rx={7}
+                    fill={isDark ? "#0A1628" : "#1E293B"}
+                  />
+                  {/* Orange accent top bar */}
+                  <rect
+                    x={TX + 8}
+                    y={TY}
+                    width={TW - 16}
+                    height={3}
+                    rx={1.5}
+                    fill="#F97316"
+                  />
+                  {/* Date */}
+                  <text
+                    x={TX + TW / 2}
+                    y={TY + 19}
+                    textAnchor="middle"
+                    fontSize="8.5"
+                    fill="#64748B"
+                  >
+                    {activeData.label}, 2025
+                  </text>
+                  {/* Value */}
+                  <text
+                    x={TX + TW / 2}
+                    y={TY + 34}
+                    textAnchor="middle"
+                    fontSize="13"
+                    fill="white"
+                    fontWeight="800"
+                  >
+                    {activeData.value} PH/s
                   </text>
                 </g>
-              )}
-            </g>
-          ))}
+              );
+            })()}
+
+          {/* ── "Latest" badge when not hovering ── */}
+          {activePoint === null &&
+            (() => {
+              const pt = lastPt;
+              const d = data[data.length - 1];
+              const BW = 88;
+              const BH = 24;
+              const bx = pt.x - BW / 2;
+              const by = pt.y - BH - 12;
+              return (
+                <g>
+                  <rect
+                    x={bx + 1}
+                    y={by + 2}
+                    width={BW}
+                    height={BH}
+                    rx={6}
+                    fill="#EA580C"
+                    fillOpacity="0.3"
+                  />
+                  <rect
+                    x={bx}
+                    y={by}
+                    width={BW}
+                    height={BH}
+                    rx={6}
+                    fill="#F97316"
+                  />
+                  <circle cx={bx + 10} cy={by + BH / 2} r="2.5" fill="white">
+                    <animate
+                      attributeName="opacity"
+                      values="1;0.25;1"
+                      dur="1.4s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                  <text
+                    x={bx + 20}
+                    y={by + BH / 2 + 4}
+                    fontSize="10"
+                    fill="white"
+                    fontWeight="800"
+                  >
+                    {d.value} PH/s
+                  </text>
+                </g>
+              );
+            })()}
+
+          {/* ── Mouse tracking overlay (invisible) ── */}
+          <rect
+            x={pad.left}
+            y={pad.top}
+            width={W - pad.left - pad.right}
+            height={H - pad.top - pad.bottom}
+            fill="transparent"
+          />
         </svg>
       </div>
     </div>
@@ -522,8 +826,21 @@ export default function F2PoolMiningPage() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "withdraw" | "plans"
+    | "dashboard"
+    | "withdraw"
+    | "plans"
+    | "earnings"
+    | "overview"
+    | "contracts"
+    | "workers"
+    | "statistics"
+    | "transactions"
+    | "wallets"
+    | "referral"
+    | "security"
+    | "account"
   >("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [calcHashrate, setCalcHashrate] = useState("100");
   const [calcDuration, setCalcDuration] = useState("30");
   const [withdrawMethod, setWithdrawMethod] = useState("BTC");
@@ -633,369 +950,476 @@ export default function F2PoolMiningPage() {
   ];
 
   return (
-    <div
-      className={`min-h-full transition-colors duration-300 ${
-        isDark ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
-      }`}
-    >
-      {/* ── Top Header Bar ──────────────────────────────────────────── */}
-      <div
-        className={`sticky top-0 z-10 px-4 sm:px-6 py-3 border-b flex items-center justify-between ${
-          isDark ? "bg-gray-900 border-gray-700/60" : "bg-white border-gray-200"
-        } shadow-sm`}
+    <div className="flex min-h-screen relative">
+      {/* ── Mobile Sidebar Overlay ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          LEFT SIDEBAR
+      ══════════════════════════════════════════════════════════ */}
+      <aside
+        className={`fixed top-0 left-0 h-full w-56 z-30 flex flex-col
+          bg-[#0A1628] border-r border-white/5 transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:z-auto lg:flex-shrink-0`}
       >
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">F2</span>
+        {/* ── Logo ── */}
+        <div className="p-4 border-b border-white/10 flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-black text-sm">F2</span>
             </div>
             <div>
-              <p
-                className={`text-sm font-bold leading-tight ${isDark ? "text-white" : "text-gray-900"}`}
-              >
-                F2 Pool Mining
+              <p className="text-white font-bold text-[13px] leading-tight tracking-wide">
+                F2 POOL MINING
               </p>
-              <p
-                className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
-              >
+              <p className="text-gray-500 text-[10px] mt-0.5">
                 Mine Today, Secure Tomorrow
               </p>
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div
-          className={`flex items-center gap-1 rounded-xl p-1 ${
-            isDark ? "bg-gray-800" : "bg-gray-100"
-          }`}
-        >
+        {/* ── Mining Wallet Balance ── */}
+        <div className="p-4 border-b border-white/10 flex-shrink-0">
+          <p className="text-gray-500 text-[9px] uppercase tracking-widest font-medium mb-2.5">
+            MINING WALLET BALANCE
+          </p>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-xs">₿</span>
+            </div>
+            <span className="text-white font-bold text-sm tabular-nums">
+              0.15263847 BTC
+            </span>
+          </div>
+          <p className="text-gray-500 text-xs mb-3">≈ $9,125,842.68 USD</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab("withdraw")}
+              className="flex-1 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-lg transition-colors"
+            >
+              Deposit
+            </button>
+            <button
+              onClick={() => setActiveTab("withdraw")}
+              className="flex-1 py-1.5 border border-gray-600 bg-transparent hover:bg-white/5 text-white text-xs font-bold rounded-lg transition-colors"
+            >
+              Withdraw
+            </button>
+          </div>
+        </div>
+
+        {/* ── Navigation ── */}
+        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
           {(
             [
               {
-                id: "dashboard",
+                id: "dashboard-link",
                 label: "Dashboard",
-                icon: <BarChart2 size={13} />,
+                icon: <Home size={15} />,
+                href: "/dashboard",
               },
-              { id: "plans", label: "Mining Plans", icon: <Star size={13} /> },
-              { id: "withdraw", label: "Withdraw", icon: <Wallet size={13} /> },
+              {
+                id: "mining",
+                label: "Mining",
+                icon: <Activity size={15} />,
+                tab: "dashboard",
+              },
+              {
+                id: "earnings",
+                label: "Earnings",
+                icon: <DollarSign size={15} />,
+                tab: "earnings",
+              },
+              {
+                id: "overview",
+                label: "Mining Overview",
+                icon: <BarChart2 size={15} />,
+                tab: "overview",
+              },
+              {
+                id: "hashrate",
+                label: "Buy Hashrate",
+                icon: <Zap size={15} />,
+                tab: "plans",
+              },
+              {
+                id: "contracts",
+                label: "Contracts",
+                icon: <FileText size={15} />,
+                tab: "contracts",
+              },
+              {
+                id: "workers",
+                label: "Workers",
+                icon: <Users size={15} />,
+                tab: "workers",
+              },
+              {
+                id: "statistics",
+                label: "Statistics",
+                icon: <TrendingUp size={15} />,
+                tab: "statistics",
+              },
+              {
+                id: "withdraw-nav",
+                label: "Withdraw",
+                icon: <Wallet size={15} />,
+                tab: "withdraw",
+              },
+              {
+                id: "transactions",
+                label: "Transactions",
+                icon: <RefreshCw size={15} />,
+                tab: "transactions",
+              },
+              {
+                id: "wallets",
+                label: "Wallets",
+                icon: <Star size={15} />,
+                tab: "wallets",
+              },
+              {
+                id: "referral",
+                label: "Referral Program",
+                icon: <Gift size={15} />,
+                tab: "referral",
+              },
+              {
+                id: "security",
+                label: "Security Settings",
+                icon: <Shield size={15} />,
+                tab: "security",
+              },
+              {
+                id: "account",
+                label: "Account Settings",
+                icon: <Settings size={15} />,
+                tab: "account",
+              },
+              {
+                id: "logout-link",
+                label: "Logout",
+                icon: <LogOut size={15} />,
+                href: "/logout",
+              },
             ] as const
-          ).map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === tab.id
-                  ? "bg-orange-500 text-white shadow-sm"
-                  : isDark
-                    ? "text-gray-400 hover:text-white"
-                    : "text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              {tab.icon}
-              <span className="hidden sm:inline">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Auto Switch */}
-          <div className="hidden sm:flex items-center gap-2">
-            <span
-              className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
-            >
-              Auto Switch
-            </span>
-            <button
-              onClick={() => setAutoSwitch(!autoSwitch)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                autoSwitch
-                  ? "bg-orange-500"
-                  : isDark
-                    ? "bg-gray-600"
-                    : "bg-gray-300"
-              }`}
-            >
-              <span
-                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                  autoSwitch ? "translate-x-[18px]" : "translate-x-[2px]"
+          ).map((item: any) => {
+            const isActive =
+              item.tab !== undefined &&
+              (item.tab === activeTab ||
+                (item.tab === "dashboard" && activeTab === "dashboard"));
+            return item.href ? (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all text-xs group w-full"
+              >
+                <span className="flex-shrink-0 text-gray-500 group-hover:text-gray-300">
+                  {item.icon}
+                </span>
+                {item.label}
+              </Link>
+            ) : (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.tab);
+                  setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-xs ${
+                  isActive
+                    ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
-              />
-            </button>
+              >
+                <span
+                  className={`flex-shrink-0 ${isActive ? "text-white" : "text-gray-500"}`}
+                >
+                  {item.icon}
+                </span>
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* ── Need Help ── */}
+        <div className="p-3 flex-shrink-0 border-t border-white/5">
+          <div className="bg-[#112040] rounded-xl p-3 border border-white/5">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-9 h-9 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-2">
+                <HelpCircle size={16} className="text-orange-400" />
+              </div>
+              <p className="text-white text-xs font-bold mb-0.5">Need Help?</p>
+              <p className="text-gray-500 text-[10px] mb-2.5 leading-relaxed">
+                Our support team is here for you 24/7
+              </p>
+              <button className="w-full py-1.5 rounded-lg border border-orange-500/40 text-orange-400 text-[10px] font-semibold hover:bg-orange-500/10 transition-colors">
+                Contact Support
+              </button>
+            </div>
           </div>
-
-          <button
-            onClick={handleRefresh}
-            className={`p-2 rounded-lg transition-all ${
-              isDark
-                ? "hover:bg-gray-700 text-gray-400"
-                : "hover:bg-gray-100 text-gray-500"
-            }`}
-          >
-            <RefreshCw
-              size={14}
-              className={isRefreshing ? "animate-spin" : ""}
-            />
-          </button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
-          >
-            Start Mining
-          </motion.button>
         </div>
-      </div>
+      </aside>
 
-      <div className="p-4 sm:p-6">
-        <AnimatePresence mode="wait">
-          {/* ══════════════════════════════════════════════════════════
-              DASHBOARD TAB
-          ══════════════════════════════════════════════════════════ */}
-          {activeTab === "dashboard" && (
-            <motion.div
-              key="dashboard"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+      {/* ══════════════════════════════════════════════════════════
+          MAIN CONTENT
+      ══════════════════════════════════════════════════════════ */}
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-colors duration-300 ${
+          isDark ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
+        }`}
+      >
+        {/* ── Top Header Bar ── */}
+        <div
+          className={`sticky top-0 z-10 px-4 sm:px-6 py-3 border-b flex items-center justify-between ${
+            isDark
+              ? "bg-gray-900 border-gray-700/60"
+              : "bg-white border-gray-200"
+          } shadow-sm`}
+        >
+          <div className="flex items-center gap-3">
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className={`lg:hidden p-2 rounded-lg transition-colors ${
+                isDark
+                  ? "hover:bg-gray-700 text-gray-400"
+                  : "hover:bg-gray-100 text-gray-500"
+              }`}
             >
-              {/* Breadcrumb */}
-              <div className="flex items-center gap-1.5 mb-5 text-xs">
-                <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+              <Menu size={16} />
+            </button>
+            <div>
+              <h1
+                className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+              >
+                Mining Dashboard
+              </h1>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span
+                  className={`text-[10px] ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                >
                   Dashboard
                 </span>
                 <ChevronRight
-                  size={12}
+                  size={10}
                   className={isDark ? "text-gray-600" : "text-gray-400"}
                 />
-                <span className="text-orange-500 font-medium">Mining</span>
+                <span className="text-[10px] text-orange-500">Mining</span>
               </div>
+            </div>
+          </div>
 
-              {/* ── Stat Cards ── */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-                <StatCard
-                  title="Active Hashrate"
-                  value="125.50 PH/s"
-                  sub="$8,974.25 / day"
-                  change="+12.5%"
-                  positive
-                  icon={<Activity size={18} className="text-orange-500" />}
-                  iconBg="bg-orange-500/10"
-                  isDark={isDark}
-                  trend={[60, 70, 65, 80, 95, 110, 125]}
+          <div className="flex items-center gap-2">
+            {/* Auto Switch */}
+            <div className="hidden sm:flex items-center gap-2">
+              <span
+                className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+              >
+                Auto Switch
+              </span>
+              <button
+                onClick={() => setAutoSwitch(!autoSwitch)}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  autoSwitch
+                    ? "bg-orange-500"
+                    : isDark
+                      ? "bg-gray-600"
+                      : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                    autoSwitch ? "translate-x-[18px]" : "translate-x-[2px]"
+                  }`}
                 />
-                <StatCard
-                  title="Active Miners"
-                  value="348"
-                  sub="Online: 336 / Offline: 12"
-                  change="+4 workers"
-                  positive
-                  icon={<Server size={18} className="text-green-500" />}
-                  iconBg="bg-green-500/10"
-                  isDark={isDark}
-                  trend={[300, 310, 320, 330, 336, 342, 348]}
-                />
-                <StatCard
-                  title="Daily Earnings"
-                  value="0.00485234 BTC"
-                  sub="$291.45"
-                  change="+8.21%"
-                  positive
-                  icon={<DollarSign size={18} className="text-blue-500" />}
-                  iconBg="bg-blue-500/10"
-                  isDark={isDark}
-                  trend={[240, 255, 260, 270, 275, 285, 291]}
-                />
-                <StatCard
-                  title="Monthly Earnings"
-                  value="0.14651243 BTC"
-                  sub="$8,789.12"
-                  change="+15.48%"
-                  positive
-                  icon={<TrendingUp size={18} className="text-purple-500" />}
-                  iconBg="bg-purple-500/10"
-                  isDark={isDark}
-                  trend={[7000, 7400, 7600, 7900, 8100, 8500, 8789]}
-                />
-              </div>
+              </button>
+            </div>
 
-              {/* ── Chart + Mining Status ── */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                {/* Hashrate Chart */}
-                <div
-                  className={`lg:col-span-2 rounded-xl p-5 border ${
-                    isDark
-                      ? "bg-gray-800 border-gray-700/60"
-                      : "bg-white border-gray-200"
-                  } shadow-sm`}
-                >
-                  <HashrateChart isDark={isDark} />
+            <button
+              onClick={handleRefresh}
+              className={`p-2 rounded-lg transition-all ${
+                isDark
+                  ? "hover:bg-gray-700 text-gray-400"
+                  : "hover:bg-gray-100 text-gray-500"
+              }`}
+            >
+              <RefreshCw
+                size={14}
+                className={isRefreshing ? "animate-spin" : ""}
+              />
+            </button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
+            >
+              Manage Mining
+            </motion.button>
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-6">
+          <AnimatePresence mode="wait">
+            {/* ══════════════════════════════════════════════════════════
+              DASHBOARD TAB
+          ══════════════════════════════════════════════════════════ */}
+            {activeTab === "dashboard" && (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                {/* Breadcrumb */}
+                <div className="flex items-center gap-1.5 mb-5 text-xs">
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+                    Dashboard
+                  </span>
+                  <ChevronRight
+                    size={12}
+                    className={isDark ? "text-gray-600" : "text-gray-400"}
+                  />
+                  <span className="text-orange-500 font-medium">Mining</span>
                 </div>
 
-                {/* Mining Status */}
-                <div
-                  className={`rounded-xl p-5 border ${
-                    isDark
-                      ? "bg-gray-800 border-gray-700/60"
-                      : "bg-white border-gray-200"
-                  } shadow-sm`}
-                >
-                  <h3
-                    className={`font-semibold text-base mb-5 ${
-                      isDark ? "text-white" : "text-gray-900"
-                    }`}
+                {/* ── Stat Cards ── */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                  <StatCard
+                    title="Active Hashrate"
+                    value="125.50 PH/s"
+                    sub="$8,974.25 / day"
+                    change="+12.5%"
+                    positive
+                    icon={<Activity size={18} className="text-orange-500" />}
+                    iconBg="bg-orange-500/10"
+                    isDark={isDark}
+                    trend={[60, 70, 65, 80, 95, 110, 125]}
+                  />
+                  <StatCard
+                    title="Active Miners"
+                    value="348"
+                    sub="Online: 336 / Offline: 12"
+                    change="+4 workers"
+                    positive
+                    icon={<Server size={18} className="text-green-500" />}
+                    iconBg="bg-green-500/10"
+                    isDark={isDark}
+                    trend={[300, 310, 320, 330, 336, 342, 348]}
+                  />
+                  <StatCard
+                    title="Daily Earnings"
+                    value="0.00485234 BTC"
+                    sub="$291.45"
+                    change="+8.21%"
+                    positive
+                    icon={<DollarSign size={18} className="text-blue-500" />}
+                    iconBg="bg-blue-500/10"
+                    isDark={isDark}
+                    trend={[240, 255, 260, 270, 275, 285, 291]}
+                  />
+                  <StatCard
+                    title="Monthly Earnings"
+                    value="0.14651243 BTC"
+                    sub="$8,789.12"
+                    change="+15.48%"
+                    positive
+                    icon={<TrendingUp size={18} className="text-purple-500" />}
+                    iconBg="bg-purple-500/10"
+                    isDark={isDark}
+                    trend={[7000, 7400, 7600, 7900, 8100, 8500, 8789]}
+                  />
+                </div>
+
+                {/* ── Chart + Mining Status ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                  {/* Hashrate Chart */}
+                  <div
+                    className={`lg:col-span-2 rounded-xl p-5 border ${
+                      isDark
+                        ? "bg-gray-800 border-gray-700/60"
+                        : "bg-white border-gray-200"
+                    } shadow-sm`}
                   >
-                    Mining Status
-                  </h3>
-
-                  <div className="flex flex-col items-center mb-5">
-                    <div className="relative">
-                      <CircularProgress
-                        value={97}
-                        size={130}
-                        strokeWidth={10}
-                        color="#22C55E"
-                        isDark={isDark}
-                      />
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span
-                          className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
-                        >
-                          97%
-                        </span>
-                        <span
-                          className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                        >
-                          Uptime
-                        </span>
-                      </div>
-                    </div>
+                    <HashrateChart isDark={isDark} />
                   </div>
 
-                  <div className="space-y-2.5">
-                    {[
-                      {
-                        label: "Status",
-                        value: "ACTIVE",
-                        badge: true,
-                        color: "green",
-                      },
-                      { label: "Started", value: "May 02, 2025 10:15 AM" },
-                      { label: "Algorithm", value: "SHA-256" },
-                      { label: "Pool", value: "F2 Pool" },
-                    ].map((row) => (
-                      <div
-                        key={row.label}
-                        className={`flex items-center justify-between py-1.5 border-b ${
-                          isDark ? "border-gray-700/60" : "border-gray-100"
-                        }`}
-                      >
-                        <span
-                          className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                        >
-                          {row.label}
-                        </span>
-                        {row.badge ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500 border border-green-500/20">
-                            {row.value}
-                          </span>
-                        ) : (
-                          <span
-                            className={`text-xs font-medium ${
-                              isDark ? "text-white" : "text-gray-800"
-                            }`}
-                          >
-                            {row.value}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-
-                    {/* Next Payout Countdown */}
-                    <div className="flex items-center justify-between pt-1">
-                      <span
-                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                      >
-                        Next Payout
-                      </span>
-                      <CountdownTimer isDark={isDark} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Mining Rig + Contracts ── */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                {/* Your Mining Rig */}
-                <div
-                  className={`rounded-xl p-5 border ${
-                    isDark
-                      ? "bg-gray-800 border-gray-700/60"
-                      : "bg-white border-gray-200"
-                  } shadow-sm`}
-                >
-                  <div className="flex items-center justify-between mb-4">
+                  {/* Mining Status */}
+                  <div
+                    className={`rounded-xl p-5 border ${
+                      isDark
+                        ? "bg-gray-800 border-gray-700/60"
+                        : "bg-white border-gray-200"
+                    } shadow-sm`}
+                  >
                     <h3
-                      className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
+                      className={`font-semibold text-base mb-5 ${
+                        isDark ? "text-white" : "text-gray-900"
+                      }`}
                     >
-                      Your Mining Rig
+                      Mining Status
                     </h3>
-                    <button
-                      className={`p-1.5 rounded-lg transition-colors ${
-                        isDark
-                          ? "hover:bg-gray-700 text-gray-400"
-                          : "hover:bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      <Settings size={14} />
-                    </button>
-                  </div>
 
-                  <div className="flex gap-4">
-                    {/* Rig visual */}
-                    <div
-                      className={`w-28 h-28 rounded-xl flex-shrink-0 flex items-center justify-center ${
-                        isDark ? "bg-gray-700/60" : "bg-gray-100"
-                      }`}
-                    >
+                    <div className="flex flex-col items-center mb-5">
                       <div className="relative">
-                        <Server
-                          size={48}
-                          className={`${isDark ? "text-gray-300" : "text-gray-600"}`}
+                        <CircularProgress
+                          value={97}
+                          size={130}
+                          strokeWidth={10}
+                          color="#22C55E"
+                          isDark={isDark}
                         />
-                        <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span
+                            className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
+                            97%
+                          </span>
+                          <span
+                            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
+                            Uptime
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex-1 space-y-2">
+                    <div className="space-y-2.5">
                       {[
                         {
-                          label: "Rig Name",
-                          value: "F2-MINER-01",
-                          editable: true,
+                          label: "Status",
+                          value: "ACTIVE",
+                          badge: true,
+                          color: "green",
                         },
-                        { label: "Total Hashrate", value: "125.50 PH/s" },
-                        { label: "Power Usage", value: "3.25 kW" },
-                        { label: "Efficiency", value: "38.6 J/TH" },
-                        {
-                          label: "Temperature",
-                          value: "42°C",
-                          badge: "Normal",
-                          badgeColor: "green",
-                        },
-                        { label: "Location", value: "USA 🇺🇸" },
+                        { label: "Started", value: "May 02, 2025 10:15 AM" },
+                        { label: "Algorithm", value: "SHA-256" },
+                        { label: "Pool", value: "F2 Pool" },
                       ].map((row) => (
                         <div
                           key={row.label}
-                          className="flex items-center justify-between"
+                          className={`flex items-center justify-between py-1.5 border-b ${
+                            isDark ? "border-gray-700/60" : "border-gray-100"
+                          }`}
                         >
                           <span
                             className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
                           >
                             {row.label}
                           </span>
-                          <div className="flex items-center gap-1.5">
+                          {row.badge ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500 border border-green-500/20">
+                              {row.value}
+                            </span>
+                          ) : (
                             <span
                               className={`text-xs font-medium ${
                                 isDark ? "text-white" : "text-gray-800"
@@ -1003,113 +1427,824 @@ export default function F2PoolMiningPage() {
                             >
                               {row.value}
                             </span>
-                            {row.badge && (
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Next Payout Countdown */}
+                      <div className="flex items-center justify-between pt-1">
+                        <span
+                          className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          Next Payout
+                        </span>
+                        <CountdownTimer isDark={isDark} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Mining Rig + Contracts ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                  {/* Your Mining Rig */}
+                  <div
+                    className={`rounded-xl p-5 border ${
+                      isDark
+                        ? "bg-gray-800 border-gray-700/60"
+                        : "bg-white border-gray-200"
+                    } shadow-sm`}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3
+                        className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Your Mining Rig
+                      </h3>
+                      <button
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          isDark
+                            ? "hover:bg-gray-700 text-gray-400"
+                            : "hover:bg-gray-100 text-gray-500"
+                        }`}
+                      >
+                        <Settings size={14} />
+                      </button>
+                    </div>
+
+                    <div className="flex gap-4">
+                      {/* Rig visual */}
+                      <div
+                        className={`w-28 h-28 rounded-xl flex-shrink-0 flex items-center justify-center ${
+                          isDark ? "bg-gray-700/60" : "bg-gray-100"
+                        }`}
+                      >
+                        <div className="relative">
+                          <Server
+                            size={48}
+                            className={`${isDark ? "text-gray-300" : "text-gray-600"}`}
+                          />
+                          <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+                        </div>
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        {[
+                          {
+                            label: "Rig Name",
+                            value: "F2-MINER-01",
+                            editable: true,
+                          },
+                          { label: "Total Hashrate", value: "125.50 PH/s" },
+                          { label: "Power Usage", value: "3.25 kW" },
+                          { label: "Efficiency", value: "38.6 J/TH" },
+                          {
+                            label: "Temperature",
+                            value: "42°C",
+                            badge: "Normal",
+                            badgeColor: "green",
+                          },
+                          { label: "Location", value: "USA 🇺🇸" },
+                        ].map((row) => (
+                          <div
+                            key={row.label}
+                            className="flex items-center justify-between"
+                          >
+                            <span
+                              className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                            >
+                              {row.label}
+                            </span>
+                            <div className="flex items-center gap-1.5">
                               <span
-                                className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                                  row.badgeColor === "green"
-                                    ? "bg-green-500/10 text-green-500"
-                                    : "bg-red-500/10 text-red-500"
+                                className={`text-xs font-medium ${
+                                  isDark ? "text-white" : "text-gray-800"
                                 }`}
                               >
-                                {row.badge}
+                                {row.value}
                               </span>
-                            )}
-                            {row.editable && (
-                              <button
-                                className={`p-0.5 rounded transition-colors ${
-                                  isDark
-                                    ? "hover:bg-gray-600 text-gray-500"
-                                    : "hover:bg-gray-100 text-gray-400"
-                                }`}
-                              >
-                                <Settings size={10} />
-                              </button>
-                            )}
+                              {row.badge && (
+                                <span
+                                  className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                    row.badgeColor === "green"
+                                      ? "bg-green-500/10 text-green-500"
+                                      : "bg-red-500/10 text-red-500"
+                                  }`}
+                                >
+                                  {row.badge}
+                                </span>
+                              )}
+                              {row.editable && (
+                                <button
+                                  className={`p-0.5 rounded transition-colors ${
+                                    isDark
+                                      ? "hover:bg-gray-600 text-gray-500"
+                                      : "hover:bg-gray-100 text-gray-400"
+                                  }`}
+                                >
+                                  <Settings size={10} />
+                                </button>
+                              )}
+                            </div>
                           </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mining Contracts */}
+                  <div
+                    className={`rounded-xl p-5 border ${
+                      isDark
+                        ? "bg-gray-800 border-gray-700/60"
+                        : "bg-white border-gray-200"
+                    } shadow-sm`}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3
+                        className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Mining Contracts
+                      </h3>
+                      <button
+                        onClick={() => setActiveTab("plans")}
+                        className="text-orange-500 hover:text-orange-400 text-xs font-semibold transition-colors"
+                      >
+                        View All
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {CONTRACTS.map((c) => (
+                        <div
+                          key={c.id}
+                          className={`flex items-center justify-between p-3 rounded-xl border ${
+                            isDark
+                              ? "bg-gray-700/50 border-gray-600/50"
+                              : "bg-gray-50 border-gray-200"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                              style={{ backgroundColor: c.color }}
+                            >
+                              {c.icon}
+                            </div>
+                            <div>
+                              <p
+                                className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                              >
+                                {c.name}
+                              </p>
+                              <p
+                                className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                              >
+                                {c.algorithm}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p
+                              className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                            >
+                              {c.hashrate}
+                            </p>
+                            <p
+                              className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                            >
+                              {c.startDate}
+                            </p>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500 border border-green-500/20 ml-2">
+                            {c.status}
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
 
-                {/* Mining Contracts */}
+                {/* ── Recent Activity + Profit Calculator ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* Recent Mining Activity */}
+                  <div
+                    className={`lg:col-span-2 rounded-xl border overflow-hidden ${
+                      isDark
+                        ? "bg-gray-800 border-gray-700/60"
+                        : "bg-white border-gray-200"
+                    } shadow-sm`}
+                  >
+                    <div
+                      className={`flex items-center justify-between px-5 py-4 border-b ${
+                        isDark ? "border-gray-700/60" : "border-gray-100"
+                      }`}
+                    >
+                      <h3
+                        className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Recent Mining Activity
+                      </h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr
+                            className={`text-xs font-medium ${
+                              isDark
+                                ? "text-gray-400 bg-gray-700/30"
+                                : "text-gray-500 bg-gray-50"
+                            }`}
+                          >
+                            {[
+                              "Date",
+                              "Type",
+                              "Details",
+                              "Hashrate",
+                              "Status",
+                            ].map((h) => (
+                              <th key={h} className="px-4 py-2.5 text-left">
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ACTIVITY.map((a, idx) => (
+                            <tr
+                              key={a.id}
+                              className={`border-t text-xs transition-colors ${
+                                isDark
+                                  ? "border-gray-700/40 hover:bg-gray-700/30"
+                                  : "border-gray-100 hover:bg-gray-50"
+                              }`}
+                            >
+                              <td
+                                className={`px-4 py-3 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                              >
+                                {a.date}
+                              </td>
+                              <td
+                                className={`px-4 py-3 font-medium ${
+                                  isDark ? "text-white" : "text-gray-900"
+                                }`}
+                              >
+                                {a.type}
+                              </td>
+                              <td
+                                className={`px-4 py-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                              >
+                                {a.details}
+                              </td>
+                              <td
+                                className={`px-4 py-3 font-mono text-xs ${
+                                  isDark ? "text-gray-300" : "text-gray-700"
+                                }`}
+                              >
+                                {a.hashrate}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    a.status === "Success"
+                                      ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                                      : a.status === "Completed"
+                                        ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                                        : "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                                  }`}
+                                >
+                                  {a.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Profit Calculator */}
+                  <div
+                    className={`rounded-xl p-5 border ${
+                      isDark
+                        ? "bg-gray-800 border-gray-700/60"
+                        : "bg-white border-gray-200"
+                    } shadow-sm`}
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <Calculator size={16} className="text-orange-500" />
+                      <h3
+                        className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Profit Calculator
+                      </h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label
+                          className={`text-xs font-medium block mb-1.5 ${
+                            isDark ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          Hashrate
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            value={calcHashrate}
+                            onChange={(e) => setCalcHashrate(e.target.value)}
+                            className={`flex-1 rounded-lg px-3 py-2 text-sm border focus:outline-none focus:border-orange-500 transition-colors ${
+                              isDark
+                                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-500"
+                                : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+                            }`}
+                            placeholder="100"
+                          />
+                          <div
+                            className={`px-3 py-2 rounded-lg text-xs font-medium border flex items-center ${
+                              isDark
+                                ? "bg-gray-700 border-gray-600 text-gray-300"
+                                : "bg-gray-50 border-gray-300 text-gray-600"
+                            }`}
+                          >
+                            PH/s
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label
+                          className={`text-xs font-medium block mb-1.5 ${
+                            isDark ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          Duration (Days)
+                        </label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {["30", "90", "180"].map((d) => (
+                            <button
+                              key={d}
+                              onClick={() => setCalcDuration(d)}
+                              className={`py-2 rounded-lg text-xs font-semibold transition-all ${
+                                calcDuration === d
+                                  ? "bg-orange-500 text-white"
+                                  : isDark
+                                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                              }`}
+                            >
+                              {d}D
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div
+                        className={`rounded-xl p-4 ${
+                          isDark ? "bg-gray-700/60" : "bg-orange-50"
+                        }`}
+                      >
+                        <p
+                          className={`text-xs mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          Estimated Earnings
+                        </p>
+                        <p className="text-xl font-bold text-orange-500">
+                          {estimatedEarnings} BTC
+                        </p>
+                        <p
+                          className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          ≈ $
+                          {(
+                            parseFloat(estimatedEarnings) * 60000
+                          ).toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                          })}{" "}
+                          USD
+                        </p>
+                      </div>
+
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm"
+                      >
+                        Calculate Profit
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════
+              MINING PLANS TAB
+          ══════════════════════════════════════════════════════════ */}
+            {activeTab === "plans" && (
+              <motion.div
+                key="plans"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="flex items-center gap-1.5 mb-5 text-xs">
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+                    Dashboard
+                  </span>
+                  <ChevronRight
+                    size={12}
+                    className={isDark ? "text-gray-600" : "text-gray-400"}
+                  />
+                  <span className="text-orange-500 font-medium">
+                    Mining Plans
+                  </span>
+                </div>
+
+                <div className="text-center mb-8">
+                  <h2
+                    className={`text-2xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
+                    Choose Your Mining Plan
+                  </h2>
+                  <p
+                    className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                  >
+                    Select the perfect hashrate plan for your mining goals
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+                  {MINING_PLANS.map((plan, idx) => (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className={`relative rounded-2xl p-6 border transition-all ${
+                        plan.popular
+                          ? "border-orange-500 shadow-lg shadow-orange-500/10"
+                          : isDark
+                            ? "border-gray-700/60 bg-gray-800"
+                            : "border-gray-200 bg-white"
+                      } ${plan.popular ? (isDark ? "bg-gray-800" : "bg-white") : ""}`}
+                    >
+                      {plan.popular && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <span className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full shadow-sm">
+                            Most Popular
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="text-center mb-5">
+                        <div
+                          className={`w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center ${
+                            plan.popular
+                              ? "bg-orange-500"
+                              : isDark
+                                ? "bg-gray-700"
+                                : "bg-gray-100"
+                          }`}
+                        >
+                          <Cpu
+                            size={24}
+                            className={
+                              plan.popular
+                                ? "text-white"
+                                : isDark
+                                  ? "text-gray-300"
+                                  : "text-gray-600"
+                            }
+                          />
+                        </div>
+                        <h3
+                          className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
+                          {plan.name}
+                        </h3>
+                        <p className="text-3xl font-bold text-orange-500 mt-2">
+                          {plan.price}
+                        </p>
+                        <p
+                          className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          {plan.duration}
+                        </p>
+                      </div>
+
+                      <div className="space-y-3 mb-5">
+                        {[
+                          { label: "Hashrate", value: plan.hashrate },
+                          { label: "Daily Profit", value: plan.dailyProfit },
+                          { label: "Contract Duration", value: plan.duration },
+                          { label: "Algorithm", value: "SHA-256" },
+                          { label: "Pool Fee", value: "0.0%" },
+                        ].map((row) => (
+                          <div
+                            key={row.label}
+                            className={`flex justify-between text-sm border-b pb-2 ${
+                              isDark ? "border-gray-700/60" : "border-gray-100"
+                            }`}
+                          >
+                            <span
+                              className={
+                                isDark ? "text-gray-400" : "text-gray-500"
+                              }
+                            >
+                              {row.label}
+                            </span>
+                            <span
+                              className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                            >
+                              {row.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                          plan.popular
+                            ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
+                            : isDark
+                              ? "bg-gray-700 hover:bg-gray-600 text-white"
+                              : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                        }`}
+                      >
+                        Buy Hashrate
+                      </motion.button>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════
+              WITHDRAW TAB
+          ══════════════════════════════════════════════════════════ */}
+            {activeTab === "withdraw" && (
+              <motion.div
+                key="withdraw"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="flex items-center gap-1.5 mb-5 text-xs">
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+                    Dashboard
+                  </span>
+                  <ChevronRight
+                    size={12}
+                    className={isDark ? "text-gray-600" : "text-gray-400"}
+                  />
+                  <span className="text-orange-500 font-medium">Withdraw</span>
+                </div>
+
+                {/* Mining Wallet Banner */}
                 <div
-                  className={`rounded-xl p-5 border ${
+                  className={`rounded-2xl p-5 mb-6 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
                     isDark
                       ? "bg-gray-800 border-gray-700/60"
                       : "bg-white border-gray-200"
                   } shadow-sm`}
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3
-                      className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
-                    >
-                      Mining Contracts
-                    </h3>
-                    <button
-                      onClick={() => setActiveTab("plans")}
-                      className="text-orange-500 hover:text-orange-400 text-xs font-semibold transition-colors"
-                    >
-                      View All
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {CONTRACTS.map((c) => (
-                      <div
-                        key={c.id}
-                        className={`flex items-center justify-between p-3 rounded-xl border ${
-                          isDark
-                            ? "bg-gray-700/50 border-gray-600/50"
-                            : "bg-gray-50 border-gray-200"
-                        }`}
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-xl">₿</span>
+                    </div>
+                    <div>
+                      <p
+                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                            style={{ backgroundColor: c.color }}
-                          >
-                            {c.icon}
-                          </div>
-                          <div>
-                            <p
-                              className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
-                            >
-                              {c.name}
-                            </p>
-                            <p
-                              className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                            >
-                              {c.algorithm}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p
-                            className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
-                          >
-                            {c.hashrate}
-                          </p>
-                          <p
-                            className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                          >
-                            {c.startDate}
-                          </p>
-                        </div>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500 border border-green-500/20 ml-2">
-                          {c.status}
-                        </span>
-                      </div>
-                    ))}
+                        Mining Wallet Balance
+                      </p>
+                      <p
+                        className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        0.15263847 BTC
+                      </p>
+                      <p
+                        className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        ≈ $9,125,842.68 USD
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+                    >
+                      Deposit
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`px-4 py-2 text-sm font-semibold rounded-xl transition-colors border ${
+                        isDark
+                          ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      Buy Hashrate
+                    </motion.button>
                   </div>
                 </div>
-              </div>
 
-              {/* ── Recent Activity + Profit Calculator ── */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Recent Mining Activity */}
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
+                  {/* Withdrawal Methods */}
+                  <div
+                    className={`lg:col-span-2 rounded-xl p-5 border ${
+                      isDark
+                        ? "bg-gray-800 border-gray-700/60"
+                        : "bg-white border-gray-200"
+                    } shadow-sm`}
+                  >
+                    <h3
+                      className={`font-semibold text-sm uppercase tracking-wide mb-4 ${
+                        isDark ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
+                      Select Withdrawal Method
+                    </h3>
+                    <div className="space-y-2">
+                      {WITHDRAWAL_METHODS.map((m) => (
+                        <button
+                          key={m.id}
+                          onClick={() => setWithdrawMethod(m.id)}
+                          className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all ${
+                            withdrawMethod === m.id
+                              ? "border-orange-500 bg-orange-500/5"
+                              : isDark
+                                ? "border-gray-700/60 bg-gray-700/30 hover:border-gray-600"
+                                : "border-gray-200 bg-gray-50 hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                              style={{ backgroundColor: m.color }}
+                            >
+                              {m.icon}
+                            </div>
+                            <div className="text-left">
+                              <p
+                                className={`text-sm font-semibold ${
+                                  isDark ? "text-white" : "text-gray-900"
+                                }`}
+                              >
+                                {m.name}
+                              </p>
+                              <p
+                                className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                              >
+                                {m.time}
+                              </p>
+                            </div>
+                          </div>
+                          {withdrawMethod === m.id && (
+                            <CheckCircle
+                              size={16}
+                              className="text-orange-500 flex-shrink-0"
+                            />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Withdrawal Details */}
+                  <div
+                    className={`lg:col-span-3 rounded-xl p-5 border ${
+                      isDark
+                        ? "bg-gray-800 border-gray-700/60"
+                        : "bg-white border-gray-200"
+                    } shadow-sm`}
+                  >
+                    <div className="text-center mb-5">
+                      <div
+                        className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-bold text-2xl"
+                        style={{
+                          backgroundColor:
+                            WITHDRAWAL_METHODS.find(
+                              (m) => m.id === withdrawMethod,
+                            )?.color || "#F97316",
+                        }}
+                      >
+                        {
+                          WITHDRAWAL_METHODS.find(
+                            (m) => m.id === withdrawMethod,
+                          )?.icon
+                        }
+                      </div>
+                      <h3
+                        className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        {WITHDRAWAL_METHODS.find(
+                          (m) => m.id === withdrawMethod,
+                        )?.name.toUpperCase()}
+                      </h3>
+                      <p
+                        className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        To withdraw amounts higher than $150,000 USD, an
+                        activation fee is required.
+                      </p>
+                    </div>
+
+                    <div
+                      className={`rounded-xl p-4 mb-4 border ${
+                        isDark
+                          ? "bg-gray-700/50 border-gray-600/50"
+                          : "bg-gray-50 border-gray-200"
+                      }`}
+                    >
+                      <div className="flex justify-between mb-3">
+                        <span
+                          className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          Withdrawal Amount
+                        </span>
+                        <div className="text-right">
+                          <p
+                            className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
+                            6.00000000 BTC
+                          </p>
+                          <p
+                            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
+                            ≈ $6,000,000.00 USD
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <span
+                          className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          Activation Fee (One-time)
+                        </span>
+                        <div className="text-right">
+                          <p
+                            className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
+                            0.00850000 BTC
+                          </p>
+                          <p
+                            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
+                            ≈ $8,500.00 USD
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Activation Fee Alert */}
+                    <div className="rounded-xl p-4 mb-4 border border-orange-500/40 bg-orange-500/5">
+                      <div className="flex items-start gap-2.5">
+                        <AlertTriangle
+                          size={16}
+                          className="text-orange-500 flex-shrink-0 mt-0.5"
+                        />
+                        <div>
+                          <p className="text-orange-500 text-sm font-semibold">
+                            Activation Fee Required
+                          </p>
+                          <p
+                            className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
+                            Your withdrawal request is pending activation.
+                            Please pay the activation fee to proceed.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm transition-colors shadow-sm mb-2"
+                    >
+                      Pay Activation Fee (0.00850000 BTC)
+                    </motion.button>
+                    <p
+                      className={`text-center text-[11px] flex items-center justify-center gap-1 ${
+                        isDark ? "text-gray-500" : "text-gray-400"
+                      }`}
+                    >
+                      <Shield size={11} />
+                      Secure &amp; Encrypted Payment
+                    </p>
+                  </div>
+                </div>
+
+                {/* Withdrawal History Table */}
                 <div
-                  className={`lg:col-span-2 rounded-xl border overflow-hidden ${
+                  className={`rounded-xl border overflow-hidden ${
                     isDark
                       ? "bg-gray-800 border-gray-700/60"
                       : "bg-white border-gray-200"
@@ -1123,8 +2258,19 @@ export default function F2PoolMiningPage() {
                     <h3
                       className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
                     >
-                      Recent Mining Activity
+                      Withdrawal Requests
                     </h3>
+                    <select
+                      className={`text-xs px-3 py-1.5 rounded-lg border focus:outline-none ${
+                        isDark
+                          ? "bg-gray-700 border-gray-600 text-gray-300"
+                          : "bg-white border-gray-300 text-gray-600"
+                      }`}
+                    >
+                      <option>All Status</option>
+                      <option>Pending</option>
+                      <option>Completed</option>
+                    </select>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -1138,10 +2284,12 @@ export default function F2PoolMiningPage() {
                         >
                           {[
                             "Date",
-                            "Type",
-                            "Details",
-                            "Hashrate",
+                            "Method",
+                            "Amount",
+                            "Activation Fee",
                             "Status",
+                            "TXID / Details",
+                            "Action",
                           ].map((h) => (
                             <th key={h} className="px-4 py-2.5 text-left">
                               {h}
@@ -1150,9 +2298,9 @@ export default function F2PoolMiningPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {ACTIVITY.map((a, idx) => (
+                        {WITHDRAWAL_HISTORY.map((w, idx) => (
                           <tr
-                            key={a.id}
+                            key={idx}
                             className={`border-t text-xs transition-colors ${
                               isDark
                                 ? "border-gray-700/40 hover:bg-gray-700/30"
@@ -1162,39 +2310,101 @@ export default function F2PoolMiningPage() {
                             <td
                               className={`px-4 py-3 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                             >
-                              {a.date}
+                              {w.date}
                             </td>
                             <td
-                              className={`px-4 py-3 font-medium ${
-                                isDark ? "text-white" : "text-gray-900"
-                              }`}
+                              className={`px-4 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}
                             >
-                              {a.type}
-                            </td>
-                            <td
-                              className={`px-4 py-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                            >
-                              {a.details}
-                            </td>
-                            <td
-                              className={`px-4 py-3 font-mono text-xs ${
-                                isDark ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              {a.hashrate}
+                              {w.method}
                             </td>
                             <td className="px-4 py-3">
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  a.status === "Success"
-                                    ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                                    : a.status === "Completed"
-                                      ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
-                                      : "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
-                                }`}
+                              <p
+                                className={`font-mono font-medium ${isDark ? "text-white" : "text-gray-900"}`}
                               >
-                                {a.status}
-                              </span>
+                                {w.amount}
+                              </p>
+                              <p
+                                className={`${isDark ? "text-gray-500" : "text-gray-400"}`}
+                              >
+                                {w.usd}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p
+                                className={
+                                  isDark ? "text-gray-300" : "text-gray-700"
+                                }
+                              >
+                                {w.fee}
+                              </p>
+                              {w.feeUsd && (
+                                <p
+                                  className={`${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                >
+                                  {w.feeUsd}
+                                </p>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    w.status === "Completed"
+                                      ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                                      : w.status === "Pending"
+                                        ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                                        : "bg-gray-500/10 text-gray-500 border border-gray-500/20"
+                                  }`}
+                                >
+                                  {w.status}
+                                </span>
+                                {w.status === "Pending" && (
+                                  <p
+                                    className={`mt-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                  >
+                                    Activation Fee Required
+                                  </p>
+                                )}
+                                {w.status === "Completed" && (
+                                  <p
+                                    className={`mt-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                  >
+                                    Funds Sent
+                                  </p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              {w.txid ? (
+                                <span className="text-orange-500 font-mono">
+                                  {w.txid}
+                                </span>
+                              ) : (
+                                <span
+                                  className={
+                                    isDark ? "text-gray-600" : "text-gray-300"
+                                  }
+                                >
+                                  —
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              {w.status === "Pending" ? (
+                                <button className="px-2.5 py-1 bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-bold rounded-lg transition-colors">
+                                  Pay Fee
+                                </button>
+                              ) : (
+                                <button
+                                  className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg border transition-colors ${
+                                    isDark
+                                      ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                                      : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  View
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -1202,712 +2412,56 @@ export default function F2PoolMiningPage() {
                     </table>
                   </div>
                 </div>
+              </motion.div>
+            )}
 
-                {/* Profit Calculator */}
-                <div
-                  className={`rounded-xl p-5 border ${
-                    isDark
-                      ? "bg-gray-800 border-gray-700/60"
-                      : "bg-white border-gray-200"
-                  } shadow-sm`}
-                >
-                  <div className="flex items-center gap-2 mb-4">
-                    <Calculator size={16} className="text-orange-500" />
-                    <h3
-                      className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
-                    >
-                      Profit Calculator
-                    </h3>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label
-                        className={`text-xs font-medium block mb-1.5 ${
-                          isDark ? "text-gray-400" : "text-gray-500"
-                        }`}
-                      >
-                        Hashrate
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="number"
-                          value={calcHashrate}
-                          onChange={(e) => setCalcHashrate(e.target.value)}
-                          className={`flex-1 rounded-lg px-3 py-2 text-sm border focus:outline-none focus:border-orange-500 transition-colors ${
-                            isDark
-                              ? "bg-gray-700 border-gray-600 text-white placeholder-gray-500"
-                              : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
-                          }`}
-                          placeholder="100"
-                        />
-                        <div
-                          className={`px-3 py-2 rounded-lg text-xs font-medium border flex items-center ${
-                            isDark
-                              ? "bg-gray-700 border-gray-600 text-gray-300"
-                              : "bg-gray-50 border-gray-300 text-gray-600"
-                          }`}
-                        >
-                          PH/s
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label
-                        className={`text-xs font-medium block mb-1.5 ${
-                          isDark ? "text-gray-400" : "text-gray-500"
-                        }`}
-                      >
-                        Duration (Days)
-                      </label>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {["30", "90", "180"].map((d) => (
-                          <button
-                            key={d}
-                            onClick={() => setCalcDuration(d)}
-                            className={`py-2 rounded-lg text-xs font-semibold transition-all ${
-                              calcDuration === d
-                                ? "bg-orange-500 text-white"
-                                : isDark
-                                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                            }`}
-                          >
-                            {d}D
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div
-                      className={`rounded-xl p-4 ${
-                        isDark ? "bg-gray-700/60" : "bg-orange-50"
-                      }`}
-                    >
-                      <p
-                        className={`text-xs mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                      >
-                        Estimated Earnings
-                      </p>
-                      <p className="text-xl font-bold text-orange-500">
-                        {estimatedEarnings} BTC
-                      </p>
-                      <p
-                        className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                      >
-                        ≈ $
-                        {(parseFloat(estimatedEarnings) * 60000).toLocaleString(
-                          undefined,
-                          { maximumFractionDigits: 2 },
-                        )}{" "}
-                        USD
-                      </p>
-                    </div>
-
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm"
-                    >
-                      Calculate Profit
-                    </motion.button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════
-              MINING PLANS TAB
-          ══════════════════════════════════════════════════════════ */}
-          {activeTab === "plans" && (
-            <motion.div
-              key="plans"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <div className="flex items-center gap-1.5 mb-5 text-xs">
-                <span className={isDark ? "text-gray-400" : "text-gray-500"}>
-                  Dashboard
-                </span>
-                <ChevronRight
-                  size={12}
-                  className={isDark ? "text-gray-600" : "text-gray-400"}
-                />
-                <span className="text-orange-500 font-medium">
-                  Mining Plans
-                </span>
-              </div>
-
-              <div className="text-center mb-8">
-                <h2
-                  className={`text-2xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
-                >
-                  Choose Your Mining Plan
-                </h2>
-                <p
-                  className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                >
-                  Select the perfect hashrate plan for your mining goals
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
-                {MINING_PLANS.map((plan, idx) => (
-                  <motion.div
-                    key={plan.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className={`relative rounded-2xl p-6 border transition-all ${
-                      plan.popular
-                        ? "border-orange-500 shadow-lg shadow-orange-500/10"
-                        : isDark
-                          ? "border-gray-700/60 bg-gray-800"
-                          : "border-gray-200 bg-white"
-                    } ${plan.popular ? (isDark ? "bg-gray-800" : "bg-white") : ""}`}
-                  >
-                    {plan.popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full shadow-sm">
-                          Most Popular
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="text-center mb-5">
-                      <div
-                        className={`w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center ${
-                          plan.popular
-                            ? "bg-orange-500"
-                            : isDark
-                              ? "bg-gray-700"
-                              : "bg-gray-100"
-                        }`}
-                      >
-                        <Cpu
-                          size={24}
-                          className={
-                            plan.popular
-                              ? "text-white"
-                              : isDark
-                                ? "text-gray-300"
-                                : "text-gray-600"
-                          }
-                        />
-                      </div>
-                      <h3
-                        className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
-                      >
-                        {plan.name}
-                      </h3>
-                      <p className="text-3xl font-bold text-orange-500 mt-2">
-                        {plan.price}
-                      </p>
-                      <p
-                        className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                      >
-                        {plan.duration}
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 mb-5">
-                      {[
-                        { label: "Hashrate", value: plan.hashrate },
-                        { label: "Daily Profit", value: plan.dailyProfit },
-                        { label: "Contract Duration", value: plan.duration },
-                        { label: "Algorithm", value: "SHA-256" },
-                        { label: "Pool Fee", value: "0.0%" },
-                      ].map((row) => (
-                        <div
-                          key={row.label}
-                          className={`flex justify-between text-sm border-b pb-2 ${
-                            isDark ? "border-gray-700/60" : "border-gray-100"
-                          }`}
-                        >
-                          <span
-                            className={
-                              isDark ? "text-gray-400" : "text-gray-500"
-                            }
-                          >
-                            {row.label}
-                          </span>
-                          <span
-                            className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
-                          >
-                            {row.value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                        plan.popular
-                          ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
-                          : isDark
-                            ? "bg-gray-700 hover:bg-gray-600 text-white"
-                            : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-                      }`}
-                    >
-                      Buy Hashrate
-                    </motion.button>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════
-              WITHDRAW TAB
-          ══════════════════════════════════════════════════════════ */}
-          {activeTab === "withdraw" && (
-            <motion.div
-              key="withdraw"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <div className="flex items-center gap-1.5 mb-5 text-xs">
-                <span className={isDark ? "text-gray-400" : "text-gray-500"}>
-                  Dashboard
-                </span>
-                <ChevronRight
-                  size={12}
-                  className={isDark ? "text-gray-600" : "text-gray-400"}
-                />
-                <span className="text-orange-500 font-medium">Withdraw</span>
-              </div>
-
-              {/* Mining Wallet Banner */}
-              <div
-                className={`rounded-2xl p-5 mb-6 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
-                  isDark
-                    ? "bg-gray-800 border-gray-700/60"
-                    : "bg-white border-gray-200"
-                } shadow-sm`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-xl">₿</span>
-                  </div>
-                  <div>
-                    <p
-                      className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                    >
-                      Mining Wallet Balance
-                    </p>
-                    <p
-                      className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
-                    >
-                      0.15263847 BTC
-                    </p>
-                    <p
-                      className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                    >
-                      ≈ $9,125,842.68 USD
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
-                  >
-                    Deposit
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`px-4 py-2 text-sm font-semibold rounded-xl transition-colors border ${
-                      isDark
-                        ? "border-gray-600 text-gray-300 hover:bg-gray-700"
-                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    Buy Hashrate
-                  </motion.button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
-                {/* Withdrawal Methods */}
-                <div
-                  className={`lg:col-span-2 rounded-xl p-5 border ${
-                    isDark
-                      ? "bg-gray-800 border-gray-700/60"
-                      : "bg-white border-gray-200"
-                  } shadow-sm`}
-                >
-                  <h3
-                    className={`font-semibold text-sm uppercase tracking-wide mb-4 ${
-                      isDark ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    Select Withdrawal Method
-                  </h3>
-                  <div className="space-y-2">
-                    {WITHDRAWAL_METHODS.map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => setWithdrawMethod(m.id)}
-                        className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all ${
-                          withdrawMethod === m.id
-                            ? "border-orange-500 bg-orange-500/5"
-                            : isDark
-                              ? "border-gray-700/60 bg-gray-700/30 hover:border-gray-600"
-                              : "border-gray-200 bg-gray-50 hover:border-gray-300"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                            style={{ backgroundColor: m.color }}
-                          >
-                            {m.icon}
-                          </div>
-                          <div className="text-left">
-                            <p
-                              className={`text-sm font-semibold ${
-                                isDark ? "text-white" : "text-gray-900"
-                              }`}
-                            >
-                              {m.name}
-                            </p>
-                            <p
-                              className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                            >
-                              {m.time}
-                            </p>
-                          </div>
-                        </div>
-                        {withdrawMethod === m.id && (
-                          <CheckCircle
-                            size={16}
-                            className="text-orange-500 flex-shrink-0"
-                          />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Withdrawal Details */}
-                <div
-                  className={`lg:col-span-3 rounded-xl p-5 border ${
-                    isDark
-                      ? "bg-gray-800 border-gray-700/60"
-                      : "bg-white border-gray-200"
-                  } shadow-sm`}
-                >
-                  <div className="text-center mb-5">
-                    <div
-                      className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-bold text-2xl"
-                      style={{
-                        backgroundColor:
-                          WITHDRAWAL_METHODS.find(
-                            (m) => m.id === withdrawMethod,
-                          )?.color || "#F97316",
-                      }}
-                    >
-                      {
-                        WITHDRAWAL_METHODS.find((m) => m.id === withdrawMethod)
-                          ?.icon
-                      }
-                    </div>
-                    <h3
-                      className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
-                    >
-                      {WITHDRAWAL_METHODS.find(
-                        (m) => m.id === withdrawMethod,
-                      )?.name.toUpperCase()}
-                    </h3>
-                    <p
-                      className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                    >
-                      To withdraw amounts higher than $150,000 USD, an
-                      activation fee is required.
-                    </p>
-                  </div>
-
-                  <div
-                    className={`rounded-xl p-4 mb-4 border ${
-                      isDark
-                        ? "bg-gray-700/50 border-gray-600/50"
-                        : "bg-gray-50 border-gray-200"
-                    }`}
-                  >
-                    <div className="flex justify-between mb-3">
-                      <span
-                        className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                      >
-                        Withdrawal Amount
-                      </span>
-                      <div className="text-right">
-                        <p
-                          className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}
-                        >
-                          6.00000000 BTC
-                        </p>
-                        <p
-                          className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                        >
-                          ≈ $6,000,000.00 USD
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <span
-                        className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                      >
-                        Activation Fee (One-time)
-                      </span>
-                      <div className="text-right">
-                        <p
-                          className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}
-                        >
-                          0.00850000 BTC
-                        </p>
-                        <p
-                          className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                        >
-                          ≈ $8,500.00 USD
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Activation Fee Alert */}
-                  <div className="rounded-xl p-4 mb-4 border border-orange-500/40 bg-orange-500/5">
-                    <div className="flex items-start gap-2.5">
-                      <AlertTriangle
-                        size={16}
-                        className="text-orange-500 flex-shrink-0 mt-0.5"
-                      />
-                      <div>
-                        <p className="text-orange-500 text-sm font-semibold">
-                          Activation Fee Required
-                        </p>
-                        <p
-                          className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                        >
-                          Your withdrawal request is pending activation. Please
-                          pay the activation fee to proceed.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm transition-colors shadow-sm mb-2"
-                  >
-                    Pay Activation Fee (0.00850000 BTC)
-                  </motion.button>
-                  <p
-                    className={`text-center text-[11px] flex items-center justify-center gap-1 ${
-                      isDark ? "text-gray-500" : "text-gray-400"
-                    }`}
-                  >
-                    <Shield size={11} />
-                    Secure &amp; Encrypted Payment
-                  </p>
-                </div>
-              </div>
-
-              {/* Withdrawal History Table */}
-              <div
-                className={`rounded-xl border overflow-hidden ${
-                  isDark
-                    ? "bg-gray-800 border-gray-700/60"
-                    : "bg-white border-gray-200"
-                } shadow-sm`}
+            {/* ══ Placeholder for other sidebar tabs ══ */}
+            {!["dashboard", "plans", "withdraw"].includes(activeTab) && (
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center justify-center py-20"
               >
                 <div
-                  className={`flex items-center justify-between px-5 py-4 border-b ${
-                    isDark ? "border-gray-700/60" : "border-gray-100"
+                  className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${
+                    isDark ? "bg-gray-800" : "bg-gray-100"
                   }`}
                 >
-                  <h3
-                    className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}
-                  >
-                    Withdrawal Requests
-                  </h3>
-                  <select
-                    className={`text-xs px-3 py-1.5 rounded-lg border focus:outline-none ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600 text-gray-300"
-                        : "bg-white border-gray-300 text-gray-600"
-                    }`}
-                  >
-                    <option>All Status</option>
-                    <option>Pending</option>
-                    <option>Completed</option>
-                  </select>
+                  <Cpu
+                    size={28}
+                    className={isDark ? "text-gray-500" : "text-gray-400"}
+                  />
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr
-                        className={`text-xs font-medium ${
-                          isDark
-                            ? "text-gray-400 bg-gray-700/30"
-                            : "text-gray-500 bg-gray-50"
-                        }`}
-                      >
-                        {[
-                          "Date",
-                          "Method",
-                          "Amount",
-                          "Activation Fee",
-                          "Status",
-                          "TXID / Details",
-                          "Action",
-                        ].map((h) => (
-                          <th key={h} className="px-4 py-2.5 text-left">
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {WITHDRAWAL_HISTORY.map((w, idx) => (
-                        <tr
-                          key={idx}
-                          className={`border-t text-xs transition-colors ${
-                            isDark
-                              ? "border-gray-700/40 hover:bg-gray-700/30"
-                              : "border-gray-100 hover:bg-gray-50"
-                          }`}
-                        >
-                          <td
-                            className={`px-4 py-3 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                          >
-                            {w.date}
-                          </td>
-                          <td
-                            className={`px-4 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}
-                          >
-                            {w.method}
-                          </td>
-                          <td className="px-4 py-3">
-                            <p
-                              className={`font-mono font-medium ${isDark ? "text-white" : "text-gray-900"}`}
-                            >
-                              {w.amount}
-                            </p>
-                            <p
-                              className={`${isDark ? "text-gray-500" : "text-gray-400"}`}
-                            >
-                              {w.usd}
-                            </p>
-                          </td>
-                          <td className="px-4 py-3">
-                            <p
-                              className={
-                                isDark ? "text-gray-300" : "text-gray-700"
-                              }
-                            >
-                              {w.fee}
-                            </p>
-                            {w.feeUsd && (
-                              <p
-                                className={`${isDark ? "text-gray-500" : "text-gray-400"}`}
-                              >
-                                {w.feeUsd}
-                              </p>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div>
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  w.status === "Completed"
-                                    ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                                    : w.status === "Pending"
-                                      ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
-                                      : "bg-gray-500/10 text-gray-500 border border-gray-500/20"
-                                }`}
-                              >
-                                {w.status}
-                              </span>
-                              {w.status === "Pending" && (
-                                <p
-                                  className={`mt-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}
-                                >
-                                  Activation Fee Required
-                                </p>
-                              )}
-                              {w.status === "Completed" && (
-                                <p
-                                  className={`mt-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}
-                                >
-                                  Funds Sent
-                                </p>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            {w.txid ? (
-                              <span className="text-orange-500 font-mono">
-                                {w.txid}
-                              </span>
-                            ) : (
-                              <span
-                                className={
-                                  isDark ? "text-gray-600" : "text-gray-300"
-                                }
-                              >
-                                —
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            {w.status === "Pending" ? (
-                              <button className="px-2.5 py-1 bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-bold rounded-lg transition-colors">
-                                Pay Fee
-                              </button>
-                            ) : (
-                              <button
-                                className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg border transition-colors ${
-                                  isDark
-                                    ? "border-gray-600 text-gray-300 hover:bg-gray-700"
-                                    : "border-gray-300 text-gray-600 hover:bg-gray-50"
-                                }`}
-                              >
-                                View
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                <h2
+                  className={`text-lg font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+                >
+                  Coming Soon
+                </h2>
+                <p
+                  className={`text-sm text-center max-w-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                >
+                  This section is currently under development. Check back soon!
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-      {/* Footer */}
-      <div
-        className={`text-center py-4 text-xs border-t ${
-          isDark
-            ? "border-gray-700/60 text-gray-600"
-            : "border-gray-200 text-gray-400"
-        }`}
-      >
-        © 2025 F2 Pool Mining. All Rights Reserved.{" "}
-        <span className="text-orange-500 font-medium">
-          CONCEPT DEMO – NOT A REAL PLATFORM
-        </span>
+        {/* Footer */}
+        <div
+          className={`text-center py-4 text-xs border-t ${
+            isDark
+              ? "border-gray-700/60 text-gray-600"
+              : "border-gray-200 text-gray-400"
+          }`}
+        >
+          © 2025 F2 Pool Mining. All Rights Reserved.{" "}
+          <span className="text-orange-500 font-medium">
+            CONCEPT DEMO – NOT A REAL PLATFORM
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -2456,6 +2456,7 @@ function TradingInterface() {
           onShowHistory={() => setShowTradingHistory(true)}
           onShowPortfolio={() => setShowPortfolioPanel(true)}
           onShowAddAsset={() => setShowAddAssetModal(true)}
+          userImage={session?.user?.image ?? undefined}
           tradeHistory={tradeHistory}
           onAddTab={(sym) => {
             const existingIdx = openTabs.findIndex((t) => t.symbol === sym);
@@ -2878,7 +2879,7 @@ function TradingInterface() {
                       />
                     </div>
                     {/* Green verified checkmark badge */}
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 md:w-3 md:h-3 lg:w-4 lg:h-4 bg-[#5ddf38] rounded-full flex items-center justify-center border-2 border-[#1b1817]">
+                    <div className="absolute top-0 right-4 w-2.5 h-2.5 md:w-3 md:h-3 lg:w-4 lg:h-4 bg-[#5ddf38] rounded-full flex items-center justify-center border-2 border-[#1b1817]">
                       <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
                         <path
                           d="M2 6L5 9L10 3"

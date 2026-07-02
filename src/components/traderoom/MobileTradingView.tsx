@@ -132,6 +132,9 @@ export interface MobileTradingViewProps {
     profit: number;
   }>;
 
+  // User profile image
+  userImage?: string;
+
   // Navigation callbacks
   onShowHistory: () => void;
   onShowPortfolio: () => void;
@@ -1935,6 +1938,7 @@ function MobileBalanceBar({
   onDeposit,
   onWithdraw,
   onReplenishPractice,
+  userImage,
 }: {
   selectedAccountType: "real" | "practice";
   traderoomBalance: number;
@@ -1943,6 +1947,7 @@ function MobileBalanceBar({
   onDeposit: () => void;
   onWithdraw: () => void;
   onReplenishPractice: (amount: number) => void;
+  userImage?: string;
 }) {
   const [showSheet, setShowSheet] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
@@ -1969,20 +1974,29 @@ function MobileBalanceBar({
       >
         {/* Avatar */}
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
           style={{ backgroundColor: C.quaternary }}
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke={C.textSecondary}
-            strokeWidth="2"
-          >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
+          {userImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={userImage}
+              alt="Profile"
+              className="w-full h-full object-cover rounded-full"
+            />
+          ) : (
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={C.textSecondary}
+              strokeWidth="2"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          )}
         </div>
 
         {/* Balance + account type — tappable */}
@@ -2415,6 +2429,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         onDeposit={props.onDeposit}
         onWithdraw={props.onWithdraw}
         onReplenishPractice={props.onReplenishPractice}
+        userImage={props.userImage}
       />
 
       {/* Asset header with tabs - hidden when portfolio or history tab is active */}

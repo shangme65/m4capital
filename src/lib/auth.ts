@@ -64,7 +64,7 @@ export const authOptions: AuthOptions = {
 
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
-          user.password
+          user.password,
         );
 
         if (!isPasswordValid) {
@@ -89,19 +89,19 @@ export const authOptions: AuthOptions = {
           const twoFactorCode = credentials.twoFactorCode;
           const twoFactorMethod = user.twoFactorMethod;
           const twoFactorVerified = credentials.twoFactorVerified === "true";
-          
+
           // If no 2FA code provided, signal that 2FA is required
           if (!twoFactorCode) {
             throw new Error(`2FA_REQUIRED:${twoFactorMethod}`);
           }
-          
+
           // If already verified via API, skip verification here
           if (twoFactorVerified) {
             // Already verified, just proceed
           } else {
             // Verify the 2FA code
             const speakeasy = require("speakeasy");
-          
+
             if (twoFactorMethod === "APP") {
               // Verify TOTP code from authenticator app
               const isValid = speakeasy.totp.verify({
@@ -110,7 +110,7 @@ export const authOptions: AuthOptions = {
                 token: twoFactorCode,
                 window: 2,
               });
-              
+
               if (!isValid) {
                 throw new Error("INVALID_2FA_CODE");
               }
@@ -121,19 +121,19 @@ export const authOptions: AuthOptions = {
               if (!storedData) {
                 throw new Error("2FA_CODE_EXPIRED");
               }
-              
+
               const [storedCode, timestamp] = storedData.split(":");
               const codeAge = Date.now() - parseInt(timestamp);
               const maxAge = 10 * 60 * 1000; // 10 minutes
-              
+
               if (codeAge > maxAge) {
                 throw new Error("2FA_CODE_EXPIRED");
               }
-              
+
               if (storedCode !== twoFactorCode) {
                 throw new Error("INVALID_2FA_CODE");
               }
-              
+
               // Clear the login code after successful verification
               await prisma.user.update({
                 where: { id: user.id },
@@ -164,30 +164,30 @@ export const authOptions: AuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax' as const,
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "lax" as const,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
         // Don't set domain - allows cookies to work on localhost AND network IP
       },
     },
     callbackUrl: {
       name: `next-auth.callback-url`,
       options: {
-        sameSite: 'lax' as const,
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "lax" as const,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
       },
     },
     csrfToken: {
       name: `next-auth.csrf-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax' as const,
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "lax" as const,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },
@@ -337,6 +337,7 @@ export const authOptions: AuthOptions = {
         session.user.accountType = token.accountType as string | undefined;
         session.user.isEmailVerified = token.isEmailVerified as boolean;
         session.user.isVerified = token.isVerified as boolean;
+        session.user.image = (token.image as string) ?? null;
         session.user.preferredCurrency = token.preferredCurrency as
           | string
           | undefined;
