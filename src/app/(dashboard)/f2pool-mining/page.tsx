@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import {
@@ -823,8 +824,95 @@ function StatCard({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function F2PoolMiningPage() {
+  const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+
+  // Non-admin users see a Coming Soon placeholder
+  const isAdmin =
+    session?.user?.role === "ADMIN" || session?.user?.role === "STAFF_ADMIN";
+
+  if (session !== undefined && !isAdmin) {
+    return (
+      <div
+        className={`min-h-screen flex flex-col items-center justify-center gap-6 px-6 ${
+          isDark ? "bg-gray-900" : "bg-gray-50"
+        }`}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center text-center max-w-md"
+        >
+          {/* F2 Pool badge */}
+          <div className="w-16 h-16 rounded-2xl bg-orange-500 flex items-center justify-center mb-6 shadow-lg shadow-orange-500/30">
+            <span className="text-white font-black text-2xl">F2</span>
+          </div>
+
+          <h1
+            className={`text-2xl font-bold mb-3 ${
+              isDark ? "text-white" : "text-gray-900"
+            }`}
+          >
+            F2 Pool Mining
+          </h1>
+
+          <div className="flex items-center gap-2 mb-5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500" />
+            </span>
+            <span
+              className={`text-sm font-semibold tracking-widest uppercase ${
+                isDark ? "text-orange-400" : "text-orange-500"
+              }`}
+            >
+              Coming Soon
+            </span>
+          </div>
+
+          <p
+            className={`text-sm leading-relaxed mb-8 ${
+              isDark ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
+            We&apos;re building something powerful. F2 Pool Mining will let you
+            mine Bitcoin and other top cryptocurrencies directly from your
+            account with real-time hashrate tracking, earnings dashboard, and
+            automated payouts.
+          </p>
+
+          {/* Feature teasers */}
+          <div
+            className={`w-full rounded-2xl border p-5 space-y-3 ${
+              isDark
+                ? "bg-gray-800/60 border-gray-700/50"
+                : "bg-white border-gray-200"
+            }`}
+          >
+            {[
+              { icon: "⚡", label: "Real-time hashrate monitoring" },
+              { icon: "💰", label: "Automated BTC earnings &amp; payouts" },
+              { icon: "📊", label: "Advanced profit calculator" },
+              { icon: "🔒", label: "Secure pool mining contracts" },
+            ].map(({ icon, label }) => (
+              <div key={label} className="flex items-center gap-3">
+                <span className="text-lg">{icon}</span>
+                <span
+                  className={`text-sm ${
+                    isDark ? "text-gray-300" : "text-gray-700"
+                  }`}
+                  dangerouslySetInnerHTML={{ __html: label }}
+                />
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ─── Admin-only full page below ───────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<
     | "dashboard"
     | "withdraw"

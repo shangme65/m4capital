@@ -7,6 +7,8 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 import { User } from "@prisma/client";
+import { generateId } from "./generate-id";
+import { sendPushNotification } from "./push-notifications";
 
 export const authOptions: AuthOptions = {
   // Remove adapter when using JWT strategy
@@ -354,6 +356,76 @@ export const authOptions: AuthOptions = {
     },
   },
   events: {
+    async signIn({ user, isNewUser }) {
+      // Only notify admins about USER logins (not admin logins, not new registrations)
+      if (!user?.id || !user?.email || isNewUser) return;
+
+      try {
+        // Fetch the logging-in user's role and country from DB
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true, country: true, name: true, email: true },
+        });
+
+        // Skip admin/staff logins to avoid admin notification spam
+        if (!dbUser || dbUser.role === "ADMIN" || dbUser.role === "STAFF_ADMIN")
+          return;
+
+        const loginTime = new Date().toLocaleString("en-US", {
+          timeZone: "UTC",
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZoneName: "short",
+        });
+
+        const locationLine = dbUser.country
+          ? `\n\ud83c\udf0d Country: ${dbUser.country}`
+          : "";
+
+        const admins = await prisma.user.findMany({
+          where: { role: { in: ["ADMIN", "STAFF_ADMIN"] } },
+          select: { id: true },
+        });
+
+        await Promise.all(
+          admins.map((admin) =>
+            prisma.notification.create({
+              data: {
+                id: generateId(),
+                userId: admin.id,
+                type: "INFO",
+                title: "\ud83d\udd10 User Login",
+                message: `"${dbUser.name || dbUser.email}" (${dbUser.email}) just logged in.\n\ud83d\udcc5 Time: ${loginTime}${locationLine}`,
+                metadata: {
+                  event: "user_login",
+                  userEmail: dbUser.email,
+                  userName: dbUser.name,
+                  country: dbUser.country,
+                  loginTime: new Date().toISOString(),
+                },
+              },
+            }),
+          ),
+        );
+
+        // Send push notifications to admins
+        await Promise.all(
+          admins.map((admin) =>
+            sendPushNotification(
+              admin.id,
+              "\ud83d\udd10 User Login",
+              `${dbUser.name || dbUser.email} just logged in${dbUser.country ? ` from ${dbUser.country}` : ""}`,
+              { url: "/admin" },
+            ),
+          ),
+        );
+      } catch {
+        // Silently fail — never block the login process
+      }
+    },
     async signOut({ token, session }) {
       // User signed out
     },

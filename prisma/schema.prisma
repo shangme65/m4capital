@@ -575,6 +575,7 @@ model User {
   phoneVerified          Boolean            @default(false)
   phoneVerifiedAt        DateTime?
   hasClaimedFirstDepositBonus Boolean       @default(false)
+  lastSeenAt             DateTime?          // Tracks real-time presence; updated by client heartbeat
   Account                Account[]
   BitcoinDeposit         BitcoinDeposit[]
   CopyTrading            CopyTrading[]

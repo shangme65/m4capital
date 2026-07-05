@@ -1264,3 +1264,220 @@ export const cryptoSwapTextTemplate = (
   feeAmount: number,
 ) =>
   `Swap Completed! You swapped ${amount.toFixed(8)} ${fromAsset} for ${receiveAmount.toFixed(8)} ${toAsset}. Exchange Rate: 1 ${fromAsset} = ${rate.toFixed(8)} ${toAsset}. Fee: ${feeAmount.toFixed(8)} ${toAsset}. Thank you for using M4 Capital!`;
+
+// ============================================================================
+// BONUS EXPIRATION EMAIL TEMPLATE
+// ============================================================================
+
+/**
+ * Bonus expiration reminder email.
+ * Sent to new users who have not yet made their first deposit.
+ *
+ * @param userName      - Display name of the recipient
+ * @param expiryDate    - Human-readable expiry date, e.g. "July 20, 2026"
+ * @param daysLeft      - Number of days remaining before bonus expires (e.g. 3)
+ * @param bonusPercent  - Bonus percentage (defaults to 50)
+ */
+export const bonusExpirationTemplate = (
+  userName: string,
+  expiryDate: string,
+  daysLeft: number,
+  bonusPercent: number = 50,
+) => {
+  const urgencyColor = daysLeft <= 2 ? colors.danger : colors.warning;
+  const urgencyLabel =
+    daysLeft === 0
+      ? "⚠️ TODAY IS YOUR LAST CHANCE"
+      : daysLeft === 1
+        ? "⚠️ EXPIRES TOMORROW"
+        : `⏳ ${daysLeft} DAYS LEFT`;
+
+  return emailTemplate(`
+    <!-- Urgency Banner -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 0;">
+      <tr>
+        <td align="center" style="background: linear-gradient(135deg, ${urgencyColor}22 0%, ${urgencyColor}11 100%); border: 1px solid ${urgencyColor}44; border-radius: 10px 10px 0 0; padding: 10px 16px;">
+          <p style="margin: 0; color: ${urgencyColor}; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">${urgencyLabel}</p>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Hero Bonus Card -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+      <tr>
+        <td align="center" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #ea580c 100%); border-radius: 0 0 10px 10px; padding: 28px 20px;">
+          <p style="margin: 0 0 4px; color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;">Limited-Time Welcome Offer</p>
+          <p style="margin: 0 0 8px; color: #ffffff; font-size: 52px; font-weight: 900; line-height: 1; letter-spacing: -2px;">${bonusPercent}%</p>
+          <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 17px; font-weight: 600;">First Deposit Bonus</p>
+          <p style="margin: 8px 0 0; color: rgba(255,255,255,0.75); font-size: 12px;">Deposit any amount — we double your start with a ${bonusPercent}% match, credited instantly.</p>
+        </td>
+      </tr>
+    </table>
+
+    ${emailGreeting(userName)}
+
+    ${emailParagraph(
+      `Your exclusive <strong style="color: ${colors.warning};">${bonusPercent}% Welcome Deposit Bonus</strong> is reserved for your account — but it <strong style="color: ${urgencyColor};">expires on ${expiryDate}</strong>. Once it's gone, it cannot be reinstated or extended.`,
+    )}
+
+    ${emailAlert(
+      `Make your first deposit before <strong>${expiryDate}</strong> and receive an instant <strong>${bonusPercent}% bonus</strong> on the full deposited amount — automatically credited to your trading balance.`,
+      "warning",
+    )}
+
+    <!-- How It Works -->
+    ${emailCard(
+      `
+      <p style="margin: 0 0 12px; color: ${colors.white}; font-size: 15px; font-weight: 700;">💡 How the Bonus Works</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td width="32" style="vertical-align: top;">
+                  <div style="width: 24px; height: 24px; background: ${colors.warning}22; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; color: ${colors.warning}; font-weight: 700;">1</div>
+                </td>
+                <td style="vertical-align: top; padding-left: 8px; color: ${colors.textSecondary}; font-size: 13px; line-height: 1.5;">Make your first deposit of any amount via Bitcoin, Ethereum, USDT, or 100+ other assets.</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td width="32" style="vertical-align: top;">
+                  <div style="width: 24px; height: 24px; background: ${colors.warning}22; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; color: ${colors.warning}; font-weight: 700;">2</div>
+                </td>
+                <td style="vertical-align: top; padding-left: 8px; color: ${colors.textSecondary}; font-size: 13px; line-height: 1.5;">Your <strong style="color: ${colors.white};">${bonusPercent}% bonus is credited instantly</strong> — no codes, no waiting, no hidden steps.</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td width="32" style="vertical-align: top;">
+                  <div style="width: 24px; height: 24px; background: ${colors.warning}22; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; color: ${colors.warning}; font-weight: 700;">3</div>
+                </td>
+                <td style="vertical-align: top; padding-left: 8px; color: ${colors.textSecondary}; font-size: 13px; line-height: 1.5;">Start trading crypto, forex, and copy-trading strategies immediately with your boosted balance.</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    `,
+      colors.warning,
+    )}
+
+    <!-- Example Calculation -->
+    ${emailTransactionTable([
+      { label: "Your Deposit", value: "$500.00" },
+      {
+        label: `${bonusPercent}% Welcome Bonus`,
+        value: `+$250.00`,
+        color: colors.success,
+      },
+      {
+        label: "Total Trading Balance",
+        value: "$750.00",
+        highlight: true,
+      },
+    ])}
+    <p style="margin: -6px 0 16px; color: ${colors.gray}; font-size: 11px; text-align: center;">Example shown for illustrative purposes only.</p>
+
+    <!-- Why Invest Now -->
+    ${emailCard(
+      `
+      <p style="margin: 0 0 12px; color: ${colors.white}; font-size: 15px; font-weight: 700;">📈 Why Start Investing Today</p>
+      ${emailFeatureList([
+        {
+          icon: "🌍",
+          text: "Access global markets — crypto, forex, stocks, and commodities — 24/7 from anywhere in the world.",
+        },
+        {
+          icon: "🤖",
+          text: "Copy top-performing traders automatically. No experience required — let proven strategies work for you.",
+        },
+        {
+          icon: "🔒",
+          text: "Regulated environment with multi-layer security. Your funds are protected and your data is encrypted.",
+        },
+        {
+          icon: "💸",
+          text: "Transparent fee structure with no hidden charges. Withdraw profits at any time with no lock-in periods.",
+        },
+        {
+          icon: "📊",
+          text: "Real-time analytics and AI-powered signals to help you make informed, data-driven decisions.",
+        },
+      ])}
+    `,
+    )}
+
+    <!-- Primary CTA -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0 8px;">
+      <tr>
+        <td align="center">
+          <a href="${baseUrl}/dashboard/deposit" style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 20px rgba(249, 115, 22, 0.5); letter-spacing: 0.3px;">
+            🚀 Claim My ${bonusPercent}% Bonus Now
+          </a>
+        </td>
+      </tr>
+    </table>
+    ${emailButtonSecondary("Learn How It Works", `${baseUrl}/dashboard`)}
+
+    ${emailDivider()}
+
+    <!-- Legal / Risk Disclaimer -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+      <tr>
+        <td style="background: rgba(0,0,0,0.25); border-radius: 8px; padding: 14px 16px; border: 1px solid rgba(255,255,255,0.06);">
+          <p style="margin: 0 0 8px; color: ${colors.grayLight}; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Important — Bonus Terms &amp; Risk Disclosure</p>
+          <p style="margin: 0 0 6px; color: ${colors.gray}; font-size: 11px; line-height: 1.6;">
+            The ${bonusPercent}% Welcome Deposit Bonus is a one-time promotional offer available exclusively on your first deposit and must be claimed before <strong style="color: ${colors.grayLight};">${expiryDate}</strong>. The bonus is subject to M4 Capital's standard bonus terms, including applicable trading volume requirements before withdrawal eligibility. Full bonus terms are available at <a href="${baseUrl}/terms" style="color: ${colors.grayLight}; text-decoration: underline;">${baseUrl}/terms</a>.
+          </p>
+          <p style="margin: 0; color: ${colors.gray}; font-size: 11px; line-height: 1.6;">
+            <strong style="color: ${colors.grayLight};">Risk Warning:</strong> Trading financial instruments involves a significant risk of loss and is not suitable for all investors. Past performance is not indicative of future results. You should only invest capital you can afford to lose. M4 Capital does not provide personalised investment advice. Please read our full <a href="${baseUrl}/terms" style="color: ${colors.grayLight}; text-decoration: underline;">Terms of Service</a> and <a href="${baseUrl}/privacy" style="color: ${colors.grayLight}; text-decoration: underline;">Privacy Policy</a> before depositing.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    ${emailSignature()}
+  `);
+};
+
+/**
+ * Plain-text version of the bonus expiration email.
+ */
+export const bonusExpirationTextTemplate = (
+  userName: string,
+  expiryDate: string,
+  daysLeft: number,
+  bonusPercent: number = 50,
+) =>
+  `Hi ${userName},
+
+Your exclusive ${bonusPercent}% Welcome Deposit Bonus expires on ${expiryDate} (${daysLeft} day${daysLeft === 1 ? "" : "s"} left).
+
+Make your first deposit before this date and receive an instant ${bonusPercent}% bonus on the full amount — credited automatically to your trading balance.
+
+EXAMPLE: Deposit $500 → Get $250 bonus → Start with $750.
+
+WHY INVEST NOW?
+• Access global crypto, forex, and stock markets 24/7
+• Copy top traders automatically — no experience needed
+• Real-time analytics and AI trading signals
+• Withdraw profits any time with no lock-in periods
+• Multi-layer security and regulated environment
+
+Claim your bonus: ${baseUrl}/dashboard/deposit
+
+--- Bonus Terms & Risk Disclosure ---
+The ${bonusPercent}% Welcome Bonus is valid on your first deposit only and expires on ${expiryDate}. Trading involves substantial risk of loss. Only invest funds you can afford to lose. Past performance is not indicative of future results. Full terms: ${baseUrl}/terms
+
+The M4 Capital Team
+${baseUrl}
+`;

