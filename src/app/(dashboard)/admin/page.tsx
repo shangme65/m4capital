@@ -3195,16 +3195,16 @@ const AdminDashboard = () => {
         <div className="space-y-3 sm:space-y-8">
           {/* Quick Actions - 3D Crypto Card Style */}
           <div
-            className={`rounded-xl p-2 sm:p-3 border -mx-1 sm:mx-0 ${isDark ? "bg-gray-800/50 border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)]" : "bg-white border-gray-200 shadow-[0_0_20px_rgba(59,130,246,0.15)]"}`}
+            className={`rounded-xl p-1.5 sm:p-2 border -mx-1 sm:mx-0 ${isDark ? "bg-gray-800/50 border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)]" : "bg-white border-gray-200 shadow-[0_0_20px_rgba(59,130,246,0.15)]"}`}
           >
-            <div className="space-y-2">
+            <div className="space-y-1">
               {/* Process Manual Payment */}
               <button
                 onClick={() => {
                   setShowPaymentModal(true);
                   fetchUsers();
                 }}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(34,197,94,0.25),0_0_30px_rgba(34,197,94,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(34,197,94,0.25),0_0_30px_rgba(34,197,94,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3217,9 +3217,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #22c55e40, 0 2px 8px #22c55e60, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3228,7 +3228,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <CreditCard
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                   </div>
                   <div className="flex flex-col text-left">
@@ -3264,7 +3264,7 @@ const AdminDashboard = () => {
               {/* Manual Trade Profit */}
               <button
                 onClick={() => setShowManualProfitModal(true)}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(251,191,36,0.25),0_0_30px_rgba(251,191,36,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(251,191,36,0.25),0_0_30px_rgba(251,191,36,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3277,9 +3277,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #fbbf2440, 0 2px 8px #fbbf2460, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3288,7 +3288,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <TrendingUp
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                   </div>
                   <div className="flex flex-col text-left">
@@ -3324,7 +3324,7 @@ const AdminDashboard = () => {
               {/* Manage Users */}
               <button
                 onClick={() => setActiveTab("users")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3337,9 +3337,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #3b82f640, 0 2px 8px #3b82f660, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3348,7 +3348,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <Users
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                   </div>
                   <div className="flex flex-col text-left">
@@ -3384,7 +3384,7 @@ const AdminDashboard = () => {
               {/* Deleted Users Bin */}
               <button
                 onClick={() => setActiveTab("bin")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(239,68,68,0.25),0_0_30px_rgba(239,68,68,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(239,68,68,0.25),0_0_30px_rgba(239,68,68,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3397,9 +3397,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #ef444440, 0 2px 8px #ef444460, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3408,7 +3408,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <Trash2
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                   </div>
                   <div className="flex flex-col text-left">
@@ -3424,7 +3424,7 @@ const AdminDashboard = () => {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {deletedUsersCount > 0 && (
                     <span className="bg-red-500 text-white rounded-full px-2 py-0.5 text-xs font-bold shadow-lg">
                       {deletedUsersCount}
@@ -3451,7 +3451,7 @@ const AdminDashboard = () => {
               {/* KYC Verification */}
               <button
                 onClick={() => (window.location.href = "/admin/kyc")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(249,115,22,0.25),0_0_30px_rgba(249,115,22,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(249,115,22,0.25),0_0_30px_rgba(249,115,22,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3464,9 +3464,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #f9731640, 0 2px 8px #f9731660, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3475,7 +3475,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <Shield
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                   </div>
                   <div className="flex flex-col text-left">
@@ -3491,7 +3491,7 @@ const AdminDashboard = () => {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {pendingKycCount > 0 && (
                     <span className="bg-orange-500 text-white rounded-full px-2 py-0.5 text-xs font-bold shadow-lg">
                       {pendingKycCount}
@@ -3518,7 +3518,7 @@ const AdminDashboard = () => {
               {/* Analytics Dashboard */}
               <button
                 onClick={() => router.push("/admin/analytics")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(6,182,212,0.25),0_0_30px_rgba(6,182,212,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(6,182,212,0.25),0_0_30px_rgba(6,182,212,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3531,9 +3531,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #06b6d440, 0 2px 8px #06b6d460, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3542,7 +3542,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <BarChart3
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                   </div>
                   <div className="flex flex-col text-left">
@@ -3578,7 +3578,7 @@ const AdminDashboard = () => {
               {/* Withdrawals Management */}
               <button
                 onClick={() => router.push("/admin/withdrawals")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(220,38,38,0.25),0_0_30px_rgba(220,38,38,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(220,38,38,0.25),0_0_30px_rgba(220,38,38,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3591,9 +3591,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #dc262640, 0 2px 8px #dc262660, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3602,7 +3602,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <Wallet
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                   </div>
                   <div className="flex flex-col text-left">
@@ -3638,7 +3638,7 @@ const AdminDashboard = () => {
               {/* Transaction History */}
               <button
                 onClick={() => setActiveTab("transactions")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(99,102,241,0.25),0_0_30px_rgba(99,102,241,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(99,102,241,0.25),0_0_30px_rgba(99,102,241,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3651,9 +3651,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #6366f140, 0 2px 8px #6366f160, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3662,7 +3662,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <History
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                   </div>
                   <div className="flex flex-col text-left">
@@ -3698,7 +3698,7 @@ const AdminDashboard = () => {
               {/* Signal Strength */}
               <button
                 onClick={() => setShowSignalModal(true)}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(34,197,94,0.25),0_0_30px_rgba(34,197,94,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(34,197,94,0.25),0_0_30px_rgba(34,197,94,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3711,9 +3711,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #22c55e40, 0 2px 8px #22c55e60, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3722,7 +3722,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <Activity
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                   </div>
                   <div className="flex flex-col text-left">
@@ -3758,7 +3758,7 @@ const AdminDashboard = () => {
               {/* Email Templates */}
               <button
                 onClick={() => setActiveTab("email-templates")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(168,85,247,0.25),0_0_30px_rgba(168,85,247,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(168,85,247,0.25),0_0_30px_rgba(168,85,247,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3771,9 +3771,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #a855f740, 0 2px 8px #a855f760, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3782,7 +3782,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <Mail
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                   </div>
                   <div className="flex flex-col text-left">
@@ -3818,7 +3818,7 @@ const AdminDashboard = () => {
               {/* Online Users */}
               <button
                 onClick={() => setActiveTab("online-users")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(16,185,129,0.25),0_0_30px_rgba(16,185,129,0.4)]"
+                className="relative w-full flex items-center justify-between p-1.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(16,185,129,0.25),0_0_30px_rgba(16,185,129,0.4)]"
                 style={{
                   background: isDark
                     ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -3831,9 +3831,9 @@ const AdminDashboard = () => {
                     : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 relative"
+                    className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 relative"
                     style={{
                       boxShadow:
                         "0 4px 16px #10b98140, 0 2px 8px #10b98160, inset 0 1px 2px rgba(255,255,255,0.2)",
@@ -3842,7 +3842,7 @@ const AdminDashboard = () => {
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                     <Users
                       className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
+                      size={14}
                     />
                     {/* pulse dot */}
                     {currentOnlineCount > 0 && (
