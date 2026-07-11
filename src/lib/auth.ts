@@ -10,6 +10,51 @@ import { User } from "@prisma/client";
 import { generateId } from "./generate-id";
 import { sendPushNotification } from "./push-notifications";
 
+// Temporary store for user-agent strings captured in authorize() and read in events.signIn()
+const pendingLoginAgents = new Map<string, string>();
+
+/** Parse a raw User-Agent string into a human-readable device summary */
+function parseUserAgent(ua: string): string {
+  if (!ua) return "🖥️ Unknown Device";
+
+  // Device type
+  let deviceType = "🖥️ Desktop";
+  if (/Mobile/i.test(ua) && !/iPad/i.test(ua)) deviceType = "📱 Mobile";
+  else if (/Tablet|iPad/i.test(ua)) deviceType = "📟 Tablet";
+
+  // Operating system
+  let os = "Unknown OS";
+  if (/Windows NT 10|Windows NT 11/i.test(ua)) os = "Windows 10/11";
+  else if (/Windows NT 6\.3/i.test(ua)) os = "Windows 8.1";
+  else if (/Windows NT 6\.1/i.test(ua)) os = "Windows 7";
+  else if (/Windows/i.test(ua)) os = "Windows";
+  else if (/Mac OS X/i.test(ua)) {
+    const m = ua.match(/Mac OS X ([\_\d]+)/);
+    os = m ? `macOS ${m[1].replace(/_/g, ".")}` : "macOS";
+  } else if (/Android/i.test(ua)) {
+    const m = ua.match(/Android ([\d.]+)/);
+    os = m ? `Android ${m[1]}` : "Android";
+  } else if (/iPhone OS/i.test(ua)) {
+    const m = ua.match(/iPhone OS ([\d_]+)/);
+    os = m ? `iOS ${m[1].replace(/_/g, ".")}` : "iOS";
+  } else if (/iPad/i.test(ua)) {
+    os = "iPadOS";
+  } else if (/Linux/i.test(ua)) {
+    os = "Linux";
+  }
+
+  // Browser
+  let browser = "Unknown Browser";
+  if (/Edg\//i.test(ua)) browser = "Edge";
+  else if (/OPR\/|Opera/i.test(ua)) browser = "Opera";
+  else if (/Chrome\/\d/i.test(ua) && !/Chromium/i.test(ua)) browser = "Chrome";
+  else if (/Firefox/i.test(ua)) browser = "Firefox";
+  else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
+  else if (/Chromium/i.test(ua)) browser = "Chromium";
+
+  return `${deviceType} • ${os} • ${browser}`;
+}
+
 export const authOptions: AuthOptions = {
   // Remove adapter when using JWT strategy
   // adapter: PrismaAdapter(prisma),
@@ -31,7 +76,7 @@ export const authOptions: AuthOptions = {
         twoFactorMethod: { label: "2FA Method", type: "text" },
         twoFactorVerified: { label: "2FA Verified", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -145,6 +190,12 @@ export const authOptions: AuthOptions = {
           }
         }
 
+        // Capture user-agent for later use in events.signIn
+        const rawUA = (req as any)?.headers?.["user-agent"] as
+          | string
+          | undefined;
+        if (rawUA) pendingLoginAgents.set(user.id, rawUA);
+
         return {
           id: user.id,
           email: user.email,
@@ -159,6 +210,7 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
+
   session: {
     strategy: "jwt", // Using JWT for reliable session management
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -385,6 +437,13 @@ export const authOptions: AuthOptions = {
           ? `\n\ud83c\udf0d Country: ${dbUser.country}`
           : "";
 
+        // Device info from captured user-agent
+        const rawUA = pendingLoginAgents.get(user.id) || "";
+        pendingLoginAgents.delete(user.id);
+        const deviceInfo = rawUA
+          ? `\n\ud83d\udcbb Device: ${parseUserAgent(rawUA)}`
+          : "";
+
         const admins = await prisma.user.findMany({
           where: { role: { in: ["ADMIN", "STAFF_ADMIN"] } },
           select: { id: true },
@@ -398,7 +457,8 @@ export const authOptions: AuthOptions = {
                 userId: admin.id,
                 type: "INFO",
                 title: "\ud83d\udd10 User Login",
-                message: `"${dbUser.name || dbUser.email}" (${dbUser.email}) just logged in.\n\ud83d\udcc5 Time: ${loginTime}${locationLine}`,
+                message: `"${dbUser.name || dbUser.email}" (${dbUser.email}) just logged in.\n\ud83d\udcc5 Time: ${loginTime}${locationLine}${deviceInfo}`,
+
                 metadata: {
                   event: "user_login",
                   userEmail: dbUser.email,

@@ -1862,7 +1862,7 @@ export default function SettingsPage() {
         </button>
 
         {/* Settings Menu - Enhanced 3D Cards */}
-        <div className="mobile:px-3 px-0 space-y-2">
+        <div className="mobile:px-3 px-0 space-y-1">
           {settingsItems.map((item, index) => {
             const Icon = item.icon;
             // Different gradient colors for each card
@@ -1920,7 +1920,7 @@ export default function SettingsPage() {
               >
                 {/* Main Card Container with 3D Effect */}
                 <div
-                  className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
+                  className="relative rounded-xl p-1.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
                   style={{
                     background: isDark
                       ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)"
@@ -1968,7 +1968,7 @@ export default function SettingsPage() {
                     }}
                   />
 
-                  <div className="relative z-10 flex items-center gap-2.5">
+                  <div className="relative z-10 flex items-center gap-2">
                     {/* 3D Icon Container */}
                     <div className="relative">
                       {/* Icon glow/shadow underneath */}
