@@ -1,0 +1,28 @@
+name: Process Mining Earnings (Daily)
+
+on:
+  schedule:
+    # Runs every day at 00:05 UTC (5 minutes after Vercel cron as a fallback)
+    - cron: "5 0 * * *"
+  workflow_dispatch: # Allow manual trigger from GitHub Actions tab
+
+jobs:
+  process-mining-earnings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Mining Earnings Cron
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.NEXTAUTH_URL }}/api/cron/process-mining-earnings")
+
+          echo "Response body:"
+          cat /tmp/response.txt
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Mining earnings processed successfully (HTTP $HTTP_STATUS)"
+          else
+            echo "❌ Mining earnings cron failed (HTTP $HTTP_STATUS)"
+            exit 1
+          fi
