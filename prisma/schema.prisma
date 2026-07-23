@@ -603,6 +603,10 @@ model User {
   SentTransfers          P2PTransfer[]      @relation("SentTransfers")
   ReceivedTransfers      P2PTransfer[]      @relation("ReceivedTransfers")
   PushSubscription       PushSubscription[]
+  MiningContract         MiningContract[]
+  MiningEarning          MiningEarning[]
+  MiningWithdrawal       MiningWithdrawal[]
+  MiningWalletAddress    MiningWalletAddress[]
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -647,6 +651,86 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model MiningContract {
+  id            String          @id @default(cuid())
+  userId        String
+  planName      String
+  coin          String          @default("BTC")
+  algorithm     String          @default("SHA-256")
+  hashrate      String
+  hashrateValue Decimal
+  hashrateUnit  String          @default("TH/s")
+  price         Decimal
+  currency      String          @default("USD")
+  duration      Int
+  status        String          @default("ACTIVE")
+  startDate     DateTime        @default(now())
+  endDate       DateTime?
+  totalEarned   Decimal         @default(0)
+  autoRenew     Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  User          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  MiningEarning MiningEarning[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model MiningEarning {
+  id             String          @id @default(cuid())
+  userId         String
+  contractId     String?
+  amount         Decimal
+  currency       String          @default("BTC")
+  amountUsd      Decimal?
+  hashrateAvg    Decimal?
+  date           DateTime        @default(now())
+  status         String          @default("PAID")
+  createdAt      DateTime        @default(now())
+  User           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  MiningContract MiningContract? @relation(fields: [contractId], references: [id])
+
+  @@index([userId])
+  @@index([contractId])
+  @@index([date])
+}
+
+model MiningWithdrawal {
+  id              String   @id @default(cuid())
+  userId          String
+  amount          Decimal
+  currency        String   @default("BTC")
+  amountUsd       Decimal?
+  walletAddress   String?
+  destinationType String   @default("EXTERNAL")
+  status          String   @default("PENDING")
+  txHash          String?
+  fee             Decimal?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  User            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model MiningWalletAddress {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String
+  address   String
+  currency  String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, address, currency])
+  @@index([userId])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

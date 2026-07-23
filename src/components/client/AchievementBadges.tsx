@@ -50,7 +50,7 @@ export default function AchievementBadges() {
   };
 
   return (
-    <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[7] flex justify-center px-4">
+    <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-[7] flex justify-center px-4">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
@@ -58,16 +58,22 @@ export default function AchievementBadges() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
           transition={{ duration: 0.5 }}
-          className={`backdrop-blur-sm rounded-full px-4 py-1 flex items-center gap-2 shadow-lg ${
-            isDark 
-              ? "bg-white/5 shadow-black/20" 
+          className={`backdrop-blur-sm rounded-full px-2.5 py-0.5 sm:px-4 sm:py-1 flex items-center gap-1.5 sm:gap-2 shadow-lg ${
+            isDark
+              ? "bg-white/5 shadow-black/20"
               : "bg-gray-800/10 border border-gray-300/40 shadow-gray-400/30"
           }`}
         >
-          <Icon className={`w-4 h-4 ${getIconColor(badge.color)}`} />
-          <span className={`text-sm font-medium whitespace-nowrap ${
-            isDark ? "text-white" : "text-gray-900"
-          }`}>{badge.text}</span>
+          <Icon
+            className={`w-3 h-3 sm:w-4 sm:h-4 ${getIconColor(badge.color)}`}
+          />
+          <span
+            className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
+              isDark ? "text-white" : "text-gray-900"
+            }`}
+          >
+            {badge.text}
+          </span>
         </motion.div>
       </AnimatePresence>
     </div>

@@ -187,7 +187,7 @@ function Hero() {
   }, []);
 
   return (
-    <div className="relative h-[calc(100vh-60px)] sm:h-screen w-full overflow-hidden bg-gradient-to-b from-purple-50 via-purple-100 to-pink-50 dark:from-[#2d1f1a] dark:via-[#1a1410] dark:to-[#0a0806]">
+    <div className="relative h-screen sm:h-[110vh] w-full overflow-hidden bg-gradient-to-b from-purple-50 via-purple-100 to-pink-50 dark:from-[#2d1f1a] dark:via-[#1a1410] dark:to-[#0a0806]">
       {/* Animated Gradient Background */}
       <AnimatedGradientBackground />
 
@@ -285,7 +285,7 @@ function Hero() {
       </div>
 
       {/* Crypto Price Ticker at bottom - fixed position */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 w-full pb-4">
+      <div className="absolute bottom-0 left-0 right-0 z-10 w-full pb-2">
         <CryptoPriceTicker />
       </div>
 
