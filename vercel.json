@@ -11,10 +11,6 @@
     {
       "path": "/api/cron/process-mining-earnings",
       "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/monitor-copy-trades",
-      "schedule": "*/10 * * * *"
     }
   ]
 }
