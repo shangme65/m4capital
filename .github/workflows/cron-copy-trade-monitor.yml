@@ -1,0 +1,28 @@
+name: Monitor Copy Trades (Every 5 Min)
+
+on:
+  schedule:
+    # Runs every 5 minutes — GitHub Actions has no frequency limit
+    - cron: "*/5 * * * *"
+  workflow_dispatch: # Allow manual trigger from GitHub Actions tab
+
+jobs:
+  monitor-copy-trades:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Copy Trade Monitor
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.NEXTAUTH_URL }}/api/cron/monitor-copy-trades")
+
+          echo "Response body:"
+          cat /tmp/response.txt
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Copy trade monitor ran successfully (HTTP $HTTP_STATUS)"
+          else
+            echo "❌ Copy trade monitor failed (HTTP $HTTP_STATUS)"
+            exit 1
+          fi
