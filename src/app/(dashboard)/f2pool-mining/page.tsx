@@ -2518,19 +2518,29 @@ export default function F2PoolMiningPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h2
-                    className={`text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}
-                  >
-                    Mining Contracts
-                  </h2>
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h2
+                      className={`text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
+                      Mining Contracts
+                    </h2>
+                    <p
+                      className={`text-[11px] mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    >
+                      {contracts.length} contract
+                      {contracts.length !== 1 ? "s" : ""} total
+                    </p>
+                  </div>
                   <button
                     onClick={() => navigate("plans")}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-orange-500/20"
                   >
                     <Plus size={13} /> New Contract
                   </button>
                 </div>
+
                 {contractsLoading ? (
                   <div className="flex items-center justify-center py-16">
                     <RefreshCw
@@ -2539,82 +2549,241 @@ export default function F2PoolMiningPage() {
                     />
                   </div>
                 ) : contracts.length ? (
-                  <div className="space-y-3">
-                    {contracts.map((c) => (
-                      <div
-                        key={c.id}
-                        className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                          <div className="flex items-center gap-3">
+                  <div className="space-y-4">
+                    {contracts.map((c) => {
+                      const start = new Date(c.startDate).getTime();
+                      const end = c.endDate
+                        ? new Date(c.endDate).getTime()
+                        : start + c.duration * 86400000;
+                      const now = Date.now();
+                      const progress = Math.min(
+                        100,
+                        Math.max(0, ((now - start) / (end - start)) * 100),
+                      );
+                      const daysLeft = Math.max(
+                        0,
+                        Math.ceil((end - now) / 86400000),
+                      );
+                      const totalEarned = Number(c.totalEarned);
+                      const earnedUsd = totalEarned * 60000;
+                      const isActive = c.status === "ACTIVE";
+
+                      return (
+                        <motion.div
+                          key={c.id}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`rounded-2xl border overflow-hidden shadow-sm ${
+                            isDark
+                              ? "bg-gray-800 border-gray-700/60"
+                              : "bg-white border-gray-200"
+                          }`}
+                        >
+                          {/* Top accent bar */}
+                          <div
+                            className="h-1 w-full"
+                            style={{
+                              background: isActive
+                                ? "linear-gradient(90deg, #F97316, #FBBF24)"
+                                : isDark
+                                  ? "#374151"
+                                  : "#E5E7EB",
+                            }}
+                          />
+
+                          <div className="p-4">
+                            {/* Row 1 — coin icon + plan name + status */}
+                            <div className="flex items-center gap-3 mb-4">
+                              {/* Real BTC logo */}
+                              <div className="relative flex-shrink-0">
+                                <div
+                                  className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
+                                  style={{
+                                    backgroundColor:
+                                      COIN_COLORS[c.coin] ?? "#F97316",
+                                  }}
+                                >
+                                  <img
+                                    src={`/crypto/${c.coin.toLowerCase()}.svg`}
+                                    alt={c.coin}
+                                    className="w-7 h-7"
+                                    onError={(e) => {
+                                      (
+                                        e.currentTarget as HTMLImageElement
+                                      ).style.display = "none";
+                                      (
+                                        e.currentTarget
+                                          .nextSibling as HTMLElement
+                                      ).style.display = "flex";
+                                    }}
+                                  />
+                                  <span className="text-white font-bold text-base hidden items-center justify-center w-7 h-7">
+                                    {COIN_ICONS[c.coin] ?? "₿"}
+                                  </span>
+                                </div>
+                                {isActive && (
+                                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-gray-800 shadow" />
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p
+                                    className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}
+                                  >
+                                    {c.planName}
+                                  </p>
+                                  <StatusBadge status={c.status} />
+                                </div>
+                                <p
+                                  className={`text-[11px] mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                >
+                                  {c.algorithm} · {c.hashrate}
+                                </p>
+                              </div>
+
+                              {/* Days left pill */}
+                              {isActive && (
+                                <div
+                                  className={`flex-shrink-0 text-center px-2.5 py-1.5 rounded-xl ${isDark ? "bg-orange-500/10 border border-orange-500/20" : "bg-orange-50 border border-orange-200"}`}
+                                >
+                                  <p className="text-orange-500 font-bold text-sm leading-none">
+                                    {daysLeft}
+                                  </p>
+                                  <p
+                                    className={`text-[9px] uppercase tracking-wide mt-0.5 ${isDark ? "text-orange-400/70" : "text-orange-400"}`}
+                                  >
+                                    days left
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Progress bar */}
+                            {isActive && (
+                              <div className="mb-4">
+                                <div className="flex justify-between items-center mb-1.5">
+                                  <span
+                                    className={`text-[10px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                  >
+                                    Contract Progress
+                                  </span>
+                                  <span
+                                    className={`text-[10px] font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                                  >
+                                    {progress.toFixed(1)}%
+                                  </span>
+                                </div>
+                                <div
+                                  className={`h-1.5 rounded-full overflow-hidden ${isDark ? "bg-gray-700" : "bg-gray-100"}`}
+                                >
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progress}%` }}
+                                    transition={{
+                                      duration: 1,
+                                      ease: "easeOut",
+                                    }}
+                                    className="h-full rounded-full"
+                                    style={{
+                                      background:
+                                        "linear-gradient(90deg, #F97316, #FBBF24)",
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex justify-between mt-1">
+                                  <span
+                                    className={`text-[9px] ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                  >
+                                    {new Date(c.startDate).toLocaleDateString(
+                                      "en-US",
+                                      { month: "short", day: "numeric" },
+                                    )}
+                                  </span>
+                                  <span
+                                    className={`text-[9px] ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                  >
+                                    {c.endDate
+                                      ? new Date(c.endDate).toLocaleDateString(
+                                          "en-US",
+                                          {
+                                            month: "short",
+                                            day: "numeric",
+                                            year: "numeric",
+                                          },
+                                        )
+                                      : "—"}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Stats grid */}
                             <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                              style={{
-                                backgroundColor:
-                                  COIN_COLORS[c.coin] ?? "#F97316",
-                              }}
+                              className={`grid grid-cols-3 gap-2 pt-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-100"}`}
                             >
-                              {COIN_ICONS[c.coin] ?? "₿"}
+                              <div
+                                className={`rounded-xl p-2.5 text-center ${isDark ? "bg-gray-700/50" : "bg-gray-50"}`}
+                              >
+                                <p
+                                  className={`text-[9px] uppercase tracking-wide mb-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                >
+                                  Hashrate
+                                </p>
+                                <p
+                                  className={`text-xs font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                                >
+                                  {c.hashrate}
+                                </p>
+                              </div>
+                              <div
+                                className={`rounded-xl p-2.5 text-center ${isDark ? "bg-gray-700/50" : "bg-gray-50"}`}
+                              >
+                                <p
+                                  className={`text-[9px] uppercase tracking-wide mb-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                >
+                                  Duration
+                                </p>
+                                <p
+                                  className={`text-xs font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                                >
+                                  {c.duration}d
+                                </p>
+                              </div>
+                              <div
+                                className={`rounded-xl p-2.5 text-center ${isDark ? "bg-green-900/20 border border-green-500/10" : "bg-green-50 border border-green-100"}`}
+                              >
+                                <p
+                                  className={`text-[9px] uppercase tracking-wide mb-1 ${isDark ? "text-green-400/70" : "text-green-600/70"}`}
+                                >
+                                  Earned
+                                </p>
+                                <p
+                                  className={`text-xs font-bold ${totalEarned > 0 ? "text-green-500" : isDark ? "text-white" : "text-gray-900"}`}
+                                >
+                                  {totalEarned > 0
+                                    ? `${totalEarned.toFixed(5)} ₿`
+                                    : "0.00000 ₿"}
+                                </p>
+                              </div>
                             </div>
-                            <div>
+
+                            {/* USD equivalent if earned */}
+                            {totalEarned > 0 && (
                               <p
-                                className={`font-semibold text-sm ${isDark ? "text-white" : "text-gray-900"}`}
+                                className={`text-center text-[10px] mt-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}
                               >
-                                {c.planName}
+                                ≈ $
+                                {earnedUsd.toLocaleString("en-US", {
+                                  maximumFractionDigits: 2,
+                                })}{" "}
+                                USD
                               </p>
-                              <p
-                                className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                              >
-                                {c.algorithm} · {c.hashrate}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <StatusBadge status={c.status} />
-                            <span
-                              className={
-                                isDark ? "text-gray-400" : "text-gray-500"
-                              }
-                            >
-                              Started:{" "}
-                              {new Date(c.startDate).toLocaleDateString()}
-                            </span>
-                            {c.endDate && (
-                              <span
-                                className={
-                                  isDark ? "text-gray-400" : "text-gray-500"
-                                }
-                              >
-                                Ends: {new Date(c.endDate).toLocaleDateString()}
-                              </span>
                             )}
                           </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-dashed border-gray-700/40">
-                          {[
-                            { label: "Hashrate", value: c.hashrate },
-                            { label: "Duration", value: `${c.duration} days` },
-                            {
-                              label: "Total Earned",
-                              value: `${Number(c.totalEarned).toFixed(8)} BTC`,
-                            },
-                          ].map((item) => (
-                            <div key={item.label}>
-                              <p
-                                className={`text-[9px] uppercase tracking-wide mb-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}
-                              >
-                                {item.label}
-                              </p>
-                              <p
-                                className={`text-xs font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
-                              >
-                                {item.value}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <EmptyState
