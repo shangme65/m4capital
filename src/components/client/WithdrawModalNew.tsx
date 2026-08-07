@@ -97,7 +97,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   };
 
   // Available balance in user's preferred currency for validation and display
-  const availableBalanceInPreferredCurrency = getBalanceInPreferredCurrency(availableBalance);
+  const availableBalanceInPreferredCurrency =
+    getBalanceInPreferredCurrency(availableBalance);
 
   // Convert amount from preferred currency to balance currency for server
   const convertToBalanceCurrency = (amountInPreferred: number): number => {
@@ -111,7 +112,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     if (preferredCurrency !== "USD") {
       // Convert from preferredCurrency to USD
       const rateFrom = exchangeRates?.[preferredCurrency] ?? 1;
-      amountInUSD = rateFrom > 0 ? amountInPreferred / rateFrom : amountInPreferred;
+      amountInUSD =
+        rateFrom > 0 ? amountInPreferred / rateFrom : amountInPreferred;
     }
     // Now convert from USD to balanceCurrency
     if (balanceCurrency === "USD") {
@@ -160,7 +162,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   // Helper to get crypto balance
   const getCryptoBalance = (symbol: string) => {
     const asset = cryptoAssets.find(
-      (a: { symbol: string; amount: number }) => a.symbol === symbol
+      (a: { symbol: string; amount: number }) => a.symbol === symbol,
     );
     return asset?.amount || 0;
   };
@@ -272,12 +274,14 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         .filter((a) => a.amount > 0)
         .map((a) => a.symbol)
         .filter(Boolean),
-    [cryptoAssets]
+    [cryptoAssets],
   );
   const withdrawCryptoPrices = useCryptoPrices(withdrawCryptoSymbols);
 
   // Available cryptos for withdrawal, sorted by fiat value (highest first)
-  const availableCryptos = (cryptoAssets as { symbol: string; amount: number }[])
+  const availableCryptos = (
+    cryptoAssets as { symbol: string; amount: number }[]
+  )
     .filter((asset) => asset.amount > 0)
     .sort((a, b) => {
       const aFiat = a.amount * (withdrawCryptoPrices[a.symbol]?.price || 0);
@@ -366,7 +370,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       if (withdrawData.amount && parseFloat(withdrawData.amount) > 0) {
         try {
           const response = await fetch(
-            `/api/payment/create-withdrawal?amount=${withdrawData.amount}&method=${withdrawData.withdrawalMethod}`
+            `/api/payment/create-withdrawal?amount=${withdrawData.amount}&method=${withdrawData.withdrawalMethod}`,
           );
           const data = await response.json();
           if (response.ok) {
@@ -390,7 +394,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     if (currentStep === 1) {
       if (!withdrawData.amount || parseFloat(withdrawData.amount) <= 0) {
         newErrors.amount = "Please enter a valid amount";
-      } else if (parseFloat(withdrawData.amount) > availableBalanceInPreferredCurrency) {
+      } else if (
+        parseFloat(withdrawData.amount) > availableBalanceInPreferredCurrency
+      ) {
         newErrors.amount = "Insufficient balance";
       }
 
@@ -428,18 +434,25 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     setApiError(null);
     try {
       // Ensure exchange rates are loaded for conversion
-      if (balanceCurrency !== preferredCurrency && (!exchangeRates || Object.keys(exchangeRates).length === 0)) {
-        setApiError("Exchange rates not loaded yet. Please wait and try again.");
+      if (
+        balanceCurrency !== preferredCurrency &&
+        (!exchangeRates || Object.keys(exchangeRates).length === 0)
+      ) {
+        setApiError(
+          "Exchange rates not loaded yet. Please wait and try again.",
+        );
         setLoading(false);
         return;
       }
-      
+
       // Convert user's input from preferred currency to balance currency for server
-      const amountInBalanceCurrency = convertToBalanceCurrency(parseFloat(withdrawData.amount));
-      
+      const amountInBalanceCurrency = convertToBalanceCurrency(
+        parseFloat(withdrawData.amount),
+      );
+
       // Ensure currency is set
       const currency = withdrawData.currency || balanceCurrency || "USD";
-      
+
       console.log("[Withdrawal] Creating withdrawal:", {
         originalAmount: withdrawData.amount,
         convertedAmount: amountInBalanceCurrency,
@@ -449,7 +462,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         exchangeRates,
         method: withdrawData.withdrawalMethod,
       });
-      
+
       const result = await createWithdrawalAction({
         amount: amountInBalanceCurrency,
         currency: currency,
@@ -550,7 +563,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[10000] overflow-hidden"
+          className="fixed inset-0 z-[10000] overflow-hidden m4-fullscreen-fixed"
           style={{
             background: isDark
               ? "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #1e1b4b 50%, #0f172a 75%, #0a0a0f 100%)"
@@ -559,9 +572,15 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         >
           {/* Animated background elements */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse ${isDark ? "bg-red-500/10" : "bg-red-500/5"}`} />
-            <div className={`absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 ${isDark ? "bg-orange-500/10" : "bg-orange-500/5"}`} />
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl ${isDark ? "bg-purple-500/5" : "bg-purple-500/3"}`} />
+            <div
+              className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse ${isDark ? "bg-red-500/10" : "bg-red-500/5"}`}
+            />
+            <div
+              className={`absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 ${isDark ? "bg-orange-500/10" : "bg-orange-500/5"}`}
+            />
+            <div
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl ${isDark ? "bg-purple-500/5" : "bg-purple-500/3"}`}
+            />
           </div>
 
           {/* Back button - top left (hidden on success modal) */}
@@ -595,7 +614,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
           )}
 
           {/* Main content container */}
-          <div className="h-full w-full overflow-y-auto py-4 px-3 md:px-6">
+          <div className="h-full w-full overflow-y-auto py-4 px-3 md:px-6 m4-scroll-y-safe m4-safe-top">
             <div className="max-w-lg mx-auto relative z-10">
               {/* Header Card - Hidden when success modal is shown */}
               {!showSuccessModal && (
@@ -604,11 +623,17 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                   className="rounded-2xl p-4 mb-4"
-                  style={isDark ? card3DStyle : {
-                    background: "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
-                    boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
-                    border: "1px solid rgba(0, 0, 0, 0.08)",
-                  }}
+                  style={
+                    isDark
+                      ? card3DStyle
+                      : {
+                          background:
+                            "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                          boxShadow:
+                            "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                          border: "1px solid rgba(0, 0, 0, 0.08)",
+                        }
+                  }
                 >
                   {/* Icon and Title in same row */}
                   <div className="flex items-center justify-center gap-3 mb-3">
@@ -634,7 +659,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         />
                       </svg>
                     </div>
-                    <h2 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                    <h2
+                      className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
                       Withdraw Funds
                     </h2>
                   </div>
@@ -647,13 +674,23 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-all ${
                             step >= s
                               ? "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md shadow-red-500/30"
-                              : isDark ? "bg-gray-800/50 text-gray-400" : "bg-gray-200 text-gray-600"
+                              : isDark
+                                ? "bg-gray-800/50 text-gray-400"
+                                : "bg-gray-200 text-gray-600"
                           }`}
-                          style={step >= s ? {} : isDark ? inputStyle : {
-                            background: "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
-                            boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.06)",
-                            border: "1px solid rgba(0, 0, 0, 0.1)",
-                          }}
+                          style={
+                            step >= s
+                              ? {}
+                              : isDark
+                                ? inputStyle
+                                : {
+                                    background:
+                                      "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
+                                    boxShadow:
+                                      "inset 0 1px 2px rgba(0, 0, 0, 0.06)",
+                                    border: "1px solid rgba(0, 0, 0, 0.1)",
+                                  }
+                          }
                         >
                           {step > s ? (
                             <svg
@@ -676,7 +713,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                             className={`w-8 h-0.5 rounded-full ${
                               step > s
                                 ? "bg-gradient-to-r from-red-500 to-orange-500"
-                                : isDark ? "bg-gray-700" : "bg-gray-300"
+                                : isDark
+                                  ? "bg-gray-700"
+                                  : "bg-gray-300"
                             }`}
                           />
                         )}
@@ -684,7 +723,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     ))}
                   </div>
                   <div className="flex justify-center mt-2">
-                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    <span
+                      className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                    >
                       {step === 1 && "Enter Details"}
                       {step === 2 && "Review"}
                       {step === 3 && "Fee Payment"}
@@ -700,11 +741,17 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                   className="rounded-2xl p-4"
-                  style={isDark ? card3DStyle : {
-                    background: "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
-                    boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
-                    border: "1px solid rgba(0, 0, 0, 0.08)",
-                  }}
+                  style={
+                    isDark
+                      ? card3DStyle
+                      : {
+                          background:
+                            "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                          boxShadow:
+                            "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                          border: "1px solid rgba(0, 0, 0, 0.08)",
+                        }
+                  }
                 >
                   {/* Step 1: Withdrawal Details */}
                   {step === 1 && (
@@ -712,17 +759,23 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       {/* Balance Card */}
                       <div
                         className="rounded-xl p-3"
-                        style={isDark ? {
-                          background:
-                            "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                          boxShadow:
-                            "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                          border: "1px solid rgba(255, 255, 255, 0.08)",
-                        } : {
-                          background: "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%)",
-                          boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
-                          border: "1px solid rgba(0, 0, 0, 0.06)",
-                        }}
+                        style={
+                          isDark
+                            ? {
+                                background:
+                                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                                boxShadow:
+                                  "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
+                              }
+                            : {
+                                background:
+                                  "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%)",
+                                boxShadow:
+                                  "0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+                                border: "1px solid rgba(0, 0, 0, 0.06)",
+                              }
+                        }
                       >
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
@@ -732,14 +785,21 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               width={28}
                               height={28}
                               className="rounded-full object-cover"
-                              style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                              style={{
+                                filter:
+                                  "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                              }}
                               unoptimized
                             />
-                            <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                            <span
+                              className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                            >
                               {preferredCurrency}
                             </span>
                           </div>
-                          <span className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                          <span
+                            className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                          >
                             {formatBalanceDisplay(availableBalance)}
                           </span>
                         </div>
@@ -747,7 +807,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                       {/* Withdrawal Method */}
                       <div>
-                        <label className={`block text-sm font-semibold mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <label
+                          className={`block text-sm font-semibold mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                        >
                           Withdrawal Method
                         </label>
                         <div className="relative">
@@ -757,21 +819,27 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               setShowMethodDropdown(!showMethodDropdown)
                             }
                             className={`w-full px-4 py-3 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all flex items-center justify-between ${isDark ? "text-white" : "text-gray-900"}`}
-                            style={isDark ? {
-                              background:
-                                "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                              boxShadow:
-                                "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)",
-                              border: "1px solid rgba(239, 68, 68, 0.3)",
-                            } : {
-                              background: "linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)",
-                              boxShadow: "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
-                              border: "1px solid rgba(0, 0, 0, 0.15)",
-                            }}
+                            style={
+                              isDark
+                                ? {
+                                    background:
+                                      "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                                    boxShadow:
+                                      "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)",
+                                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                                  }
+                                : {
+                                    background:
+                                      "linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)",
+                                    boxShadow:
+                                      "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
+                                    border: "1px solid rgba(0, 0, 0, 0.15)",
+                                  }
+                            }
                           >
                             <span className="flex items-center gap-2">
                               {withdrawData.withdrawalMethod.startsWith(
-                                "CRYPTO"
+                                "CRYPTO",
                               ) ? (
                                 <>
                                   <div className="flex items-center -space-x-2">
@@ -848,14 +916,20 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl z-20 overflow-hidden"
-                                style={isDark ? {
-                                  background:
-                                    "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                                } : {
-                                  background: "linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)",
-                                  border: "1px solid rgba(0, 0, 0, 0.1)",
-                                }}
+                                style={
+                                  isDark
+                                    ? {
+                                        background:
+                                          "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                                        border:
+                                          "1px solid rgba(255, 255, 255, 0.1)",
+                                      }
+                                    : {
+                                        background:
+                                          "linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)",
+                                        border: "1px solid rgba(0, 0, 0, 0.1)",
+                                      }
+                                }
                               >
                                 <div className="py-2 px-2 space-y-2">
                                   {/* Crypto Option */}
@@ -869,44 +943,51 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                       setShowMethodDropdown(false);
                                     }}
                                     className="w-full text-left transition-all duration-300 rounded-xl p-3"
-                                    style={isDark ? {
-                                      background:
-                                        withdrawData.withdrawalMethod.startsWith(
-                                          "CRYPTO"
-                                        )
-                                          ? "linear-gradient(145deg, rgba(239, 68, 68, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%)"
-                                          : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
-                                      boxShadow:
-                                        "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
-                                      border:
-                                        withdrawData.withdrawalMethod.startsWith(
-                                          "CRYPTO"
-                                        )
-                                          ? "1px solid rgba(239, 68, 68, 0.3)"
-                                          : "1px solid rgba(255, 255, 255, 0.05)",
-                                    } : {
-                                      background:
-                                        withdrawData.withdrawalMethod.startsWith(
-                                          "CRYPTO"
-                                        )
-                                          ? "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%)"
-                                          : "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)",
-                                      boxShadow: "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
-                                      border:
-                                        withdrawData.withdrawalMethod.startsWith(
-                                          "CRYPTO"
-                                        )
-                                          ? "1px solid rgba(239, 68, 68, 0.3)"
-                                          : "1px solid rgba(0, 0, 0, 0.06)",
-                                    }}
+                                    style={
+                                      isDark
+                                        ? {
+                                            background:
+                                              withdrawData.withdrawalMethod.startsWith(
+                                                "CRYPTO",
+                                              )
+                                                ? "linear-gradient(145deg, rgba(239, 68, 68, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%)"
+                                                : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
+                                            boxShadow:
+                                              "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                                            border:
+                                              withdrawData.withdrawalMethod.startsWith(
+                                                "CRYPTO",
+                                              )
+                                                ? "1px solid rgba(239, 68, 68, 0.3)"
+                                                : "1px solid rgba(255, 255, 255, 0.05)",
+                                          }
+                                        : {
+                                            background:
+                                              withdrawData.withdrawalMethod.startsWith(
+                                                "CRYPTO",
+                                              )
+                                                ? "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%)"
+                                                : "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)",
+                                            boxShadow:
+                                              "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
+                                            border:
+                                              withdrawData.withdrawalMethod.startsWith(
+                                                "CRYPTO",
+                                              )
+                                                ? "1px solid rgba(239, 68, 68, 0.3)"
+                                                : "1px solid rgba(0, 0, 0, 0.06)",
+                                          }
+                                    }
                                   >
                                     <div className="flex items-center gap-3 w-full">
                                       <div className="flex flex-col gap-1.5 w-full">
                                         <div className="flex items-center justify-between">
-                                          <div className={`text-sm font-semibold flex items-center gap-1.5 ${isDark ? "text-white" : "text-gray-900"}`}>
+                                          <div
+                                            className={`text-sm font-semibold flex items-center gap-1.5 ${isDark ? "text-white" : "text-gray-900"}`}
+                                          >
                                             Withdraw via Crypto
                                             {withdrawData.withdrawalMethod.startsWith(
-                                              "CRYPTO"
+                                              "CRYPTO",
                                             ) && (
                                               <svg
                                                 className="w-4 h-4 text-green-400"
@@ -952,7 +1033,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                             />
                                           </div>
                                         </div>
-                                        <p className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                                        <p
+                                          className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                        >
                                           Fast withdrawals to BTC, ETH, USDT,
                                           LTC wallets. Network fees apply.
                                         </p>
@@ -971,32 +1054,43 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                       setShowMethodDropdown(false);
                                     }}
                                     className="w-full text-left transition-all duration-300 rounded-xl p-3"
-                                    style={isDark ? {
-                                      background:
-                                        withdrawData.withdrawalMethod === "PIX"
-                                          ? "linear-gradient(145deg, rgba(239, 68, 68, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%)"
-                                          : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
-                                      boxShadow:
-                                        "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
-                                      border:
-                                        withdrawData.withdrawalMethod === "PIX"
-                                          ? "1px solid rgba(239, 68, 68, 0.3)"
-                                          : "1px solid rgba(255, 255, 255, 0.05)",
-                                    } : {
-                                      background:
-                                        withdrawData.withdrawalMethod === "PIX"
-                                          ? "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%)"
-                                          : "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)",
-                                      boxShadow: "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
-                                      border:
-                                        withdrawData.withdrawalMethod === "PIX"
-                                          ? "1px solid rgba(239, 68, 68, 0.3)"
-                                          : "1px solid rgba(0, 0, 0, 0.06)",
-                                    }}
+                                    style={
+                                      isDark
+                                        ? {
+                                            background:
+                                              withdrawData.withdrawalMethod ===
+                                              "PIX"
+                                                ? "linear-gradient(145deg, rgba(239, 68, 68, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%)"
+                                                : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
+                                            boxShadow:
+                                              "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                                            border:
+                                              withdrawData.withdrawalMethod ===
+                                              "PIX"
+                                                ? "1px solid rgba(239, 68, 68, 0.3)"
+                                                : "1px solid rgba(255, 255, 255, 0.05)",
+                                          }
+                                        : {
+                                            background:
+                                              withdrawData.withdrawalMethod ===
+                                              "PIX"
+                                                ? "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%)"
+                                                : "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)",
+                                            boxShadow:
+                                              "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
+                                            border:
+                                              withdrawData.withdrawalMethod ===
+                                              "PIX"
+                                                ? "1px solid rgba(239, 68, 68, 0.3)"
+                                                : "1px solid rgba(0, 0, 0, 0.06)",
+                                          }
+                                    }
                                   >
                                     <div className="flex flex-col gap-1 w-full">
                                       <div className="flex items-center justify-between">
-                                        <div className={`text-sm font-semibold flex items-center gap-1.5 ${isDark ? "text-white" : "text-gray-900"}`}>
+                                        <div
+                                          className={`text-sm font-semibold flex items-center gap-1.5 ${isDark ? "text-white" : "text-gray-900"}`}
+                                        >
                                           Withdraw via PIX
                                           {withdrawData.withdrawalMethod ===
                                             "PIX" && (
@@ -1021,7 +1115,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                           className="w-25 h-10 object-contain"
                                         />
                                       </div>
-                                      <p className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                                      <p
+                                        className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                      >
                                         Instant withdrawal for Brazilian
                                         customers. Available 24/7.
                                       </p>
@@ -1037,7 +1133,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       {/* Select Crypto Network - Only show when crypto is selected */}
                       {withdrawData.withdrawalMethod.startsWith("CRYPTO") && (
                         <div>
-                          <label className={`block text-sm font-semibold mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                          <label
+                            className={`block text-sm font-semibold mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                          >
                             Select Crypto Network
                           </label>
                           <div className="relative">
@@ -1047,24 +1145,32 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                 setShowCryptoDropdown(!showCryptoDropdown)
                               }
                               className={`w-full px-4 py-3 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all flex items-center justify-between ${isDark ? "text-white" : "text-gray-900"}`}
-                              style={isDark ? {
-                                background:
-                                  "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                                boxShadow:
-                                  "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)",
-                                border: "1px solid rgba(239, 68, 68, 0.3)",
-                              } : {
-                                background: "linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)",
-                                boxShadow: "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
-                                border: "1px solid rgba(0, 0, 0, 0.15)",
-                              }}
+                              style={
+                                isDark
+                                  ? {
+                                      background:
+                                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                                      boxShadow:
+                                        "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)",
+                                      border:
+                                        "1px solid rgba(239, 68, 68, 0.3)",
+                                    }
+                                  : {
+                                      background:
+                                        "linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)",
+                                      boxShadow:
+                                        "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
+                                      border: "1px solid rgba(0, 0, 0, 0.15)",
+                                    }
+                              }
                             >
                               <span className="flex items-center gap-3">
                                 {/* 3D Crypto Logo */}
                                 <div
                                   className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
                                   style={{
-                                    background: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+                                    background:
+                                      "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
                                     boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)`,
                                   }}
                                 >
@@ -1087,7 +1193,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                     {selectedCrypto === "LTC" &&
                                       "Litecoin (LTC)"}
                                   </span>
-                                  <span className={`text-[10px] block ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                                  <span
+                                    className={`text-[10px] block ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                  >
                                     Withdrawal Network
                                   </span>
                                 </div>
@@ -1116,34 +1224,53 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: -10 }}
                                   className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl z-20 overflow-hidden"
-                                  style={isDark ? {
-                                    background:
-                                      "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                                    border:
-                                      "1px solid rgba(255, 255, 255, 0.1)",
-                                  } : {
-                                    background: "linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)",
-                                    border: "1px solid rgba(0, 0, 0, 0.1)",
-                                  }}
+                                  style={
+                                    isDark
+                                      ? {
+                                          background:
+                                            "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                                          border:
+                                            "1px solid rgba(255, 255, 255, 0.1)",
+                                        }
+                                      : {
+                                          background:
+                                            "linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)",
+                                          border:
+                                            "1px solid rgba(0, 0, 0, 0.1)",
+                                        }
+                                  }
                                 >
                                   <div className="py-2 px-2 space-y-1">
                                     {availableCryptos.length === 0 && (
-                                      <div className={`px-4 py-5 text-center rounded-xl ${isDark ? "bg-yellow-500/10 border border-yellow-500/20" : "bg-yellow-50 border border-yellow-200"}`}>
+                                      <div
+                                        className={`px-4 py-5 text-center rounded-xl ${isDark ? "bg-yellow-500/10 border border-yellow-500/20" : "bg-yellow-50 border border-yellow-200"}`}
+                                      >
                                         <div className="text-2xl mb-2">📭</div>
-                                        <p className={`text-sm font-semibold mb-1 ${isDark ? "text-yellow-400" : "text-yellow-700"}`}>
+                                        <p
+                                          className={`text-sm font-semibold mb-1 ${isDark ? "text-yellow-400" : "text-yellow-700"}`}
+                                        >
                                           No crypto assets found
                                         </p>
-                                        <p className={`text-xs ${isDark ? "text-yellow-500/80" : "text-yellow-600"}`}>
-                                          You don&apos;t have any cryptocurrency in your portfolio. Deposit or purchase crypto first to withdraw.
+                                        <p
+                                          className={`text-xs ${isDark ? "text-yellow-500/80" : "text-yellow-600"}`}
+                                        >
+                                          You don&apos;t have any cryptocurrency
+                                          in your portfolio. Deposit or purchase
+                                          crypto first to withdraw.
                                         </p>
                                       </div>
                                     )}
                                     {availableCryptos.map((crypto) => {
                                       const balance = getCryptoBalance(crypto);
-                                      const price = withdrawCryptoPrices[crypto]?.price || 0;
+                                      const price =
+                                        withdrawCryptoPrices[crypto]?.price ||
+                                        0;
                                       const valueInUSD = balance * price;
-                                      const changePercent = withdrawCryptoPrices[crypto]?.changePercent24h;
-                                      const isSelected = selectedCrypto === crypto;
+                                      const changePercent =
+                                        withdrawCryptoPrices[crypto]
+                                          ?.changePercent24h;
+                                      const isSelected =
+                                        selectedCrypto === crypto;
                                       return (
                                         <button
                                           key={crypto}
@@ -1170,7 +1297,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                               : "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
                                             border: isSelected
                                               ? "1px solid rgba(168, 85, 247, 0.3)"
-                                              : isDark ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.08)",
+                                              : isDark
+                                                ? "1px solid rgba(255, 255, 255, 0.05)"
+                                                : "1px solid rgba(0, 0, 0, 0.08)",
                                           }}
                                         >
                                           <div className="flex items-center gap-3">
@@ -1179,9 +1308,11 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                               className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
                                               style={{
                                                 background: isDark
-                                                  ? cryptoGradients[crypto] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                                  ? cryptoGradients[crypto] ||
+                                                    "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                                                   : "#ffffff",
-                                                filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                                                filter:
+                                                  "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                                               }}
                                             >
                                               <Image
@@ -1194,30 +1325,53 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                             </div>
                                             {/* Left: amount top, symbol+% bottom */}
                                             <div className="flex-1 min-w-0 flex flex-col">
-                                              <div className={`text-base font-bold leading-none ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                              <div
+                                                className={`text-base font-bold leading-none ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                              >
                                                 {balance.toFixed(8)}
                                               </div>
                                               <div className="flex items-baseline gap-1 leading-none mt-0.5">
-                                                <span className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                                                <span
+                                                  className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                                >
                                                   {crypto}
                                                 </span>
-                                                {changePercent !== undefined && (
-                                                  <span className={`text-xs font-semibold ${changePercent >= 0 ? "text-green-400" : "text-red-400"}`}>
-                                                    {changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%
+                                                {changePercent !==
+                                                  undefined && (
+                                                  <span
+                                                    className={`text-xs font-semibold ${changePercent >= 0 ? "text-green-400" : "text-red-400"}`}
+                                                  >
+                                                    {changePercent >= 0
+                                                      ? "+"
+                                                      : ""}
+                                                    {changePercent.toFixed(2)}%
                                                   </span>
                                                 )}
                                               </div>
                                             </div>
                                             {/* Right: tick top, fiat value bottom */}
-                                            <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ minHeight: '2.5rem' }}>
+                                            <div
+                                              className="flex flex-col items-end justify-between flex-shrink-0"
+                                              style={{ minHeight: "2.5rem" }}
+                                            >
                                               <div className="h-4 flex items-center">
                                                 {isSelected && (
-                                                  <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                  <svg
+                                                    className="w-4 h-4 text-purple-400"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 20 20"
+                                                  >
+                                                    <path
+                                                      fillRule="evenodd"
+                                                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                      clipRule="evenodd"
+                                                    />
                                                   </svg>
                                                 )}
                                               </div>
-                                              <div className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                              <div
+                                                className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                              >
                                                 {formatAmount(valueInUSD, 2)}
                                               </div>
                                             </div>
@@ -1235,18 +1389,28 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                       {/* Amount */}
                       <div>
-                        <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <label
+                          className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                        >
                           Amount ({preferredCurrency})
                         </label>
-                        <div 
+                        <div
                           className="flex items-center rounded-xl px-4 py-3 gap-1"
-                          style={isDark ? inputStyle : {
-                            background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                            boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.06)",
-                            border: "1px solid rgba(0, 0, 0, 0.15)",
-                          }}
+                          style={
+                            isDark
+                              ? inputStyle
+                              : {
+                                  background:
+                                    "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                                  boxShadow:
+                                    "inset 0 2px 4px rgba(0, 0, 0, 0.06)",
+                                  border: "1px solid rgba(0, 0, 0, 0.15)",
+                                }
+                          }
                         >
-                          <span className={`text-sm font-semibold ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                          <span
+                            className={`text-sm font-semibold ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
                             {currencySymbol}
                           </span>
                           <input
@@ -1273,7 +1437,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           onClick={() => {
                             // Withdrawals always come from fiat balance in user's preferred currency
                             // Crypto selection is just for the withdrawal network
-                            const maxAmount = availableBalanceInPreferredCurrency;
+                            const maxAmount =
+                              availableBalanceInPreferredCurrency;
 
                             setWithdrawData((prev) => ({
                               ...prev,
@@ -1290,7 +1455,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       {withdrawData.withdrawalMethod.startsWith("CRYPTO") && (
                         <>
                           <div>
-                            <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                            <label
+                              className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                            >
                               Destination Wallet Address
                             </label>
                             <input
@@ -1303,11 +1470,17 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                 }))
                               }
                               className={`w-full rounded-xl px-4 py-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all ${isDark ? "text-white" : "text-gray-900"}`}
-                              style={isDark ? inputStyle : {
-                                background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                                boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.06)",
-                                border: "1px solid rgba(0, 0, 0, 0.15)",
-                              }}
+                              style={
+                                isDark
+                                  ? inputStyle
+                                  : {
+                                      background:
+                                        "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                                      boxShadow:
+                                        "inset 0 2px 4px rgba(0, 0, 0, 0.06)",
+                                      border: "1px solid rgba(0, 0, 0, 0.15)",
+                                    }
+                              }
                               placeholder="Enter wallet address"
                             />
                             {errors.address && (
@@ -1318,7 +1491,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           </div>
 
                           <div>
-                            <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                            <label
+                              className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                            >
                               Memo/Tag (Optional)
                             </label>
                             <input
@@ -1331,11 +1506,17 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                 }))
                               }
                               className={`w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all ${isDark ? "text-white" : "text-gray-900"}`}
-                              style={isDark ? inputStyle : {
-                                background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                                boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.06)",
-                                border: "1px solid rgba(0, 0, 0, 0.15)",
-                              }}
+                              style={
+                                isDark
+                                  ? inputStyle
+                                  : {
+                                      background:
+                                        "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                                      boxShadow:
+                                        "inset 0 2px 4px rgba(0, 0, 0, 0.06)",
+                                      border: "1px solid rgba(0, 0, 0, 0.15)",
+                                    }
+                              }
                               placeholder="Optional"
                             />
                           </div>
@@ -1355,17 +1536,26 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                             border: "1px solid rgba(59, 130, 246, 0.2)",
                           }}
                         >
-                          <h4 className={`text-sm font-medium mb-2 ${isDark ? "text-blue-300" : "text-blue-600"}`}>
+                          <h4
+                            className={`text-sm font-medium mb-2 ${isDark ? "text-blue-300" : "text-blue-600"}`}
+                          >
                             Estimated Fees
                           </h4>
                           <div className="space-y-1 text-xs">
                             {fees.breakdown.map((item, index) => (
-                              <div key={index} className={isDark ? "text-blue-200" : "text-blue-700"}>
+                              <div
+                                key={index}
+                                className={
+                                  isDark ? "text-blue-200" : "text-blue-700"
+                                }
+                              >
                                 {item.replace(/\$/g, currencySymbol)}
                               </div>
                             ))}
                             <div className="border-t border-blue-500/30 mt-2 pt-2">
-                              <div className={`flex justify-between font-medium text-xs ${isDark ? "text-blue-100" : "text-blue-800"}`}>
+                              <div
+                                className={`flex justify-between font-medium text-xs ${isDark ? "text-blue-100" : "text-blue-800"}`}
+                              >
                                 <span>Total Fees:</span>
                                 <span>
                                   {currencySymbol}
@@ -1407,57 +1597,99 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           }}
                         >
                           <div className="flex items-start gap-2">
-                            <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            <svg
+                              className="w-5 h-5 flex-shrink-0 mt-0.5"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clipRule="evenodd"
+                              />
                             </svg>
                             <span>{apiError}</span>
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Withdrawal Summary - 3D Card */}
                       <div
                         className="rounded-xl p-4 space-y-3"
-                        style={isDark ? {
-                          background:
-                            "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                          boxShadow:
-                            "0 8px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                          border: "1px solid rgba(255, 255, 255, 0.08)",
-                        } : {
-                          background: "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%)",
-                          boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
-                          border: "1px solid rgba(0, 0, 0, 0.08)",
-                        }}
+                        style={
+                          isDark
+                            ? {
+                                background:
+                                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                                boxShadow:
+                                  "0 8px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
+                              }
+                            : {
+                                background:
+                                  "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%)",
+                                boxShadow:
+                                  "0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+                                border: "1px solid rgba(0, 0, 0, 0.08)",
+                              }
+                        }
                       >
-                        <h3 className={`font-semibold text-sm mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <h3
+                          className={`font-semibold text-sm mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           Withdrawal Summary
                         </h3>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className={isDark ? "text-gray-400" : "text-gray-600"}>Method:</span>
-                            <span className={isDark ? "text-white" : "text-gray-900"}>
+                            <span
+                              className={
+                                isDark ? "text-gray-400" : "text-gray-600"
+                              }
+                            >
+                              Method:
+                            </span>
+                            <span
+                              className={
+                                isDark ? "text-white" : "text-gray-900"
+                              }
+                            >
                               {withdrawData.withdrawalMethod.replace("_", " ")}
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className={isDark ? "text-gray-400" : "text-gray-600"}>Amount:</span>
-                            <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                            <span
+                              className={
+                                isDark ? "text-gray-400" : "text-gray-600"
+                              }
+                            >
+                              Amount:
+                            </span>
+                            <span
+                              className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                            >
                               {currencySymbol}
                               {parseFloat(withdrawData.amount).toFixed(2)}
                             </span>
                           </div>
                           {withdrawData.address && (
                             <div className="flex justify-between items-start">
-                              <span className={isDark ? "text-gray-400" : "text-gray-600"}>
+                              <span
+                                className={
+                                  isDark ? "text-gray-400" : "text-gray-600"
+                                }
+                              >
                                 Destination:
                               </span>
-                              <span className={`font-mono text-xs break-all max-w-[60%] text-right ${isDark ? "text-white" : "text-gray-900"}`}>
+                              <span
+                                className={`font-mono text-xs break-all max-w-[60%] text-right ${isDark ? "text-white" : "text-gray-900"}`}
+                              >
                                 {withdrawData.address.substring(0, 20)}...
                               </span>
                             </div>
                           )}
-                          <hr className={`my-2 ${isDark ? "border-gray-700" : "border-gray-300"}`} />
+                          <hr
+                            className={`my-2 ${isDark ? "border-gray-700" : "border-gray-300"}`}
+                          />
                           <div className="flex justify-between text-yellow-500 text-sm">
                             <span>Total Fees:</span>
                             <span className="font-medium">
@@ -1465,7 +1697,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               {fees.totalFees.toFixed(2)}
                             </span>
                           </div>
-                          <div className={`flex justify-between text-base font-bold border-t pt-2 mt-2 ${isDark ? "text-white border-gray-600" : "text-gray-900 border-gray-300"}`}>
+                          <div
+                            className={`flex justify-between text-base font-bold border-t pt-2 mt-2 ${isDark ? "text-white border-gray-600" : "text-gray-900 border-gray-300"}`}
+                          >
                             <span>Total Deduction:</span>
                             <span>
                               {currencySymbol}
@@ -1501,11 +1735,15 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77 1.333.192 3 1.732 3z"
                             />
                           </svg>
-                          <p className={`text-xs font-medium ${isDark ? "text-yellow-400" : "text-yellow-700"}`}>
+                          <p
+                            className={`text-xs font-medium ${isDark ? "text-yellow-400" : "text-yellow-700"}`}
+                          >
                             Important Notice
                           </p>
                         </div>
-                        <p className={`text-xs ${isDark ? "text-yellow-300/80" : "text-yellow-800/80"}`}>
+                        <p
+                          className={`text-xs ${isDark ? "text-yellow-300/80" : "text-yellow-800/80"}`}
+                        >
                           Verify all details carefully. Withdrawals may be
                           irreversible.
                         </p>
@@ -1516,11 +1754,17 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           onClick={() => setStep(1)}
                           disabled={loading}
                           className={`flex-1 py-2.5 px-3 rounded-xl font-semibold transition-all text-sm disabled:opacity-50 ${isDark ? "text-white" : "text-gray-900"}`}
-                          style={isDark ? card3DStyle : {
-                            background: "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
-                            border: "1px solid rgba(0, 0, 0, 0.1)",
-                          }}
+                          style={
+                            isDark
+                              ? card3DStyle
+                              : {
+                                  background:
+                                    "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
+                                  boxShadow:
+                                    "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
+                                  border: "1px solid rgba(0, 0, 0, 0.1)",
+                                }
+                          }
                         >
                           Back
                         </button>
@@ -1568,10 +1812,14 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                             />
                           </svg>
                         </div>
-                        <h3 className={`text-lg font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <h3
+                          className={`text-lg font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           Fee Payment Required
                         </h3>
-                        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                        <p
+                          className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                        >
                           Review and authorize the fee deduction
                         </p>
                       </div>
@@ -1579,19 +1827,27 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       {/* Fee Breakdown - 3D Card */}
                       <div
                         className="rounded-xl p-4"
-                        style={isDark ? {
-                          background:
-                            "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                          boxShadow:
-                            "0 8px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                          border: "1px solid rgba(255, 255, 255, 0.08)",
-                        } : {
-                          background: "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%)",
-                          boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
-                          border: "1px solid rgba(0, 0, 0, 0.08)",
-                        }}
+                        style={
+                          isDark
+                            ? {
+                                background:
+                                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                                boxShadow:
+                                  "0 8px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
+                              }
+                            : {
+                                background:
+                                  "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%)",
+                                boxShadow:
+                                  "0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+                                border: "1px solid rgba(0, 0, 0, 0.08)",
+                              }
+                        }
                       >
-                        <h4 className={`text-sm font-semibold mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <h4
+                          className={`text-sm font-semibold mb-3 ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           Fee Breakdown
                         </h4>
                         <div className="space-y-2">
@@ -1602,17 +1858,29 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                 key={index}
                                 className="flex justify-between text-xs"
                               >
-                                <span className={isDark ? "text-gray-300" : "text-gray-600"}>{label}</span>
-                                <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                                <span
+                                  className={
+                                    isDark ? "text-gray-300" : "text-gray-600"
+                                  }
+                                >
+                                  {label}
+                                </span>
+                                <span
+                                  className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                                >
                                   {currencySymbol}
                                   {amount}
                                 </span>
                               </div>
                             );
                           })}
-                          <hr className={`my-2 ${isDark ? "border-gray-700" : "border-gray-300"}`} />
+                          <hr
+                            className={`my-2 ${isDark ? "border-gray-700" : "border-gray-300"}`}
+                          />
                           <div className="flex justify-between text-sm">
-                            <span className={`font-semibold ${isDark ? "text-gray-200" : "text-gray-700"}`}>
+                            <span
+                              className={`font-semibold ${isDark ? "text-gray-200" : "text-gray-700"}`}
+                            >
                               Total Fees
                             </span>
                             <span className="text-orange-500 font-bold">
@@ -1637,14 +1905,20 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       >
                         <div className="flex justify-between items-center">
                           <div>
-                            <p className={`text-xs ${isDark ? "text-blue-300" : "text-blue-600"}`}>
+                            <p
+                              className={`text-xs ${isDark ? "text-blue-300" : "text-blue-600"}`}
+                            >
                               Total Amount to be Deducted
                             </p>
-                            <p className={`text-[10px] mt-0.5 ${isDark ? "text-blue-200" : "text-blue-500"}`}>
+                            <p
+                              className={`text-[10px] mt-0.5 ${isDark ? "text-blue-200" : "text-blue-500"}`}
+                            >
                               (Withdrawal + Fees)
                             </p>
                           </div>
-                          <p className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <p
+                            className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
                             {currencySymbol}
                             {totalRequired.toFixed(2)}
                           </p>
@@ -1654,18 +1928,26 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       {/* Legal Notice - 3D Card */}
                       <div
                         className={`rounded-xl p-3 text-xs space-y-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}
-                        style={isDark ? {
-                          background:
-                            "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                          boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)",
-                          border: "1px solid rgba(255, 255, 255, 0.05)",
-                        } : {
-                          background: "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
-                          boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.06)",
-                          border: "1px solid rgba(0, 0, 0, 0.06)",
-                        }}
+                        style={
+                          isDark
+                            ? {
+                                background:
+                                  "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                                boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)",
+                                border: "1px solid rgba(255, 255, 255, 0.05)",
+                              }
+                            : {
+                                background:
+                                  "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
+                                boxShadow:
+                                  "inset 0 1px 2px rgba(0, 0, 0, 0.06)",
+                                border: "1px solid rgba(0, 0, 0, 0.06)",
+                              }
+                        }
                       >
-                        <p className={`font-medium text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <p
+                          className={`font-medium text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                        >
                           By proceeding, you agree to:
                         </p>
                         <ul className="list-disc list-inside space-y-0.5 pl-1 text-[10px]">
@@ -1684,11 +1966,17 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           onClick={() => setStep(2)}
                           disabled={loading}
                           className={`flex-1 py-2 px-2 rounded-lg font-medium transition-all text-xs disabled:opacity-50 ${isDark ? "text-white" : "text-gray-900"}`}
-                          style={isDark ? card3DStyle : {
-                            background: "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
-                            border: "1px solid rgba(0, 0, 0, 0.1)",
-                          }}
+                          style={
+                            isDark
+                              ? card3DStyle
+                              : {
+                                  background:
+                                    "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
+                                  boxShadow:
+                                    "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
+                                  border: "1px solid rgba(0, 0, 0, 0.1)",
+                                }
+                          }
                         >
                           Back
                         </button>
@@ -1762,7 +2050,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 z-60 flex items-center justify-center p-4"
                 style={{
-                  background: isDark ? "rgba(0, 0, 0, 0.8)" : "rgba(255, 255, 255, 0.9)",
+                  background: isDark
+                    ? "rgba(0, 0, 0, 0.8)"
+                    : "rgba(255, 255, 255, 0.9)",
                   backdropFilter: "blur(8px)",
                 }}
               >
@@ -1771,17 +2061,23 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
                   className="w-full max-w-sm rounded-2xl p-6"
-                  style={isDark ? {
-                    background:
-                      "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                    boxShadow:
-                      "0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 2px 0 rgba(255, 255, 255, 0.1)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                  } : {
-                    background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
-                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
-                    border: "1px solid rgba(0, 0, 0, 0.08)",
-                  }}
+                  style={
+                    isDark
+                      ? {
+                          background:
+                            "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                          boxShadow:
+                            "0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 2px 0 rgba(255, 255, 255, 0.1)",
+                          border: "1px solid rgba(255, 255, 255, 0.1)",
+                        }
+                      : {
+                          background:
+                            "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                          boxShadow:
+                            "0 25px 50px -12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                          border: "1px solid rgba(0, 0, 0, 0.08)",
+                        }
+                  }
                 >
                   {/* Success Icon */}
                   <div className="flex justify-center mb-4">
@@ -1821,12 +2117,16 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   </div>
 
                   {/* Title */}
-                  <h3 className={`text-xl font-bold text-center mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <h3
+                    className={`text-xl font-bold text-center mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
                     Withdrawal Submitted!
                   </h3>
 
                   {/* Description */}
-                  <p className={`text-sm text-center mb-4 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                  <p
+                    className={`text-sm text-center mb-4 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                  >
                     Your withdrawal request has been successfully submitted and
                     is being processed.
                   </p>
@@ -1842,33 +2142,59 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   >
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className={isDark ? "text-gray-400" : "text-gray-600"}>Amount:</span>
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-600"}
+                        >
+                          Amount:
+                        </span>
+                        <span
+                          className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {currencySymbol}
                           {parseFloat(withdrawData.amount).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className={isDark ? "text-gray-400" : "text-gray-600"}>Method:</span>
-                        <span className={isDark ? "text-white" : "text-gray-900"}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-600"}
+                        >
+                          Method:
+                        </span>
+                        <span
+                          className={isDark ? "text-white" : "text-gray-900"}
+                        >
                           {withdrawData.withdrawalMethod.replace("CRYPTO_", "")}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className={isDark ? "text-gray-400" : "text-gray-600"}>Status:</span>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-600"}
+                        >
+                          Status:
+                        </span>
                         <span className="text-green-500 font-medium">
                           Processing
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className={isDark ? "text-gray-400" : "text-gray-600"}>Est. Time:</span>
-                        <span className={isDark ? "text-white" : "text-gray-900"}>1-3 business days</span>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-600"}
+                        >
+                          Est. Time:
+                        </span>
+                        <span
+                          className={isDark ? "text-white" : "text-gray-900"}
+                        >
+                          1-3 business days
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Info */}
-                  <p className={`text-xs text-center mb-4 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+                  <p
+                    className={`text-xs text-center mb-4 ${isDark ? "text-gray-500" : "text-gray-500"}`}
+                  >
                     You will receive a notification once your withdrawal is
                     completed.
                   </p>

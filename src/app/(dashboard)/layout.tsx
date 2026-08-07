@@ -51,7 +51,7 @@ export default async function DashboardLayout({
                         <EmergencyUiReset />
                         <LogoPreloader />
                         <UserHeartbeat />
-                        <div className="flex h-screen relative bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+                        <div className="flex m4-viewport-shell relative bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
                           <Sidebar />
                           <div className="flex-1 flex flex-col overflow-hidden">
                             <DashboardHeaderWrapper />

@@ -24,7 +24,9 @@ const getCard3DStyle = (isDark: boolean) => ({
   boxShadow: isDark
     ? "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)"
     : "0 8px 30px -4px rgba(0, 0, 0, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
-  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+  border: isDark
+    ? "1px solid rgba(255, 255, 255, 0.08)"
+    : "1px solid rgba(0, 0, 0, 0.08)",
 });
 
 const getInputStyle = (isDark: boolean) => ({
@@ -34,7 +36,9 @@ const getInputStyle = (isDark: boolean) => ({
   boxShadow: isDark
     ? "inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
     : "inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 1)",
-  border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)",
+  border: isDark
+    ? "1px solid rgba(255, 255, 255, 0.1)"
+    : "1px solid rgba(0, 0, 0, 0.1)",
 });
 
 // Crypto gradient colors
@@ -84,10 +88,12 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
   // Get list of assets user actually owns
   const userAssets = portfolio?.portfolio?.assets || [];
   const availableAssets = userAssets.filter(
-    (a: { symbol: string; amount: number }) => (a.amount || 0) > 0
+    (a: { symbol: string; amount: number }) => (a.amount || 0) > 0,
   );
 
-  const cryptoSymbols = availableAssets.map((a: { symbol: string }) => a.symbol);
+  const cryptoSymbols = availableAssets.map(
+    (a: { symbol: string }) => a.symbol,
+  );
   const cryptoPrices = useCryptoPrices(cryptoSymbols);
 
   // Initialize first asset on load
@@ -98,7 +104,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
   }, [availableAssets, sellData.asset]);
 
   const currentAsset = availableAssets.find(
-    (a: { symbol: string }) => a.symbol === sellData.asset
+    (a: { symbol: string }) => a.symbol === sellData.asset,
   );
   const currentPrice = cryptoPrices[sellData.asset]?.price || 0;
   const currentBalance = currentAsset?.amount || 0;
@@ -189,7 +195,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
       newErrors.amount = "Please enter a valid amount";
     } else if (cryptoAmount > currentBalance) {
       newErrors.amount = `Insufficient balance. Max: ${currencySymbol}${convertAmount(
-        currentBalance * currentPrice
+        currentBalance * currentPrice,
       ).toFixed(2)}`;
     }
 
@@ -216,13 +222,15 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
     // Check if price is valid
     if (!currentPrice || currentPrice <= 0) {
-      setErrors({ amount: "Price not available. Please wait for prices to load." });
+      setErrors({
+        amount: "Price not available. Please wait for prices to load.",
+      });
       setStep(2);
       return;
     }
 
     const cryptoAmount = getCryptoAmountFromCurrency();
-    
+
     // Validate calculated values
     if (!Number.isFinite(cryptoAmount) || cryptoAmount <= 0) {
       setErrors({ amount: "Invalid calculation. Please try again." });
@@ -244,7 +252,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
       const result = await sellCryptoAction(
         sellData.asset,
         cryptoAmount,
-        currentPrice
+        currentPrice,
       );
 
       if (result.success && result.data) {
@@ -299,7 +307,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[10000] overflow-hidden"
+          className="fixed inset-0 z-[10000] overflow-hidden m4-fullscreen-fixed"
           style={{
             background: isDark
               ? "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #450a0a 50%, #0f172a 75%, #0a0a0f 100%)"
@@ -308,9 +316,15 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
         >
           {/* Animated background elements - RED theme */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className={`absolute top-1/4 left-1/4 w-96 h-96 ${isDark ? "bg-red-500/10" : "bg-red-200/30"} rounded-full blur-3xl animate-pulse`} />
-            <div className={`absolute bottom-1/4 right-1/4 w-96 h-96 ${isDark ? "bg-rose-500/10" : "bg-rose-200/30"} rounded-full blur-3xl animate-pulse delay-1000`} />
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] ${isDark ? "bg-red-500/5" : "bg-red-100/40"} rounded-full blur-3xl`} />
+            <div
+              className={`absolute top-1/4 left-1/4 w-96 h-96 ${isDark ? "bg-red-500/10" : "bg-red-200/30"} rounded-full blur-3xl animate-pulse`}
+            />
+            <div
+              className={`absolute bottom-1/4 right-1/4 w-96 h-96 ${isDark ? "bg-rose-500/10" : "bg-rose-200/30"} rounded-full blur-3xl animate-pulse delay-1000`}
+            />
+            <div
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] ${isDark ? "bg-red-500/5" : "bg-red-100/40"} rounded-full blur-3xl`}
+            />
           </div>
 
           {/* Back button - top left (hidden on success) */}
@@ -338,7 +352,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
           )}
 
           {/* Main content container */}
-          <div className="h-full w-full overflow-y-auto py-4 px-3 md:px-6">
+          <div className="h-full w-full overflow-y-auto py-4 px-3 md:px-6 m4-scroll-y-safe m4-safe-top">
             <div className="max-w-lg mx-auto relative z-10">
               {/* Header Card */}
               <motion.div
@@ -371,7 +385,11 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       />
                     </svg>
                   </div>
-                  <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Sell Crypto</h2>
+                  <h2
+                    className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
+                    Sell Crypto
+                  </h2>
                 </div>
 
                 {/* Progress Steps */}
@@ -384,7 +402,9 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                             className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] transition-all ${
                               step >= s
                                 ? "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-sm shadow-red-500/30"
-                                : isDark ? "bg-gray-800/50 text-gray-500" : "bg-gray-200 text-gray-400"
+                                : isDark
+                                  ? "bg-gray-800/50 text-gray-500"
+                                  : "bg-gray-200 text-gray-400"
                             }`}
                             style={step >= s ? {} : inputStyle}
                           >
@@ -409,7 +429,9 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                               className={`w-6 h-0.5 rounded-full ${
                                 step > s
                                   ? "bg-gradient-to-r from-red-500 to-rose-500"
-                                  : isDark ? "bg-gray-700" : "bg-gray-300"
+                                  : isDark
+                                    ? "bg-gray-700"
+                                    : "bg-gray-300"
                               }`}
                             />
                           )}
@@ -417,7 +439,9 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       ))}
                     </div>
                     <div className="flex justify-center mt-1">
-                      <span className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      <span
+                        className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
                         {step === 1 && "Select Asset"}
                         {step === 2 && "Enter Amount"}
                         {step === 3 && "Confirm"}
@@ -440,7 +464,9 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                   <div className="space-y-4">
                     {availableAssets.length === 0 ? (
                       <div className="text-center py-8">
-                        <p className={isDark ? "text-gray-400" : "text-gray-500"}>
+                        <p
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
                           No crypto assets to sell
                         </p>
                         <button
@@ -452,16 +478,21 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       </div>
                     ) : (
                       <>
-                        <label className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <label
+                          className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                        >
                           Select Asset to Sell
                         </label>
                         <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
                           {availableAssets.map(
                             (asset: { symbol: string; amount: number }) => {
-                              const price = cryptoPrices[asset.symbol]?.price || 0;
+                              const price =
+                                cryptoPrices[asset.symbol]?.price || 0;
                               const value = asset.amount * price;
-                              const changePercent = cryptoPrices[asset.symbol]?.changePercent24h;
-                              const isSelected = sellData.asset === asset.symbol;
+                              const changePercent =
+                                cryptoPrices[asset.symbol]?.changePercent24h;
+                              const isSelected =
+                                sellData.asset === asset.symbol;
                               return (
                                 <button
                                   key={asset.symbol}
@@ -497,9 +528,11 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                                       className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
                                       style={{
                                         background: isDark
-                                          ? cryptoGradients[asset.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                          ? cryptoGradients[asset.symbol] ||
+                                            "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                                           : "#ffffff",
-                                        filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                                        filter:
+                                          "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                                       }}
                                     >
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -514,38 +547,58 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
                                     {/* Left text: amount on top, symbol + % on bottom */}
                                     <div className="flex-1 min-w-0 flex flex-col">
-                                      <div className={`text-base font-bold leading-none ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                      <div
+                                        className={`text-base font-bold leading-none ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                      >
                                         {asset.amount.toFixed(8)}
                                       </div>
                                       <div className="flex items-baseline gap-1 leading-none mt-0.5">
-                                        <span className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                                        <span
+                                          className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                        >
                                           {asset.symbol}
                                         </span>
                                         {changePercent !== undefined && (
-                                          <span className={`text-xs font-semibold ${changePercent >= 0 ? "text-green-400" : "text-red-400"}`}>
-                                            {changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%
+                                          <span
+                                            className={`text-xs font-semibold ${changePercent >= 0 ? "text-green-400" : "text-red-400"}`}
+                                          >
+                                            {changePercent >= 0 ? "+" : ""}
+                                            {changePercent.toFixed(2)}%
                                           </span>
                                         )}
                                       </div>
                                     </div>
 
                                     {/* Right: tick on top, fiat value on bottom */}
-                                    <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ minHeight: '2.5rem' }}>
+                                    <div
+                                      className="flex flex-col items-end justify-between flex-shrink-0"
+                                      style={{ minHeight: "2.5rem" }}
+                                    >
                                       <div className="h-4 flex items-center">
                                         {isSelected && (
-                                          <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                          <svg
+                                            className="w-4 h-4 text-red-400"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                          >
+                                            <path
+                                              fillRule="evenodd"
+                                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                              clipRule="evenodd"
+                                            />
                                           </svg>
                                         )}
                                       </div>
-                                      <div className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                      <div
+                                        className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                      >
                                         {formatAmount(value, 2)}
                                       </div>
                                     </div>
                                   </div>
                                 </button>
                               );
-                            }
+                            },
                           )}
                         </div>
 
@@ -596,23 +649,25 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                         className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
                         style={{
                           background: isDark
-                            ? cryptoGradients[sellData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                            ? cryptoGradients[sellData.asset] ||
+                              "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                             : "#ffffff",
                           boxShadow: isDark
                             ? "0 4px 12px rgba(0,0,0,0.4)"
                             : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                         }}
                       >
-                        <CryptoIcon
-                          symbol={sellData.asset}
-                          size="lg"
-                        />
+                        <CryptoIcon symbol={sellData.asset} size="lg" />
                       </div>
                       <div>
-                        <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <div
+                          className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           Selling {sellData.asset}
                         </div>
-                        <div className={`text-base ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                        <div
+                          className={`text-base ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
                           Price: {formatAmount(currentPrice, 2)}
                         </div>
                       </div>
@@ -620,7 +675,9 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
                     {/* Amount Input - in user's preferred currency */}
                     <div>
-                      <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      <label
+                        className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                      >
                         Amount ({preferredCurrency})
                       </label>
                       <input
@@ -670,7 +727,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                         onClick={() => {
                           // Calculate max value in preferred currency
                           const maxValue = convertAmount(
-                            currentBalance * currentPrice
+                            currentBalance * currentPrice,
                           );
                           setSellData((prev) => ({
                             ...prev,
@@ -694,19 +751,27 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                         }}
                       >
                         <div className="flex justify-between items-center">
-                          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                          <span
+                            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
                             You will sell:
                           </span>
-                          <span className={`font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <span
+                            className={`font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
                             {getCryptoAmountFromCurrency().toFixed(8)}{" "}
                             {sellData.asset}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                          <span
+                            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
                             You will receive (after 1.5% fee):
                           </span>
-                          <span className={`font-bold ${isDark ? "text-red-400" : "text-red-600"}`}>
+                          <span
+                            className={`font-bold ${isDark ? "text-red-400" : "text-red-600"}`}
+                          >
                             {currencySymbol}
                             {(getEstimatedValue() * 0.985).toFixed(2)}
                           </span>
@@ -747,25 +812,29 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                         className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden"
                         style={{
                           background: isDark
-                            ? cryptoGradients[sellData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                            ? cryptoGradients[sellData.asset] ||
+                              "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                             : "#ffffff",
                           boxShadow: isDark
                             ? "0 10px 30px -5px rgba(0, 0, 0, 0.5)"
                             : "0 6px 18px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                         }}
                       >
-                        <CryptoIcon
-                          symbol={sellData.asset}
-                          size="xl"
-                        />
+                        <CryptoIcon symbol={sellData.asset} size="xl" />
                       </div>
-                      <p className={`text-xs mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      <p
+                        className={`text-xs mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
                         You&apos;re selling
                       </p>
-                      <p className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                      <p
+                        className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
                         {getCryptoAmountFromCurrency().toFixed(8)}
                       </p>
-                      <p className={`font-semibold ${isDark ? "text-red-400" : "text-red-600"}`}>
+                      <p
+                        className={`font-semibold ${isDark ? "text-red-400" : "text-red-600"}`}
+                      >
                         {sellData.asset}
                       </p>
                     </div>
@@ -779,37 +848,63 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                         boxShadow: isDark
                           ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
                           : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1)",
-                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+                        border: isDark
+                          ? "1px solid rgba(255, 255, 255, 0.08)"
+                          : "1px solid rgba(0, 0, 0, 0.08)",
                       }}
                     >
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
                           Price per {sellData.asset}:
                         </span>
-                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {formatAmount(currentPrice, 2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount:</span>
-                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Amount:
+                        </span>
+                        <span
+                          className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {getCryptoAmountFromCurrency().toFixed(8)}{" "}
                           {sellData.asset}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Fee (1.5%):</span>
-                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Fee (1.5%):
+                        </span>
+                        <span
+                          className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {currencySymbol}
                           {(getEstimatedValue() * 0.015).toFixed(2)}
                         </span>
                       </div>
-                      <hr className={isDark ? "border-gray-700" : "border-gray-200"} />
+                      <hr
+                        className={
+                          isDark ? "border-gray-700" : "border-gray-200"
+                        }
+                      />
                       <div className="flex justify-between font-bold">
-                        <span className={isDark ? "text-gray-300" : "text-gray-700"}>
+                        <span
+                          className={isDark ? "text-gray-300" : "text-gray-700"}
+                        >
                           You&apos;ll receive:
                         </span>
-                        <span className={isDark ? "text-red-400" : "text-red-600"}>
+                        <span
+                          className={isDark ? "text-red-400" : "text-red-600"}
+                        >
                           {currencySymbol}
                           {(getEstimatedValue() * 0.985).toFixed(2)}
                         </span>
@@ -905,10 +1000,14 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       </motion.div>
                     </div>
 
-                    <h3 className={`text-xl font-bold text-center ${isDark ? "text-white" : "text-gray-900"}`}>
+                    <h3
+                      className={`text-xl font-bold text-center ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
                       Sale Successful!
                     </h3>
-                    <p className={`text-sm text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    <p
+                      className={`text-sm text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    >
                       Your order has been completed
                     </p>
 
@@ -921,33 +1020,63 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       }}
                     >
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Asset Sold:</span>
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Asset Sold:
+                        </span>
+                        <span
+                          className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {successData.asset}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount Sold:</span>
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Amount Sold:
+                        </span>
+                        <span
+                          className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {successData.amount.toFixed(8)} {successData.asset}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount Received:</span>
-                        <span className={`font-bold ${isDark ? "text-red-400" : "text-red-600"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Amount Received:
+                        </span>
+                        <span
+                          className={`font-bold ${isDark ? "text-red-400" : "text-red-600"}`}
+                        >
                           {currencySymbol}
                           {successData.value.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Date:</span>
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Date:
+                        </span>
+                        <span
+                          className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {new Date().toLocaleDateString()}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Time:</span>
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Time:
+                        </span>
+                        <span
+                          className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {new Date().toLocaleTimeString()}
                         </span>
                       </div>

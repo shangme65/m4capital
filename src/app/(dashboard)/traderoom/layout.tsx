@@ -24,7 +24,7 @@ export default async function TraderoomLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
-  
+
   // Check if user is authenticated
   if (!session || !session.user) {
     redirect("/login");
@@ -36,7 +36,7 @@ export default async function TraderoomLayout({
         <NotificationProvider>
           <MarketDataProvider>
             <div
-              className="h-screen w-screen m-0 p-0 overflow-hidden"
+              className="m4-viewport-shell w-screen m-0 p-0 overflow-hidden"
               style={{ margin: 0, padding: 0 }}
             >
               {children}

@@ -476,7 +476,7 @@ export default function TransferModalNew({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[10000] overflow-hidden"
+          className="fixed inset-0 z-[10000] overflow-hidden m4-fullscreen-fixed"
           style={{
             background: isDark
               ? "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #2e1065 50%, #0f172a 75%, #0a0a0f 100%)"
@@ -521,7 +521,7 @@ export default function TransferModalNew({
           )}
 
           {/* Main content container */}
-          <div className="h-full w-full overflow-y-auto py-4 px-3 md:px-6">
+          <div className="h-full w-full overflow-y-auto py-4 px-3 md:px-6 m4-scroll-y-safe m4-safe-top">
             <div className="max-w-lg mx-auto relative z-10">
               {/* Header Card */}
               <motion.div

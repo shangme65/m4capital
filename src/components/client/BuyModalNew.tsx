@@ -29,7 +29,9 @@ const getCard3DStyle = (isDark: boolean) => ({
   boxShadow: isDark
     ? "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)"
     : "0 8px 30px -4px rgba(0, 0, 0, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 2px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
-  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.1)",
+  border: isDark
+    ? "1px solid rgba(255, 255, 255, 0.08)"
+    : "1px solid rgba(0, 0, 0, 0.1)",
 });
 
 const getInputStyle = (isDark: boolean) => ({
@@ -39,7 +41,9 @@ const getInputStyle = (isDark: boolean) => ({
   boxShadow: isDark
     ? "inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
     : "inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.8)",
-  border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)",
+  border: isDark
+    ? "1px solid rgba(255, 255, 255, 0.1)"
+    : "1px solid rgba(0, 0, 0, 0.1)",
 });
 
 // Crypto gradient colors
@@ -74,7 +78,8 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   const [optimisticBalance, setOptimisticBalance] = useOptimistic(0);
 
   const { portfolio, refetch } = usePortfolio();
-  const { preferredCurrency, convertAmount, formatAmount, exchangeRates } = useCurrency();
+  const { preferredCurrency, convertAmount, formatAmount, exchangeRates } =
+    useCurrency();
   const { addTransaction } = useNotifications();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
@@ -125,7 +130,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     if (cryptoSymbols.length > 0 && !buyData.asset) {
       setBuyData((prev) => ({ ...prev, asset: cryptoSymbols[0] }));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cryptoSymbols.length]);
 
   const getCurrentPrice = () => cryptoPrices[buyData.asset]?.price || 0;
@@ -201,7 +206,8 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     if (balanceCurrency !== "USD") {
       // Convert from balanceCurrency to USD
       const rate = exchangeRates?.[balanceCurrency] ?? 1;
-      availableBalanceUSD = rate > 0 ? availableBalance / rate : availableBalance;
+      availableBalanceUSD =
+        rate > 0 ? availableBalance / rate : availableBalance;
     }
 
     if (!buyData.amount || inputAmount <= 0) {
@@ -232,14 +238,16 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     }
 
     const price = getCurrentPrice();
-    
+
     // Check if price is valid
     if (!price || price <= 0) {
-      setErrors({ amount: "Price not available. Please wait for prices to load." });
+      setErrors({
+        amount: "Price not available. Please wait for prices to load.",
+      });
       setStep(2);
       return;
     }
-    
+
     const inputAmount = parseFloat(buyData.amount);
     const usdValue = convertAmount(inputAmount, true);
     const assetAmount = usdValue / price;
@@ -306,7 +314,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[10000] overflow-hidden"
+          className="fixed inset-0 z-[10000] overflow-hidden m4-fullscreen-fixed"
           style={{
             background: isDark
               ? "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #052e16 50%, #0f172a 75%, #0a0a0f 100%)"
@@ -315,9 +323,15 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
         >
           {/* Animated background elements - GREEN theme */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse ${isDark ? "bg-green-500/10" : "bg-green-500/20"}`} />
-            <div className={`absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 ${isDark ? "bg-emerald-500/10" : "bg-emerald-500/15"}`} />
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl ${isDark ? "bg-green-500/5" : "bg-green-500/10"}`} />
+            <div
+              className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse ${isDark ? "bg-green-500/10" : "bg-green-500/20"}`}
+            />
+            <div
+              className={`absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 ${isDark ? "bg-emerald-500/10" : "bg-emerald-500/15"}`}
+            />
+            <div
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl ${isDark ? "bg-green-500/5" : "bg-green-500/10"}`}
+            />
           </div>
 
           {/* Back button - top left (hidden on success) */}
@@ -345,7 +359,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
           )}
 
           {/* Main content container */}
-          <div className="h-full w-full overflow-y-auto py-4 px-3 md:px-6">
+          <div className="h-full w-full overflow-y-auto py-4 px-3 md:px-6 m4-scroll-y-safe m4-safe-top">
             <div className="max-w-lg mx-auto relative z-10">
               {/* Header Card */}
               <motion.div
@@ -378,7 +392,11 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       />
                     </svg>
                   </div>
-                  <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Buy Crypto</h2>
+                  <h2
+                    className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
+                    Buy Crypto
+                  </h2>
                 </div>
 
                 {/* Progress Steps */}
@@ -391,7 +409,9 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] transition-all ${
                               step >= s
                                 ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm shadow-green-500/30"
-                                : isDark ? "bg-gray-800/50 text-gray-500" : "bg-gray-200 text-gray-500"
+                                : isDark
+                                  ? "bg-gray-800/50 text-gray-500"
+                                  : "bg-gray-200 text-gray-500"
                             }`}
                             style={step >= s ? {} : inputStyle}
                           >
@@ -416,7 +436,9 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                               className={`w-6 h-0.5 rounded-full ${
                                 step > s
                                   ? "bg-gradient-to-r from-green-500 to-emerald-500"
-                                  : isDark ? "bg-gray-700" : "bg-gray-300"
+                                  : isDark
+                                    ? "bg-gray-700"
+                                    : "bg-gray-300"
                               }`}
                             />
                           )}
@@ -424,7 +446,9 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       ))}
                     </div>
                     <div className="flex justify-center mt-1">
-                      <span className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      <span
+                        className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
                         {step === 1 && "Select Asset"}
                         {step === 2 && "Enter Amount"}
                         {step === 3 && "Confirm"}
@@ -454,7 +478,9 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         boxShadow: isDark
                           ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
                           : "0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
-                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
+                        border: isDark
+                          ? "1px solid rgba(255, 255, 255, 0.08)"
+                          : "1px solid rgba(0, 0, 0, 0.06)",
                       }}
                     >
                       <div className="flex justify-between items-center">
@@ -465,25 +491,36 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             width={28}
                             height={28}
                             className="rounded-full object-cover"
-                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                            style={{
+                              filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                            }}
                             unoptimized
                           />
-                          <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                          <span
+                            className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                          >
                             {preferredCurrency}
                           </span>
                         </div>
-                        <span className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                        <span
+                          className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                        >
                           {formatBalanceDisplay(availableBalance)}
                         </span>
                       </div>
                     </div>
 
                     <div className="mb-3">
-                      <label className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      <label
+                        className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                      >
                         Select Cryptocurrency
                       </label>
-                      <p className={`text-xs mt-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                        You are buying with your fiat balance. Choose a cryptocurrency to purchase.
+                      <p
+                        className={`text-xs mt-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                      >
+                        You are buying with your fiat balance. Choose a
+                        cryptocurrency to purchase.
                       </p>
                     </div>
                     {cryptoSymbols.length === 0 && portfolio !== null && (
@@ -493,27 +530,44 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                           background: isDark
                             ? "linear-gradient(145deg, rgba(34,197,94,0.06) 0%, rgba(22,163,74,0.06) 100%)"
                             : "linear-gradient(145deg, rgba(34,197,94,0.05) 0%, rgba(22,163,74,0.05) 100%)",
-                          border: isDark ? "1px solid rgba(34,197,94,0.15)" : "1px solid rgba(34,197,94,0.2)",
+                          border: isDark
+                            ? "1px solid rgba(34,197,94,0.15)"
+                            : "1px solid rgba(34,197,94,0.2)",
                         }}
                       >
                         <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
-                          <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          <svg
+                            className="w-6 h-6 text-green-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
                           </svg>
                         </div>
-                        <p className={`text-sm font-semibold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <p
+                          className={`text-sm font-semibold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           No assets added yet
                         </p>
-                        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                          Go to the Dashboard and tap <strong>+</strong> to toggle on crypto assets you want to track and buy.
+                        <p
+                          className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          Go to the Dashboard and tap <strong>+</strong> to
+                          toggle on crypto assets you want to track and buy.
                         </p>
                       </div>
                     )}
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                      {cryptoSymbols
-                        .map((symbol) => {
+                      {cryptoSymbols.map((symbol) => {
                         const price = cryptoPrices[symbol]?.price || 0;
-                        const changePercent = cryptoPrices[symbol]?.changePercent24h;
+                        const changePercent =
+                          cryptoPrices[symbol]?.changePercent24h;
                         const name = getCryptoMetadata(symbol).name || symbol;
                         return (
                           <button
@@ -538,7 +592,9 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                               border:
                                 buyData.asset === symbol
                                   ? "1px solid rgba(34, 197, 94, 0.3)"
-                                  : isDark ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.08)",
+                                  : isDark
+                                    ? "1px solid rgba(255, 255, 255, 0.05)"
+                                    : "1px solid rgba(0, 0, 0, 0.08)",
                             }}
                           >
                             <div className="flex items-center justify-between">
@@ -547,9 +603,11 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                                   className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
                                   style={{
                                     background: isDark
-                                      ? cryptoGradients[symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                      ? cryptoGradients[symbol] ||
+                                        "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                                       : "#ffffff",
-                                    filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                                    filter:
+                                      "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                                   }}
                                 >
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -562,14 +620,25 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                                   />
                                 </div>
                                 <div>
-                                  <div className={`text-base font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                  <div
+                                    className={`text-base font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                  >
                                     {symbol}
                                   </div>
-                                  <div className={`text-xs font-semibold flex items-center gap-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                                  <div
+                                    className={`text-xs font-semibold flex items-center gap-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                  >
                                     {formatAmount(price, 2)}
                                     {changePercent !== undefined && (
-                                      <span className={changePercent >= 0 ? "text-green-400" : "text-red-400"}>
-                                        {changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%
+                                      <span
+                                        className={
+                                          changePercent >= 0
+                                            ? "text-green-400"
+                                            : "text-red-400"
+                                        }
+                                      >
+                                        {changePercent >= 0 ? "+" : ""}
+                                        {changePercent.toFixed(2)}%
                                       </span>
                                     )}
                                   </div>
@@ -591,8 +660,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             </div>
                           </button>
                         );
-                      })
-                      }
+                      })}
                     </div>
 
                     <button
@@ -642,7 +710,8 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden relative"
                         style={{
                           background: isDark
-                            ? cryptoGradients[buyData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                            ? cryptoGradients[buyData.asset] ||
+                              "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                             : "#ffffff",
                           boxShadow: isDark
                             ? "0 6px 20px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.15), inset 0 -2px 0 rgba(0,0,0,0.3)"
@@ -661,10 +730,14 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         />
                       </div>
                       <div>
-                        <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <div
+                          className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           Buying {buyData.asset}
                         </div>
-                        <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                        <div
+                          className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
                           Price: {formatAmount(getCurrentPrice(), 2)}
                         </div>
                       </div>
@@ -672,11 +745,15 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
                     {/* Amount Input */}
                     <div>
-                      <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      <label
+                        className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                      >
                         Amount ({preferredCurrency})
                       </label>
                       <div className="relative">
-                        <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold ${isDark ? "text-gray-400" : "text-gray-500"} pointer-events-none select-none`}>
+                        <span
+                          className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold ${isDark ? "text-gray-400" : "text-gray-500"} pointer-events-none select-none`}
+                        >
                           {currencySymbol}
                         </span>
                         <input
@@ -690,7 +767,11 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             }))
                           }
                           className={`w-full rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? "text-white" : "text-gray-900"}`}
-                          style={{ ...inputStyle, paddingLeft: currencySymbol.length > 1 ? "36px" : "28px" }}
+                          style={{
+                            ...inputStyle,
+                            paddingLeft:
+                              currencySymbol.length > 1 ? "36px" : "28px",
+                          }}
                           placeholder="0.00"
                         />
                       </div>
@@ -710,8 +791,12 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                               background: isDark
                                 ? "linear-gradient(145deg, #374151 0%, #1f2937 100%)"
                                 : "linear-gradient(145deg, #f3f4f6 0%, #e5e7eb 100%)",
-                              boxShadow: isDark ? "0 2px 8px -2px rgba(0, 0, 0, 0.4)" : "0 2px 6px -2px rgba(0, 0, 0, 0.15)",
-                              border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0, 0, 0, 0.08)",
+                              boxShadow: isDark
+                                ? "0 2px 8px -2px rgba(0, 0, 0, 0.4)"
+                                : "0 2px 6px -2px rgba(0, 0, 0, 0.15)",
+                              border: isDark
+                                ? "1px solid rgba(255, 255, 255, 0.06)"
+                                : "1px solid rgba(0, 0, 0, 0.08)",
                             }}
                           >
                             {currencySymbol}
@@ -733,11 +818,16 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         }}
                       >
                         <div className="flex justify-between items-center">
-                          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                          <span
+                            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
                             You will receive:
                           </span>
-                          <span className={`font-bold ${isDark ? "text-green-400" : "text-green-600"}`}>
-                            {formatCryptoAmount(getEstimatedCrypto(), 14)} {buyData.asset}
+                          <span
+                            className={`font-bold ${isDark ? "text-green-400" : "text-green-600"}`}
+                          >
+                            {formatCryptoAmount(getEstimatedCrypto(), 14)}{" "}
+                            {buyData.asset}
                           </span>
                         </div>
                       </div>
@@ -753,7 +843,9 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         boxShadow: isDark
                           ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
                           : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1)",
-                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+                        border: isDark
+                          ? "1px solid rgba(255, 255, 255, 0.08)"
+                          : "1px solid rgba(0, 0, 0, 0.08)",
                       }}
                     >
                       <div className="flex justify-between items-center">
@@ -764,14 +856,20 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             width={28}
                             height={28}
                             className="rounded-full object-cover"
-                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                            style={{
+                              filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                            }}
                             unoptimized
                           />
-                          <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                          <span
+                            className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                          >
                             {preferredCurrency}
                           </span>
                         </div>
-                        <span className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {formatBalanceDisplay(availableBalance)}
                         </span>
                       </div>
@@ -810,7 +908,8 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 relative overflow-hidden"
                         style={{
                           background: isDark
-                            ? cryptoGradients[buyData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                            ? cryptoGradients[buyData.asset] ||
+                              "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                             : "#ffffff",
                           boxShadow: isDark
                             ? "0 10px 30px -5px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.3)"
@@ -825,13 +924,19 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                           className="relative z-0 scale-[1.35]"
                         />
                       </div>
-                      <p className={`text-xs mb-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      <p
+                        className={`text-xs mb-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
                         You&apos;re buying
                       </p>
-                      <p className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                      <p
+                        className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
                         {formatCryptoAmount(getEstimatedCrypto(), 18)}
                       </p>
-                      <p className={`font-semibold text-sm ${isDark ? "text-green-400" : "text-green-600"}`}>
+                      <p
+                        className={`font-semibold text-sm ${isDark ? "text-green-400" : "text-green-600"}`}
+                      >
                         {buyData.asset}
                       </p>
                     </div>
@@ -845,35 +950,65 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         boxShadow: isDark
                           ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
                           : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1)",
-                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+                        border: isDark
+                          ? "1px solid rgba(255, 255, 255, 0.08)"
+                          : "1px solid rgba(0, 0, 0, 0.08)",
                       }}
                     >
                       <div className="flex justify-between text-xs">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
                           Price per {buyData.asset}:
                         </span>
-                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {formatAmount(getCurrentPrice(), 2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount:</span>
-                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Amount:
+                        </span>
+                        <span
+                          className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {currencySymbol}
                           {parseFloat(buyData.amount).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Fee (1.5%):</span>
-                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Fee (1.5%):
+                        </span>
+                        <span
+                          className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {currencySymbol}
                           {(parseFloat(buyData.amount) * 0.015).toFixed(2)}
                         </span>
                       </div>
-                      <hr className={isDark ? "border-gray-700" : "border-gray-200"} />
+                      <hr
+                        className={
+                          isDark ? "border-gray-700" : "border-gray-200"
+                        }
+                      />
                       <div className="flex justify-between font-bold text-sm">
-                        <span className={isDark ? "text-gray-300" : "text-gray-700"}>Total Cost:</span>
-                        <span className={isDark ? "text-green-400" : "text-green-600"}>
+                        <span
+                          className={isDark ? "text-gray-300" : "text-gray-700"}
+                        >
+                          Total Cost:
+                        </span>
+                        <span
+                          className={
+                            isDark ? "text-green-400" : "text-green-600"
+                          }
+                        >
                           {currencySymbol}
                           {(parseFloat(buyData.amount) * 1.015).toFixed(2)}
                         </span>

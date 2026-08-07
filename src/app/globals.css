@@ -25,9 +25,17 @@
   --sar: env(safe-area-inset-right, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
+  --m4-dvh: 100dvh;
+  --m4-modal-bottom-offset: 112px;
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+}
+
+@supports not (height: 100dvh) {
+  :root {
+    --m4-dvh: 100vh;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -103,6 +111,30 @@ html {
 
 html::-webkit-scrollbar {
   display: none;
+}
+
+.m4-viewport-shell {
+  min-height: var(--m4-dvh);
+  height: var(--m4-dvh);
+}
+
+.m4-fullscreen-fixed {
+  min-height: var(--m4-dvh);
+  height: var(--m4-dvh);
+}
+
+.m4-scroll-y-safe {
+  min-height: var(--m4-dvh);
+  padding-bottom: calc(var(--m4-modal-bottom-offset) + var(--sab));
+  -webkit-overflow-scrolling: touch;
+}
+
+.m4-safe-top {
+  padding-top: var(--sat);
+}
+
+.m4-safe-bottom {
+  padding-bottom: var(--sab);
 }
 
 * {

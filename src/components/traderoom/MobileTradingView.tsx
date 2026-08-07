@@ -2418,6 +2418,10 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         fontFamily: '"Inter", sans-serif',
         touchAction: "none",
         overflow: "hidden",
+        minHeight: "100dvh",
+        height: "100dvh",
+        paddingTop: "env(safe-area-inset-top, 0px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
       {/* Balance bar */}

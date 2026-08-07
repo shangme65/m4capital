@@ -251,7 +251,7 @@ export default function AssetSendModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[10000] overflow-hidden"
+            className="fixed inset-0 z-[10000] overflow-hidden m4-fullscreen-fixed"
             style={
               isDark
                 ? {
@@ -348,7 +348,7 @@ export default function AssetSendModal({
               <X className="w-5 h-5" />
             </button>
 
-            <div className="h-full overflow-y-auto">
+            <div className="h-full overflow-y-auto m4-scroll-y-safe m4-safe-top">
               <div className="min-h-full flex flex-col items-center justify-start py-16 px-4">
                 <motion.div
                   initial={{ scale: 0.95, opacity: 0, y: 20 }}

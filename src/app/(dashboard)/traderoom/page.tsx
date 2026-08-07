@@ -2267,7 +2267,7 @@ function TradingInterface() {
   if (!mounted) {
     return (
       <div
-        className="h-screen flex flex-col items-center justify-center"
+        className="h-[100dvh] flex flex-col items-center justify-center"
         style={{ backgroundColor: "#070c15", color: "#eef2f7" }}
       >
         <div className="text-center space-y-6">
@@ -2386,7 +2386,8 @@ function TradingInterface() {
         html,
         body {
           overflow: hidden !important;
-          height: 100%;
+          height: 100dvh;
+          min-height: 100dvh;
           width: 100%;
         }
         ::-webkit-scrollbar {
@@ -2480,7 +2481,7 @@ function TradingInterface() {
       {/* ─── Desktop Trading View ─── */}
       {!isMobile && (
         <div
-          className="h-screen w-screen flex flex-col m-0"
+          className="h-[100dvh] w-screen flex flex-col m-0"
           style={{
             backgroundColor: "#070c15",
             color: "#eef2f7",

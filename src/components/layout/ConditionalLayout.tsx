@@ -60,7 +60,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header onLoginClick={openLoginModal} onSignupClick={openSignupModal} />
-      <main className="min-h-screen overflow-x-hidden">{children}</main>
+      <main className="min-h-[100dvh] overflow-x-hidden">{children}</main>
       {!hideFooterOnly && <Footer />}
 
       {/* Modals */}
