@@ -15,10 +15,15 @@ jobs:
     steps:
       - name: Trigger Copy Trade Monitor
         run: |
-          APP_URL="$NEXTAUTH_URL"
+          APP_URL=$(printf '%s' "$NEXTAUTH_URL" | tr -d '\r' | sed 's/^\"//; s/\"$//; s/^[[:space:]]*//; s/[[:space:]]*$//; s#/*$##')
 
           if [ -z "$APP_URL" ]; then
             echo "❌ Missing app URL. Configure secrets.NEXTAUTH_URL"
+            exit 1
+          fi
+
+          if ! [[ "$APP_URL" =~ ^https?:// ]]; then
+            echo "❌ Invalid app URL in secrets.NEXTAUTH_URL: must start with http:// or https://"
             exit 1
           fi
 
