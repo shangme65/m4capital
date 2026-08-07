@@ -9,20 +9,41 @@ on:
 jobs:
   monitor-copy-trades:
     runs-on: ubuntu-latest
+    env:
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
     steps:
       - name: Trigger Copy Trade Monitor
         run: |
-          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+          APP_URL="$NEXTAUTH_URL"
+
+          if [ -z "$APP_URL" ]; then
+            echo "❌ Missing app URL. Configure secrets.NEXTAUTH_URL"
+            exit 1
+          fi
+
+          if [ -z "$CRON_SECRET" ]; then
+            echo "❌ Missing CRON secret. Configure secrets.CRON_SECRET"
+            exit 1
+          fi
+
+          HTTP_STATUS=$(curl -sS -L --connect-timeout 10 --max-time 30 \
+            -o /tmp/response.txt -w "%{http_code}" \
             -X GET \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ secrets.NEXTAUTH_URL }}/api/cron/monitor-copy-trades")
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/monitor-copy-trades" || true)
 
           echo "Response body:"
-          cat /tmp/response.txt
+          if [ -f /tmp/response.txt ]; then
+            cat /tmp/response.txt
+          else
+            echo "(empty response)"
+          fi
 
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
             echo "✅ Copy trade monitor ran successfully (HTTP $HTTP_STATUS)"
           else
             echo "❌ Copy trade monitor failed (HTTP $HTTP_STATUS)"
+            echo "Target URL: $APP_URL/api/cron/monitor-copy-trades"
             exit 1
           fi
