@@ -44,10 +44,12 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import ReactDOM from "react-dom";
 import { signOut } from "next-auth/react";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
+import { VscVerifiedFilled } from "react-icons/vsc";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -112,6 +114,38 @@ interface DashboardData {
   pendingWithdrawalCount: number;
   contracts: MiningContract[];
   recentEarnings: MiningEarning[];
+}
+
+interface ActiveMinerMember {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  country: string | null;
+  lastSeenAt: string | null;
+  activeContracts: number;
+  totalHashrate: number;
+  hashrateUnit: string;
+}
+
+type InsightCardId =
+  | "activeHashrate"
+  | "activeContracts"
+  | "todayEarnings"
+  | "monthlyEarnings"
+  | "miningStatus";
+
+interface InsightRow {
+  label: string;
+  value: string;
+}
+
+interface InsightCardMeta {
+  id: InsightCardId;
+  title: string;
+  subtitle: string;
+  highlight: string;
+  rows: InsightRow[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -222,6 +256,161 @@ function Sparkline({
   );
 }
 
+function useAdaptiveMotionProfile() {
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+
+    const coarseQuery = window.matchMedia("(pointer: coarse)");
+    const reducedMotionQuery = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
+
+    const update = () => {
+      setIsCoarsePointer(coarseQuery.matches || window.innerWidth < 768);
+      setPrefersReducedMotion(reducedMotionQuery.matches);
+    };
+
+    update();
+
+    const addListener = (mq: MediaQueryList, fn: () => void) => {
+      if (mq.addEventListener) mq.addEventListener("change", fn);
+      else mq.addListener(fn);
+    };
+
+    const removeListener = (mq: MediaQueryList, fn: () => void) => {
+      if (mq.removeEventListener) mq.removeEventListener("change", fn);
+      else mq.removeListener(fn);
+    };
+
+    addListener(coarseQuery, update);
+    addListener(reducedMotionQuery, update);
+    window.addEventListener("resize", update);
+
+    return () => {
+      removeListener(coarseQuery, update);
+      removeListener(reducedMotionQuery, update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  const intensity = prefersReducedMotion ? 0 : isCoarsePointer ? 0.35 : 1;
+
+  return {
+    isCoarsePointer,
+    prefersReducedMotion,
+    intensity,
+    disableReactiveTilt: prefersReducedMotion || isCoarsePointer,
+  };
+}
+
+function InteractiveDepthCard({
+  children,
+  className,
+  isDark,
+  style,
+  onClick,
+  entryY = 10,
+  entryScale = 0.99,
+  delay = 0,
+  lift = 6,
+  tilt = 4,
+  hoverScale = 1.01,
+}: {
+  children: React.ReactNode;
+  className: string;
+  isDark: boolean;
+  style?: Record<string, string | number>;
+  onClick?: () => void;
+  entryY?: number;
+  entryScale?: number;
+  delay?: number;
+  lift?: number;
+  tilt?: number;
+  hoverScale?: number;
+}) {
+  const { intensity, disableReactiveTilt } = useAdaptiveMotionProfile();
+  const [isHovered, setIsHovered] = useState(false);
+  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+
+  const adaptiveLift = lift * intensity;
+  const adaptiveTilt = tilt * intensity;
+  const adaptiveHoverScale = 1 + (hoverScale - 1) * intensity;
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (disableReactiveTilt || adaptiveTilt <= 0) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    const rotateY = (px - 0.5) * adaptiveTilt * 2;
+    const rotateX = (0.5 - py) * adaptiveTilt * 2;
+
+    setRotation({ x: rotateX, y: rotateY });
+  };
+
+  const baseShadow = isDark
+    ? "0 18px 34px -22px rgba(0,0,0,0.75), 0 0 0 1px rgba(249,115,22,0.08), inset 0 1px 0 rgba(255,255,255,0.04)"
+    : "0 14px 28px -20px rgba(15,23,42,0.22), 0 0 0 1px rgba(249,115,22,0.1), inset 0 1px 0 rgba(255,255,255,0.92)";
+
+  const hoverShadow = isDark
+    ? "0 34px 68px -30px rgba(0,0,0,0.92), 0 0 0 1px rgba(249,115,22,0.28), 0 14px 26px -20px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.08)"
+    : "0 28px 56px -30px rgba(15,23,42,0.35), 0 0 0 1px rgba(249,115,22,0.24), 0 12px 24px -20px rgba(249,115,22,0.3), inset 0 1px 0 rgba(255,255,255,0.96)";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: entryY, scale: entryScale }}
+      animate={{
+        opacity: 1,
+        y: isHovered ? -adaptiveLift : 0,
+        scale: isHovered ? adaptiveHoverScale : 1,
+        rotateX: rotation.x,
+        rotateY: rotation.y,
+      }}
+      transition={{
+        opacity: { duration: 0.34, delay, ease: "easeOut" },
+        y: { type: "spring", stiffness: 210, damping: 20 },
+        scale: { type: "spring", stiffness: 210, damping: 18 },
+        rotateX: { type: "spring", stiffness: 180, damping: 16 },
+        rotateY: { type: "spring", stiffness: 180, damping: 16 },
+      }}
+      onMouseEnter={() => {
+        if (intensity > 0) setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setRotation({ x: 0, y: 0 });
+      }}
+      onMouseMove={handleMouseMove}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (!onClick) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      whileTap={{ scale: 0.995 }}
+      className={className}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : -1}
+      style={{
+        transformStyle: "preserve-3d",
+        perspective: 1200,
+        boxShadow: isHovered && intensity > 0.4 ? hoverShadow : baseShadow,
+        cursor: onClick ? "pointer" : "default",
+        ...style,
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 function StatCard({
   title,
   value,
@@ -232,6 +421,7 @@ function StatCard({
   iconBg,
   isDark,
   sparkData,
+  onClick,
 }: {
   title: string;
   value: string;
@@ -242,12 +432,40 @@ function StatCard({
   iconBg: string;
   isDark: boolean;
   sparkData?: number[];
+  onClick?: () => void;
 }) {
   return (
-    <div
+    <InteractiveDepthCard
       className={`rounded-xl p-3 sm:p-4 border transition-all ${isDark ? "bg-gray-800 border-gray-700/60 hover:border-orange-500/30" : "bg-white border-gray-200 hover:border-orange-300"} shadow-sm`}
+      isDark={isDark}
+      onClick={onClick}
+      entryY={8}
+      entryScale={0.992}
+      lift={5}
+      tilt={2.6}
+      hoverScale={1.01}
+      style={{
+        background: isDark
+          ? "linear-gradient(152deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+          : "linear-gradient(152deg, #ffffff 0%, #f8fafc 100%)",
+      }}
     >
-      <div className="flex items-start justify-between mb-2">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, transparent 0 8px, rgba(148,163,184,0.32) 8px 9px), repeating-linear-gradient(90deg, transparent 0 12px, rgba(148,163,184,0.2) 12px 13px)",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute -right-10 -top-8 w-24 h-24 rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(249,115,22,0.32) 0%, rgba(249,115,22,0) 72%)",
+          filter: "blur(6px)",
+        }}
+      />
+      <div className="relative z-10 flex items-start justify-between mb-2">
         <div className="flex-1 min-w-0 mr-2">
           <p
             className={`text-[10px] sm:text-xs font-medium uppercase tracking-wide mb-0.5 truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}
@@ -267,7 +485,7 @@ function StatCard({
         </div>
         <div className={`p-2 rounded-xl flex-shrink-0 ${iconBg}`}>{icon}</div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="relative z-10 flex items-center gap-1">
         {positive ? (
           <ArrowUpRight size={11} className="text-green-500 flex-shrink-0" />
         ) : (
@@ -292,7 +510,7 @@ function StatCard({
           </span>
         )}
       </div>
-    </div>
+    </InteractiveDepthCard>
   );
 }
 
@@ -335,6 +553,435 @@ function CircularProgress({
         className="transition-all duration-1000 ease-out"
       />
     </svg>
+  );
+}
+
+function ModalInfoRow({
+  label,
+  value,
+  isDark,
+}: {
+  label: string;
+  value: string;
+  isDark: boolean;
+}) {
+  const { intensity } = useAdaptiveMotionProfile();
+
+  const hoverEffect =
+    intensity > 0
+      ? {
+          y: -2 * intensity,
+          scale: 1 + 0.01 * intensity,
+          rotateX: 1.4 * intensity,
+          rotateY: -1.4 * intensity,
+        }
+      : undefined;
+
+  return (
+    <motion.div
+      whileHover={hoverEffect}
+      transition={{ type: "spring", stiffness: 260, damping: 18 }}
+      className={`relative flex items-center justify-between rounded-lg px-3 py-2 border overflow-hidden ${
+        isDark
+          ? "bg-gray-800/70 border-gray-700/60"
+          : "bg-gray-50 border-gray-200"
+      }`}
+      style={{
+        transformStyle: "preserve-3d",
+        boxShadow: isDark
+          ? "0 10px 20px -16px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)"
+          : "0 8px 16px -14px rgba(15,23,42,0.2), inset 0 1px 0 rgba(255,255,255,0.9)",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, transparent 0 12px, rgba(148,163,184,0.26) 12px 13px)",
+        }}
+      />
+      <span
+        className={`relative z-10 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+      >
+        {label}
+      </span>
+      <span
+        className={`relative z-10 text-xs font-semibold ${isDark ? "text-green-300" : "text-green-700"}`}
+      >
+        {value}
+      </span>
+    </motion.div>
+  );
+}
+
+function InsightCardModal({
+  isOpen,
+  card,
+  isDark,
+  onClose,
+}: {
+  isOpen: boolean;
+  card: InsightCardMeta | null;
+  isDark: boolean;
+  onClose: () => void;
+}) {
+  const { intensity, disableReactiveTilt } = useAdaptiveMotionProfile();
+  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const [glow, setGlow] = useState({ x: 80, y: -20, opacity: 0.34 });
+
+  if (!isOpen || !card || typeof window === "undefined") return null;
+
+  const handleModalMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (disableReactiveTilt || intensity <= 0) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    const rotateY = (px - 0.5) * 8 * intensity;
+    const rotateX = (0.5 - py) * 8 * intensity;
+
+    setRotation({ x: rotateX, y: rotateY });
+    setGlow({ x: px * 100, y: py * 100, opacity: 0.3 + 0.15 * intensity });
+  };
+
+  const resetModalPose = () => {
+    setRotation({ x: 0, y: 0 });
+    setGlow({ x: 80, y: -20, opacity: 0.34 });
+  };
+
+  return ReactDOM.createPortal(
+    <div
+      className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center px-3 sm:px-4"
+      style={{
+        paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: "rgba(2, 6, 23, 0.62)",
+          backdropFilter: "blur(4px)",
+        }}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 16 }}
+        animate={{
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          rotateX: rotation.x * intensity,
+          rotateY: rotation.y * intensity,
+        }}
+        exit={{ opacity: 0, scale: 0.96, y: 16 }}
+        transition={{
+          opacity: { duration: 0.22, ease: "easeOut" },
+          scale: { duration: 0.22, ease: "easeOut" },
+          y: { duration: 0.22, ease: "easeOut" },
+          rotateX: { type: "spring", stiffness: 170, damping: 16 },
+          rotateY: { type: "spring", stiffness: 170, damping: 16 },
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onMouseMove={handleModalMove}
+        onMouseLeave={resetModalPose}
+        className={`relative w-full max-w-md max-h-[90dvh] sm:max-h-[88vh] rounded-2xl border overflow-hidden flex flex-col ${
+          isDark ? "bg-gray-900 border-gray-700/70" : "bg-white border-gray-200"
+        }`}
+        style={{
+          transformStyle: "preserve-3d",
+          perspective: 1400,
+          boxShadow: isDark
+            ? "0 30px 64px -28px rgba(0,0,0,0.85), 0 0 0 1px rgba(249,115,22,0.16), inset 0 1px 0 rgba(255,255,255,0.05)"
+            : "0 30px 56px -28px rgba(15,23,42,0.3), 0 0 0 1px rgba(249,115,22,0.18), inset 0 1px 0 rgba(255,255,255,0.94)",
+          background: isDark
+            ? "linear-gradient(145deg, rgba(17,24,39,0.98) 0%, rgba(15,23,42,0.99) 56%, rgba(31,41,55,0.98) 100%)"
+            : "linear-gradient(145deg, #ffffff 0%, #f8fafc 56%, #ffffff 100%)",
+        }}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, transparent 0 8px, rgba(148,163,184,0.28) 8px 9px), repeating-linear-gradient(90deg, transparent 0 12px, rgba(148,163,184,0.22) 12px 13px)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute -top-20 -right-20 w-48 h-48 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(249,115,22,0.34) 0%, rgba(251,191,36,0.14) 34%, rgba(0,0,0,0) 70%)",
+            filter: "blur(8px)",
+          }}
+        />
+        <motion.div
+          className="pointer-events-none absolute w-56 h-56 rounded-full"
+          animate={{
+            left: `${glow.x}%`,
+            top: `${glow.y}%`,
+            opacity: glow.opacity * intensity,
+          }}
+          transition={{ type: "spring", stiffness: 140, damping: 16 }}
+          style={{
+            transform: "translate(-50%, -50%)",
+            background:
+              "radial-gradient(circle, rgba(34,197,94,0.22) 0%, rgba(34,197,94,0.09) 42%, rgba(0,0,0,0) 74%)",
+            filter: "blur(10px)",
+          }}
+        />
+
+        <div className="relative z-10 p-4 sm:p-5 overflow-y-auto min-h-0">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h3
+                className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+              >
+                {card.title}
+              </h3>
+              <p
+                className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+              >
+                {card.subtitle}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className={`p-2 rounded-xl transition-colors ${isDark ? "bg-gray-800 hover:bg-gray-700 text-gray-300" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}
+              aria-label="Close details modal"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div
+            className={`rounded-xl border px-3 py-2.5 mb-3 ${
+              isDark
+                ? "bg-green-500/10 border-green-500/25 text-green-300"
+                : "bg-green-50 border-green-200 text-green-700"
+            }`}
+          >
+            <p className="text-sm font-semibold">{card.highlight}</p>
+          </div>
+
+          <div className="space-y-2">
+            {card.rows.map((row) => (
+              <ModalInfoRow
+                key={row.label}
+                label={row.label}
+                value={row.value}
+                isDark={isDark}
+              />
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </div>,
+    document.body,
+  );
+}
+
+function ContractPreviewModal({
+  isOpen,
+  contract,
+  isDark,
+  onClose,
+}: {
+  isOpen: boolean;
+  contract: MiningContract | null;
+  isDark: boolean;
+  onClose: () => void;
+}) {
+  const { intensity, disableReactiveTilt } = useAdaptiveMotionProfile();
+  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const [glow, setGlow] = useState({ x: 80, y: -20, opacity: 0.34 });
+
+  if (!isOpen || !contract || typeof window === "undefined") return null;
+
+  const handleModalMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (disableReactiveTilt || intensity <= 0) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    const rotateY = (px - 0.5) * 8 * intensity;
+    const rotateX = (0.5 - py) * 8 * intensity;
+
+    setRotation({ x: rotateX, y: rotateY });
+    setGlow({ x: px * 100, y: py * 100, opacity: 0.3 + 0.15 * intensity });
+  };
+
+  const resetModalPose = () => {
+    setRotation({ x: 0, y: 0 });
+    setGlow({ x: 80, y: -20, opacity: 0.34 });
+  };
+
+  const startDate = new Date(contract.startDate).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const endDate = contract.endDate
+    ? new Date(contract.endDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Running";
+
+  return ReactDOM.createPortal(
+    <div
+      className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center px-3 sm:px-4"
+      style={{
+        paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: "rgba(2, 6, 23, 0.62)",
+          backdropFilter: "blur(4px)",
+        }}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 16 }}
+        animate={{
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          rotateX: rotation.x * intensity,
+          rotateY: rotation.y * intensity,
+        }}
+        exit={{ opacity: 0, scale: 0.96, y: 16 }}
+        transition={{
+          opacity: { duration: 0.22, ease: "easeOut" },
+          scale: { duration: 0.22, ease: "easeOut" },
+          y: { duration: 0.22, ease: "easeOut" },
+          rotateX: { type: "spring", stiffness: 170, damping: 16 },
+          rotateY: { type: "spring", stiffness: 170, damping: 16 },
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onMouseMove={handleModalMove}
+        onMouseLeave={resetModalPose}
+        className={`relative w-full max-w-md max-h-[90dvh] sm:max-h-[88vh] rounded-2xl border overflow-hidden flex flex-col ${
+          isDark ? "bg-gray-900 border-gray-700/70" : "bg-white border-gray-200"
+        }`}
+        style={{
+          transformStyle: "preserve-3d",
+          perspective: 1400,
+          boxShadow: isDark
+            ? "0 30px 64px -28px rgba(0,0,0,0.85), 0 0 0 1px rgba(249,115,22,0.16), inset 0 1px 0 rgba(255,255,255,0.05)"
+            : "0 30px 56px -28px rgba(15,23,42,0.3), 0 0 0 1px rgba(249,115,22,0.18), inset 0 1px 0 rgba(255,255,255,0.94)",
+          background: isDark
+            ? "linear-gradient(145deg, rgba(17,24,39,0.98) 0%, rgba(15,23,42,0.99) 56%, rgba(31,41,55,0.98) 100%)"
+            : "linear-gradient(145deg, #ffffff 0%, #f8fafc 56%, #ffffff 100%)",
+        }}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, transparent 0 8px, rgba(148,163,184,0.28) 8px 9px), repeating-linear-gradient(90deg, transparent 0 12px, rgba(148,163,184,0.22) 12px 13px)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute -top-20 -right-20 w-48 h-48 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(249,115,22,0.34) 0%, rgba(251,191,36,0.14) 34%, rgba(0,0,0,0) 70%)",
+            filter: "blur(8px)",
+          }}
+        />
+        <motion.div
+          className="pointer-events-none absolute w-56 h-56 rounded-full"
+          animate={{
+            left: `${glow.x}%`,
+            top: `${glow.y}%`,
+            opacity: glow.opacity * intensity,
+          }}
+          transition={{ type: "spring", stiffness: 140, damping: 16 }}
+          style={{
+            transform: "translate(-50%, -50%)",
+            background:
+              "radial-gradient(circle, rgba(34,197,94,0.22) 0%, rgba(34,197,94,0.09) 42%, rgba(0,0,0,0) 74%)",
+            filter: "blur(10px)",
+          }}
+        />
+
+        <div className="relative z-10 p-4 sm:p-5 overflow-y-auto min-h-0">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h3
+                  className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                >
+                  {contract.planName}
+                </h3>
+                <VscVerifiedFilled
+                  className="text-green-500 flex-shrink-0"
+                  size={15}
+                />
+              </div>
+              <p
+                className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+              >
+                Active contract information
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className={`p-2 rounded-xl transition-colors ${isDark ? "bg-gray-800 hover:bg-gray-700 text-gray-300" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}
+              aria-label="Close contract details modal"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div
+            className={`rounded-xl border px-3 py-2.5 mb-3 ${
+              isDark
+                ? "bg-green-500/10 border-green-500/25 text-green-300"
+                : "bg-green-50 border-green-200 text-green-700"
+            }`}
+          >
+            <p className="text-sm font-semibold">
+              {contract.hashrate} currently running ({contract.status})
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            {[
+              { label: "Status", value: contract.status },
+              { label: "Coin", value: contract.coin },
+              { label: "Hashrate", value: contract.hashrate },
+              { label: "Algorithm", value: contract.algorithm },
+              { label: "Duration", value: `${contract.duration} days` },
+              { label: "Start Date", value: startDate },
+              { label: "End Date", value: endDate },
+              {
+                label: "Total Earned",
+                value: `${Number(contract.totalEarned).toFixed(8)} BTC`,
+              },
+            ].map((row) => (
+              <ModalInfoRow
+                key={row.label}
+                label={row.label}
+                value={row.value}
+                isDark={isDark}
+              />
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </div>,
+    document.body,
   );
 }
 
@@ -736,12 +1383,18 @@ function PurchaseModal({
     : "bg-gray-50 border-gray-200";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm"
+      style={{
+        paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+      }}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className={`w-full max-w-md rounded-2xl border shadow-2xl ${isDark ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"}`}
+        className={`w-full max-w-md max-h-[92dvh] rounded-2xl border shadow-2xl flex flex-col ${isDark ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"}`}
       >
         {/* Header */}
         <div
@@ -767,7 +1420,7 @@ function PurchaseModal({
           </button>
         </div>
 
-        <div className="p-4">
+        <div className="p-4 overflow-y-auto">
           {/* Price Banner */}
           <div
             className={`rounded-xl p-3 mb-4 border ${isDark ? "bg-orange-500/10 border-orange-500/20" : "bg-orange-50 border-orange-200"}`}
@@ -1137,6 +1790,8 @@ export default function F2PoolMiningPage() {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const isAdmin =
+    session?.user?.role === "ADMIN" || session?.user?.role === "STAFF_ADMIN";
   const {
     formatAmount: formatCurrency,
     preferredCurrency: prefCurrency,
@@ -1179,6 +1834,11 @@ export default function F2PoolMiningPage() {
   const [workersLoading, setWorkersLoading] = useState(false);
   const [workerOnline, setWorkerOnline] = useState(0);
   const [workerOffline, setWorkerOffline] = useState(0);
+  const [activeMinerMembers, setActiveMinerMembers] = useState<
+    ActiveMinerMember[]
+  >([]);
+  const [activeMinerMembersLoading, setActiveMinerMembersLoading] =
+    useState(false);
   const [stats, setStats] = useState<any>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [withdrawals, setWithdrawals] = useState<MiningWithdrawal[]>([]);
@@ -1204,6 +1864,10 @@ export default function F2PoolMiningPage() {
   const [walletSaving, setWalletSaving] = useState(false);
   const [walletError, setWalletError] = useState("");
   const [walletSuccess, setWalletSuccess] = useState("");
+  const [selectedInsightCard, setSelectedInsightCard] =
+    useState<InsightCardId | null>(null);
+  const [selectedPreviewContract, setSelectedPreviewContract] =
+    useState<MiningContract | null>(null);
 
   // Plans + purchase modal
   const [planSuccess, setPlanSuccess] = useState("");
@@ -1215,6 +1879,131 @@ export default function F2PoolMiningPage() {
   // Transactions
   const [transactions, setTransactions] = useState<any[]>([]);
   const [txLoading, setTxLoading] = useState(false);
+
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedInsightCard(null);
+        setSelectedPreviewContract(null);
+      }
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, []);
+
+  const insightCards: Record<InsightCardId, InsightCardMeta> = {
+    activeHashrate: {
+      id: "activeHashrate",
+      title: "Active Hashrate",
+      subtitle: "Current total hashrate from all running plans",
+      highlight: dashData?.activeContracts
+        ? `${dashData.totalHashrate} ${dashData.hashrateUnit} currently mining`
+        : "No active hashrate until a plan is running",
+      rows: [
+        {
+          label: "Current Hashrate",
+          value: dashData?.activeContracts
+            ? `${dashData.totalHashrate} ${dashData.hashrateUnit}`
+            : "0 TH/s",
+        },
+        {
+          label: "Estimated Daily",
+          value: `$${Number(dashData?.todayEarnedUsd ?? 0).toFixed(2)}/day`,
+        },
+        {
+          label: "Active Plans",
+          value: String(dashData?.activeContracts ?? 0),
+        },
+      ],
+    },
+    activeContracts: {
+      id: "activeContracts",
+      title: "Active Contracts",
+      subtitle: "Number of mining plans currently running",
+      highlight: dashData?.activeContracts
+        ? `${dashData.activeContracts} active contract(s) running now`
+        : "No contracts are currently active",
+      rows: [
+        {
+          label: "Running Contracts",
+          value: String(dashData?.activeContracts ?? 0),
+        },
+        {
+          label: "Pending Withdrawals",
+          value: String(dashData?.pendingWithdrawalCount ?? 0),
+        },
+        {
+          label: "Pool",
+          value: "F2 Pool",
+        },
+      ],
+    },
+    todayEarnings: {
+      id: "todayEarnings",
+      title: "Today's Earnings",
+      subtitle: "Live BTC earnings accumulated today",
+      highlight: `${Number(dashData?.todayEarned ?? 0).toFixed(8)} BTC earned today`,
+      rows: [
+        {
+          label: "BTC Earned",
+          value: `${Number(dashData?.todayEarned ?? 0).toFixed(8)} BTC`,
+        },
+        {
+          label: "USD Equivalent",
+          value: `$${Number(dashData?.todayEarnedUsd ?? 0).toFixed(2)}`,
+        },
+        {
+          label: "Settlement Window",
+          value: "Daily",
+        },
+      ],
+    },
+    monthlyEarnings: {
+      id: "monthlyEarnings",
+      title: "Monthly Earnings",
+      subtitle: "Total BTC earnings in current month",
+      highlight: `${Number(dashData?.monthEarned ?? 0).toFixed(8)} BTC this month`,
+      rows: [
+        {
+          label: "BTC Earned",
+          value: `${Number(dashData?.monthEarned ?? 0).toFixed(8)} BTC`,
+        },
+        {
+          label: "USD Equivalent",
+          value: `$${Number(dashData?.monthEarnedUsd ?? 0).toFixed(2)}`,
+        },
+        {
+          label: "Performance",
+          value:
+            Number(dashData?.monthEarned ?? 0) > 0
+              ? "Positive"
+              : "No earnings yet",
+        },
+      ],
+    },
+    miningStatus: {
+      id: "miningStatus",
+      title: "Mining Status",
+      subtitle: "Operational health and uptime overview",
+      highlight: dashData?.activeContracts
+        ? "Mining operations are active and stable"
+        : "Mining is currently inactive",
+      rows: [
+        {
+          label: "Uptime",
+          value: dashData?.activeContracts ? "97%" : "0%",
+        },
+        {
+          label: "Status",
+          value: dashData?.activeContracts ? "ACTIVE" : "INACTIVE",
+        },
+        {
+          label: "Algorithm",
+          value: "SHA-256",
+        },
+      ],
+    },
+  };
 
   // ── Fetch helpers ──
 
@@ -1267,6 +2056,19 @@ export default function F2PoolMiningPage() {
     } catch {}
     setWorkersLoading(false);
   }, []);
+
+  const loadActiveMinerMembers = useCallback(async () => {
+    if (!isAdmin) return;
+    setActiveMinerMembersLoading(true);
+    try {
+      const res = await fetch("/api/mining/active-miners-members");
+      if (res.ok) {
+        const d = await res.json();
+        setActiveMinerMembers(d.members ?? []);
+      }
+    } catch {}
+    setActiveMinerMembersLoading(false);
+  }, [isAdmin]);
 
   const loadStatistics = useCallback(async () => {
     setStatsLoading(true);
@@ -1323,6 +2125,7 @@ export default function F2PoolMiningPage() {
     if (activeTab === "contracts") loadContracts();
     if (activeTab === "earnings" || activeTab === "overview") loadEarnings();
     if (activeTab === "workers") loadWorkers();
+    if (activeTab === "workers" && isAdmin) loadActiveMinerMembers();
     if (activeTab === "statistics") loadStatistics();
     if (activeTab === "withdraw") loadWithdrawals();
     if (activeTab === "transactions") loadTransactions();
@@ -1332,10 +2135,12 @@ export default function F2PoolMiningPage() {
     loadContracts,
     loadEarnings,
     loadWorkers,
+    loadActiveMinerMembers,
     loadStatistics,
     loadWithdrawals,
     loadTransactions,
     loadWallets,
+    isAdmin,
   ]);
 
   const handleRefresh = async () => {
@@ -1344,6 +2149,7 @@ export default function F2PoolMiningPage() {
     if (activeTab === "contracts") await loadContracts();
     if (activeTab === "earnings") await loadEarnings();
     if (activeTab === "workers") await loadWorkers();
+    if (activeTab === "workers" && isAdmin) await loadActiveMinerMembers();
     if (activeTab === "statistics") await loadStatistics();
     if (activeTab === "withdraw") await loadWithdrawals();
     if (activeTab === "transactions") await loadTransactions();
@@ -1687,6 +2493,7 @@ export default function F2PoolMiningPage() {
                     iconBg="bg-orange-500/10"
                     isDark={isDark}
                     sparkData={[60, 70, 65, 80, 95, 110, 125]}
+                    onClick={() => setSelectedInsightCard("activeHashrate")}
                   />
                   <StatCard
                     title="Active Contracts"
@@ -1707,6 +2514,7 @@ export default function F2PoolMiningPage() {
                     icon={<Server size={16} className="text-green-500" />}
                     iconBg="bg-green-500/10"
                     isDark={isDark}
+                    onClick={() => setSelectedInsightCard("activeContracts")}
                   />
                   <StatCard
                     title="Today's Earnings"
@@ -1722,6 +2530,7 @@ export default function F2PoolMiningPage() {
                     iconBg="bg-blue-500/10"
                     isDark={isDark}
                     sparkData={[240, 255, 260, 270, 275, 285, 291]}
+                    onClick={() => setSelectedInsightCard("todayEarnings")}
                   />
                   <StatCard
                     title="Monthly Earnings"
@@ -1739,20 +2548,48 @@ export default function F2PoolMiningPage() {
                     iconBg="bg-purple-500/10"
                     isDark={isDark}
                     sparkData={[7000, 7400, 7600, 7900, 8100, 8500, 8789]}
+                    onClick={() => setSelectedInsightCard("monthlyEarnings")}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
                   {/* Mining Status */}
-                  <div
+                  <InteractiveDepthCard
                     className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                    isDark={isDark}
+                    entryY={10}
+                    entryScale={0.99}
+                    lift={6}
+                    tilt={3.2}
+                    hoverScale={1.01}
+                    style={{
+                      background: isDark
+                        ? "linear-gradient(145deg, rgba(31,41,55,0.98) 0%, rgba(17,24,39,0.98) 60%, rgba(31,41,55,0.98) 100%)"
+                        : "linear-gradient(145deg, #ffffff 0%, #f8fafc 60%, #ffffff 100%)",
+                    }}
+                    onClick={() => setSelectedInsightCard("miningStatus")}
                   >
+                    <div
+                      className="pointer-events-none absolute inset-0 opacity-[0.08]"
+                      style={{
+                        backgroundImage:
+                          "repeating-linear-gradient(90deg, transparent 0 10px, rgba(148,163,184,0.3) 10px 11px)",
+                      }}
+                    />
+                    <div
+                      className="pointer-events-none absolute -top-20 -right-16 w-40 h-40 rounded-full"
+                      style={{
+                        background:
+                          "radial-gradient(circle, rgba(34,197,94,0.24) 0%, rgba(34,197,94,0) 70%)",
+                        filter: "blur(8px)",
+                      }}
+                    />
                     <h3
                       className={`font-semibold text-sm mb-4 ${isDark ? "text-white" : "text-gray-900"}`}
                     >
                       Mining Status
                     </h3>
-                    <div className="flex flex-col items-center mb-4">
+                    <div className="relative z-10 flex flex-col items-center mb-4">
                       <div className="relative">
                         <CircularProgress
                           value={dashData?.activeContracts ? 97 : 0}
@@ -1775,7 +2612,7 @@ export default function F2PoolMiningPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="relative z-10 space-y-2">
                       {[
                         {
                           label: "Status",
@@ -1806,7 +2643,7 @@ export default function F2PoolMiningPage() {
                             />
                           ) : (
                             <span
-                              className={`text-xs font-medium ${isDark ? "text-white" : "text-gray-800"}`}
+                              className={`text-xs font-medium ${isDark ? "text-green-300" : "text-green-700"}`}
                             >
                               {row.value}
                             </span>
@@ -1822,77 +2659,127 @@ export default function F2PoolMiningPage() {
                         <CountdownTimer isDark={isDark} />
                       </div>
                     </div>
-                  </div>
+                  </InteractiveDepthCard>
 
                   {/* Active Contracts Preview */}
-                  <div
-                    className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                  <InteractiveDepthCard
+                    className={`relative rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                    isDark={isDark}
+                    entryY={8}
+                    entryScale={0.995}
+                    lift={4}
+                    tilt={2.3}
+                    hoverScale={1.006}
+                    style={{
+                      background: isDark
+                        ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                        : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                    }}
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <h3
-                        className={`font-semibold text-sm ${isDark ? "text-white" : "text-gray-900"}`}
-                      >
-                        Active Contracts
-                      </h3>
-                      <button
-                        onClick={() => navigate("contracts")}
-                        className="text-orange-500 hover:text-orange-400 text-xs font-semibold"
-                      >
-                        View All
-                      </button>
-                    </div>
-                    {dashData?.contracts?.length ? (
-                      <div className="space-y-2">
-                        {dashData.contracts.slice(0, 3).map((c) => (
-                          <div
-                            key={c.id}
-                            className={`flex items-center gap-2 p-2.5 rounded-lg border ${isDark ? "bg-gray-700/50 border-gray-600/50" : "bg-gray-50 border-gray-200"}`}
-                          >
-                            <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-                              style={{
-                                backgroundColor:
-                                  COIN_COLORS[c.coin] ?? "#F97316",
-                              }}
-                            >
-                              {COIN_ICONS[c.coin] ?? "₿"}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p
-                                className={`text-xs font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}
-                              >
-                                {c.planName}
-                              </p>
-                              <p
-                                className={`text-[10px] truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                              >
-                                {c.hashrate}
-                              </p>
-                            </div>
-                            <StatusBadge status={c.status} />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center py-6 text-center">
-                        <Cpu
-                          size={24}
-                          className={`mb-2 ${isDark ? "text-gray-600" : "text-gray-300"}`}
-                        />
-                        <p
-                          className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    <div
+                      className="pointer-events-none absolute inset-0 opacity-[0.08]"
+                      style={{
+                        backgroundImage:
+                          "repeating-linear-gradient(90deg, transparent 0 12px, rgba(148,163,184,0.26) 12px 13px)",
+                      }}
+                    />
+                    <div className="relative z-10">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3
+                          className={`font-semibold text-sm ${isDark ? "text-white" : "text-gray-900"}`}
                         >
-                          No active contracts
-                        </p>
+                          Active Contracts
+                        </h3>
                         <button
-                          onClick={() => navigate("plans")}
-                          className="mt-2 text-xs text-orange-500 hover:text-orange-400 font-semibold flex items-center gap-1"
+                          onClick={() => navigate("contracts")}
+                          className="text-orange-500 hover:text-orange-400 text-xs font-semibold"
                         >
-                          Buy a plan <ArrowRight size={11} />
+                          View All
                         </button>
                       </div>
-                    )}
-                  </div>
+                      {dashData?.contracts?.length ? (
+                        <div className="space-y-2">
+                          {dashData.contracts.slice(0, 3).map((c, index) => (
+                            <InteractiveDepthCard
+                              key={c.id}
+                              className={`relative flex items-center gap-2 p-2.5 rounded-lg border overflow-hidden ${isDark ? "bg-gray-700/55 border-gray-600/50" : "bg-gray-50 border-gray-200"}`}
+                              isDark={isDark}
+                              entryY={6}
+                              entryScale={0.99}
+                              delay={index * 0.04}
+                              lift={4}
+                              tilt={2.5}
+                              hoverScale={1.01}
+                              onClick={() => setSelectedPreviewContract(c)}
+                              style={{
+                                background: isDark
+                                  ? "linear-gradient(150deg, rgba(55,65,81,0.62) 0%, rgba(31,41,55,0.72) 100%)"
+                                  : "linear-gradient(150deg, #f8fafc 0%, #f1f5f9 100%)",
+                              }}
+                            >
+                              <div
+                                className="pointer-events-none absolute inset-0 opacity-[0.08]"
+                                style={{
+                                  backgroundImage:
+                                    "repeating-linear-gradient(90deg, transparent 0 10px, rgba(148,163,184,0.35) 10px 11px)",
+                                }}
+                              />
+                              <div
+                                className="flex-shrink-0"
+                                style={{
+                                  filter:
+                                    "drop-shadow(0 2px 4px rgba(0,0,0,0.35))",
+                                  transform: "translateZ(14px)",
+                                }}
+                              >
+                                <CryptoIcon symbol={c.coin} size="sm" />
+                              </div>
+                              <div
+                                className="flex-1 min-w-0"
+                                style={{ transform: "translateZ(10px)" }}
+                              >
+                                <div className="flex items-center gap-1 min-w-0">
+                                  <span
+                                    className={`text-xs font-semibold truncate min-w-0 ${isDark ? "text-white" : "text-gray-900"}`}
+                                  >
+                                    {c.planName}
+                                  </span>
+                                  <VscVerifiedFilled
+                                    className="text-green-500 flex-shrink-0"
+                                    size={13}
+                                  />
+                                </div>
+                                <p
+                                  className={`text-[10px] truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                >
+                                  {c.hashrate}
+                                </p>
+                              </div>
+                              <StatusBadge status={c.status} />
+                            </InteractiveDepthCard>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center py-6 text-center">
+                          <Cpu
+                            size={24}
+                            className={`mb-2 ${isDark ? "text-gray-600" : "text-gray-300"}`}
+                          />
+                          <p
+                            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
+                            No active contracts
+                          </p>
+                          <button
+                            onClick={() => navigate("plans")}
+                            className="mt-2 text-xs text-orange-500 hover:text-orange-400 font-semibold flex items-center gap-1"
+                          >
+                            Buy a plan <ArrowRight size={11} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </InteractiveDepthCard>
 
                   {/* Profit Calculator */}
                   <div
@@ -2105,19 +2992,44 @@ export default function F2PoolMiningPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {MINING_PLANS_UI.map((plan, idx) => (
-                    <motion.div
+                    <InteractiveDepthCard
                       key={plan.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.07 }}
+                      isDark={isDark}
+                      entryY={20}
+                      entryScale={0.985}
+                      delay={idx * 0.07}
+                      lift={7}
+                      tilt={4}
+                      hoverScale={1.012}
                       className={`relative rounded-2xl p-5 border transition-all ${
                         plan.popular
-                          ? "border-orange-500 shadow-lg shadow-orange-500/10"
+                          ? "border-orange-500"
                           : isDark
-                            ? "border-gray-700/60 bg-gray-800"
-                            : "border-gray-200 bg-white"
-                      } ${plan.popular ? (isDark ? "bg-gray-800" : "bg-white") : ""}`}
+                            ? "border-gray-700/60"
+                            : "border-gray-200"
+                      }`}
+                      style={{
+                        background: isDark
+                          ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                          : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                      }}
                     >
+                      <div
+                        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+                        style={{
+                          backgroundImage:
+                            "repeating-linear-gradient(90deg, transparent 0 11px, rgba(148,163,184,0.3) 11px 12px)",
+                        }}
+                      />
+                      <div
+                        className="pointer-events-none absolute -top-16 -right-14 w-36 h-36 rounded-full"
+                        style={{
+                          background:
+                            "radial-gradient(circle, rgba(249,115,22,0.28) 0%, rgba(251,191,36,0.12) 36%, rgba(0,0,0,0) 70%)",
+                          filter: "blur(8px)",
+                        }}
+                      />
+
                       {plan.popular && (
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                           <span className="px-3 py-1 bg-orange-500 text-white text-[10px] font-bold rounded-full shadow-sm">
@@ -2125,18 +3037,32 @@ export default function F2PoolMiningPage() {
                           </span>
                         </div>
                       )}
-                      <div className="text-center mb-4">
+
+                      <div className="relative z-10 text-center mb-4">
                         <div
-                          className={`w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center`}
-                          style={{ backgroundColor: plan.color + "22" }}
+                          className={`w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center ${isDark ? "bg-gray-800/90" : "bg-white"}`}
+                          style={{
+                            border: isDark
+                              ? "1px solid rgba(249,115,22,0.25)"
+                              : "1px solid rgba(249,115,22,0.22)",
+                            boxShadow: isDark
+                              ? "0 8px 16px -12px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.1)"
+                              : "0 8px 16px -12px rgba(15,23,42,0.25), inset 0 1px 0 rgba(255,255,255,0.95)",
+                          }}
                         >
                           <Cpu size={18} style={{ color: plan.color }} />
                         </div>
-                        <h3
-                          className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}
-                        >
-                          {plan.name}
-                        </h3>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <h3
+                            className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
+                            {plan.name}
+                          </h3>
+                          <VscVerifiedFilled
+                            className="text-green-500 flex-shrink-0"
+                            size={14}
+                          />
+                        </div>
                         <p className="text-xl font-bold text-orange-500 mt-1">
                           ${plan.price.toLocaleString()}
                         </p>
@@ -2146,7 +3072,8 @@ export default function F2PoolMiningPage() {
                           {plan.duration} Days
                         </p>
                       </div>
-                      <div className="space-y-1.5 mb-4">
+
+                      <div className="relative z-10 space-y-1.5 mb-4">
                         {[
                           { label: "Hashrate", value: plan.hashrate },
                           { label: "Daily Profit", value: plan.dailyProfit },
@@ -2166,26 +3093,27 @@ export default function F2PoolMiningPage() {
                               {row.label}
                             </span>
                             <span
-                              className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                              className={`font-semibold ${isDark ? "text-green-300" : "text-green-700"}`}
                             >
                               {row.value}
                             </span>
                           </div>
                         ))}
                       </div>
+
                       <button
                         onClick={() => openPurchaseModal(plan.id)}
-                        className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all ${
+                        className={`relative z-10 w-full py-2.5 rounded-xl font-bold text-xs transition-all ${
                           plan.popular
                             ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
                             : isDark
-                              ? "bg-gray-700 hover:bg-gray-600 text-white border border-gray-600"
-                              : "bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200"
+                              ? "bg-gray-700 hover:bg-gray-600 text-white hover:text-green-300 border border-gray-600"
+                              : "bg-gray-100 hover:bg-gray-200 text-gray-900 hover:text-green-700 border border-gray-200"
                         }`}
                       >
                         Buy {plan.name} Plan
                       </button>
-                    </motion.div>
+                    </InteractiveDepthCard>
                   ))}
                 </div>
               </motion.div>
@@ -2239,10 +3167,22 @@ export default function F2PoolMiningPage() {
                       value: `${Number(dashData?.todayEarned ?? 0).toFixed(8)} BTC`,
                       sub: `$${Number(dashData?.todayEarnedUsd ?? 0).toFixed(2)}`,
                     },
-                  ].map((item) => (
-                    <div
+                  ].map((item, idx) => (
+                    <InteractiveDepthCard
                       key={item.label}
                       className={`rounded-xl p-3 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                      isDark={isDark}
+                      entryY={8}
+                      entryScale={0.992}
+                      delay={idx * 0.03}
+                      lift={4}
+                      tilt={2.5}
+                      hoverScale={1.01}
+                      style={{
+                        background: isDark
+                          ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                          : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                      }}
                     >
                       <p
                         className={`text-[10px] uppercase tracking-wide mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
@@ -2259,11 +3199,22 @@ export default function F2PoolMiningPage() {
                       >
                         {item.sub}
                       </p>
-                    </div>
+                    </InteractiveDepthCard>
                   ))}
                 </div>
-                <div
+                <InteractiveDepthCard
                   className={`rounded-xl border overflow-hidden ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                  isDark={isDark}
+                  entryY={8}
+                  entryScale={0.995}
+                  lift={4}
+                  tilt={2.5}
+                  hoverScale={1.004}
+                  style={{
+                    background: isDark
+                      ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                      : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                  }}
                 >
                   <div
                     className={`px-4 py-3 border-b ${isDark ? "border-gray-700/60" : "border-gray-100"}`}
@@ -2348,7 +3299,7 @@ export default function F2PoolMiningPage() {
                       isDark={isDark}
                     />
                   )}
-                </div>
+                </InteractiveDepthCard>
               </motion.div>
             )}
 
@@ -2395,10 +3346,22 @@ export default function F2PoolMiningPage() {
                       icon: <Clock size={16} className="text-orange-400" />,
                       bg: "bg-orange-500/10",
                     },
-                  ].map((item) => (
-                    <div
+                  ].map((item, idx) => (
+                    <InteractiveDepthCard
                       key={item.label}
                       className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                      isDark={isDark}
+                      entryY={8}
+                      entryScale={0.992}
+                      delay={idx * 0.03}
+                      lift={4}
+                      tilt={2.4}
+                      hoverScale={1.01}
+                      style={{
+                        background: isDark
+                          ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                          : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                      }}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <div className={`p-2 rounded-lg ${item.bg}`}>
@@ -2415,12 +3378,23 @@ export default function F2PoolMiningPage() {
                       >
                         {item.value}
                       </p>
-                    </div>
+                    </InteractiveDepthCard>
                   ))}
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                  <div
+                  <InteractiveDepthCard
                     className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                    isDark={isDark}
+                    entryY={8}
+                    entryScale={0.995}
+                    lift={4}
+                    tilt={2.5}
+                    hoverScale={1.004}
+                    style={{
+                      background: isDark
+                        ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                        : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                    }}
                   >
                     <h3
                       className={`font-semibold text-sm mb-3 ${isDark ? "text-white" : "text-gray-900"}`}
@@ -2451,16 +3425,27 @@ export default function F2PoolMiningPage() {
                             {row.label}
                           </span>
                           <span
-                            className={`text-xs font-medium ${isDark ? "text-white" : "text-gray-800"}`}
+                            className={`text-xs font-medium ${isDark ? "text-green-300" : "text-green-700"}`}
                           >
                             {row.value}
                           </span>
                         </div>
                       ))}
                     </div>
-                  </div>
-                  <div
+                  </InteractiveDepthCard>
+                  <InteractiveDepthCard
                     className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                    isDark={isDark}
+                    entryY={8}
+                    entryScale={0.995}
+                    lift={4}
+                    tilt={2.5}
+                    hoverScale={1.004}
+                    style={{
+                      background: isDark
+                        ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                        : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                    }}
                   >
                     <h3
                       className={`font-semibold text-sm mb-3 ${isDark ? "text-white" : "text-gray-900"}`}
@@ -2505,7 +3490,7 @@ export default function F2PoolMiningPage() {
                         isDark={isDark}
                       />
                     )}
-                  </div>
+                  </InteractiveDepthCard>
                 </div>
               </motion.div>
             )}
@@ -2550,7 +3535,7 @@ export default function F2PoolMiningPage() {
                   </div>
                 ) : contracts.length ? (
                   <div className="space-y-4">
-                    {contracts.map((c) => {
+                    {contracts.map((c, index) => {
                       const start = new Date(c.startDate).getTime();
                       const end = c.endDate
                         ? new Date(c.endDate).getTime()
@@ -2569,64 +3554,103 @@ export default function F2PoolMiningPage() {
                       const isActive = c.status === "ACTIVE";
 
                       return (
-                        <motion.div
+                        <InteractiveDepthCard
                           key={c.id}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`rounded-2xl border overflow-hidden shadow-sm ${
+                          className={`group relative rounded-2xl border overflow-hidden ${
                             isDark
-                              ? "bg-gray-800 border-gray-700/60"
+                              ? "bg-gray-900/95 border-gray-700/60"
                               : "bg-white border-gray-200"
                           }`}
+                          isDark={isDark}
+                          entryY={12}
+                          entryScale={0.985}
+                          delay={index * 0.04}
+                          lift={8}
+                          tilt={4.5}
+                          hoverScale={1.012}
+                          style={{
+                            background: isDark
+                              ? "linear-gradient(145deg, rgba(17,24,39,0.96) 0%, rgba(15,23,42,0.98) 58%, rgba(31,41,55,0.96) 100%)"
+                              : "linear-gradient(145deg, #ffffff 0%, #f8fafc 52%, #ffffff 100%)",
+                          }}
                         >
-                          {/* Top accent bar */}
-                          <div
-                            className="h-1 w-full"
+                          <motion.div
+                            className="pointer-events-none absolute -top-24 -right-20 w-48 h-48 rounded-full"
+                            animate={{
+                              x: [0, 10, 0],
+                              y: [0, -6, 0],
+                              opacity: isActive
+                                ? [0.25, 0.4, 0.25]
+                                : [0.12, 0.2, 0.12],
+                            }}
+                            transition={{
+                              duration: 5,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }}
                             style={{
-                              background: isActive
-                                ? "linear-gradient(90deg, #F97316, #FBBF24)"
-                                : isDark
-                                  ? "#374151"
-                                  : "#E5E7EB",
+                              background:
+                                "radial-gradient(circle, rgba(249,115,22,0.35) 0%, rgba(251,191,36,0.16) 35%, rgba(0,0,0,0) 70%)",
+                              filter: "blur(8px)",
                             }}
                           />
 
-                          <div className="p-4">
+                          <div
+                            className="pointer-events-none absolute inset-0 opacity-[0.08]"
+                            style={{
+                              backgroundImage:
+                                "repeating-linear-gradient(0deg, transparent 0 7px, rgba(148,163,184,0.35) 7px 8px), repeating-linear-gradient(90deg, transparent 0 11px, rgba(148,163,184,0.25) 11px 12px)",
+                            }}
+                          />
+
+                          {/* Top accent bar */}
+                          <div
+                            className="relative h-1.5 w-full"
+                            style={{
+                              background: isActive
+                                ? "linear-gradient(90deg, #F97316, #FBBF24, #F97316)"
+                                : isDark
+                                  ? "linear-gradient(90deg, #374151, #4B5563, #374151)"
+                                  : "linear-gradient(90deg, #E5E7EB, #D1D5DB, #E5E7EB)",
+                              backgroundSize: "200% 100%",
+                            }}
+                          />
+
+                          <div className="relative z-10 p-4">
                             {/* Row 1 — coin icon + plan name + status */}
                             <div className="flex items-center gap-3 mb-4">
-                              {/* Real BTC logo */}
-                              <div className="relative flex-shrink-0">
+                              <motion.div
+                                className="relative flex-shrink-0"
+                                whileHover={{ rotate: 6, scale: 1.06 }}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 260,
+                                  damping: 16,
+                                }}
+                                style={{ transform: "translateZ(22px)" }}
+                              >
                                 <div
-                                  className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
+                                  className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? "bg-gray-800/90" : "bg-white"}`}
                                   style={{
-                                    backgroundColor:
-                                      COIN_COLORS[c.coin] ?? "#F97316",
+                                    boxShadow: isDark
+                                      ? "0 10px 20px -12px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.1)"
+                                      : "0 10px 20px -14px rgba(15,23,42,0.35), inset 0 1px 0 rgba(255,255,255,0.95)",
+                                    border: isDark
+                                      ? "1px solid rgba(249,115,22,0.25)"
+                                      : "1px solid rgba(249,115,22,0.22)",
                                   }}
                                 >
-                                  <img
-                                    src={`/crypto/${c.coin.toLowerCase()}.svg`}
-                                    alt={c.coin}
-                                    className="w-7 h-7"
-                                    onError={(e) => {
-                                      (
-                                        e.currentTarget as HTMLImageElement
-                                      ).style.display = "none";
-                                      (
-                                        e.currentTarget
-                                          .nextSibling as HTMLElement
-                                      ).style.display = "flex";
-                                    }}
-                                  />
-                                  <span className="text-white font-bold text-base hidden items-center justify-center w-7 h-7">
-                                    {COIN_ICONS[c.coin] ?? "₿"}
-                                  </span>
+                                  <CryptoIcon symbol={c.coin} size="md" />
                                 </div>
                                 {isActive && (
                                   <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-gray-800 shadow" />
                                 )}
-                              </div>
+                              </motion.div>
 
-                              <div className="flex-1 min-w-0">
+                              <div
+                                className="flex-1 min-w-0"
+                                style={{ transform: "translateZ(12px)" }}
+                              >
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <p
                                     className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}
@@ -2646,6 +3670,7 @@ export default function F2PoolMiningPage() {
                               {isActive && (
                                 <div
                                   className={`flex-shrink-0 text-center px-2.5 py-1.5 rounded-xl ${isDark ? "bg-orange-500/10 border border-orange-500/20" : "bg-orange-50 border border-orange-200"}`}
+                                  style={{ transform: "translateZ(20px)" }}
                                 >
                                   <p className="text-orange-500 font-bold text-sm leading-none">
                                     {daysLeft}
@@ -2661,7 +3686,10 @@ export default function F2PoolMiningPage() {
 
                             {/* Progress bar */}
                             {isActive && (
-                              <div className="mb-4">
+                              <div
+                                className="mb-4"
+                                style={{ transform: "translateZ(10px)" }}
+                              >
                                 <div className="flex justify-between items-center mb-1.5">
                                   <span
                                     className={`text-[10px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}
@@ -2721,9 +3749,15 @@ export default function F2PoolMiningPage() {
                             {/* Stats grid */}
                             <div
                               className={`grid grid-cols-3 gap-2 pt-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-100"}`}
+                              style={{ transform: "translateZ(14px)" }}
                             >
                               <div
-                                className={`rounded-xl p-2.5 text-center ${isDark ? "bg-gray-700/50" : "bg-gray-50"}`}
+                                className={`rounded-xl p-2.5 text-center ${isDark ? "bg-gray-800/80 border border-gray-700/70" : "bg-gray-50 border border-gray-200"}`}
+                                style={{
+                                  boxShadow: isDark
+                                    ? "inset 0 1px 0 rgba(255,255,255,0.04)"
+                                    : "inset 0 1px 0 rgba(255,255,255,0.9)",
+                                }}
                               >
                                 <p
                                   className={`text-[9px] uppercase tracking-wide mb-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
@@ -2737,7 +3771,12 @@ export default function F2PoolMiningPage() {
                                 </p>
                               </div>
                               <div
-                                className={`rounded-xl p-2.5 text-center ${isDark ? "bg-gray-700/50" : "bg-gray-50"}`}
+                                className={`rounded-xl p-2.5 text-center ${isDark ? "bg-gray-800/80 border border-gray-700/70" : "bg-gray-50 border border-gray-200"}`}
+                                style={{
+                                  boxShadow: isDark
+                                    ? "inset 0 1px 0 rgba(255,255,255,0.04)"
+                                    : "inset 0 1px 0 rgba(255,255,255,0.9)",
+                                }}
                               >
                                 <p
                                   className={`text-[9px] uppercase tracking-wide mb-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
@@ -2751,7 +3790,12 @@ export default function F2PoolMiningPage() {
                                 </p>
                               </div>
                               <div
-                                className={`rounded-xl p-2.5 text-center ${isDark ? "bg-green-900/20 border border-green-500/10" : "bg-green-50 border border-green-100"}`}
+                                className={`rounded-xl p-2.5 text-center ${isDark ? "bg-green-900/20 border border-green-500/20" : "bg-green-50 border border-green-100"}`}
+                                style={{
+                                  boxShadow: isDark
+                                    ? "0 8px 18px -14px rgba(34,197,94,0.65)"
+                                    : "0 8px 18px -14px rgba(22,163,74,0.45)",
+                                }}
                               >
                                 <p
                                   className={`text-[9px] uppercase tracking-wide mb-1 ${isDark ? "text-green-400/70" : "text-green-600/70"}`}
@@ -2781,7 +3825,7 @@ export default function F2PoolMiningPage() {
                               </p>
                             )}
                           </div>
-                        </motion.div>
+                        </InteractiveDepthCard>
                       );
                     })}
                   </div>
@@ -2809,6 +3853,130 @@ export default function F2PoolMiningPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
+                {isAdmin && (
+                  <div className="mb-4">
+                    <h3
+                      className={`text-sm font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
+                      Active Miner Members
+                    </h3>
+                    {activeMinerMembersLoading ? (
+                      <div className="flex items-center justify-center py-6">
+                        <RefreshCw
+                          size={16}
+                          className="animate-spin text-orange-500"
+                        />
+                      </div>
+                    ) : activeMinerMembers.length ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {activeMinerMembers.map((member, idx) => (
+                          <InteractiveDepthCard
+                            key={member.id}
+                            className={`rounded-xl p-3.5 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                            isDark={isDark}
+                            entryY={8}
+                            entryScale={0.995}
+                            delay={idx * 0.025}
+                            lift={4}
+                            tilt={2.3}
+                            hoverScale={1.006}
+                            style={{
+                              background: isDark
+                                ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                                : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="relative flex-shrink-0">
+                                {member.image ? (
+                                  <img
+                                    src={member.image}
+                                    alt={member.name || "Member"}
+                                    className="w-9 h-9 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br from-orange-500 to-orange-600">
+                                    {(member.name || member.email || "U")
+                                      .split(" ")
+                                      .slice(0, 2)
+                                      .map((p) => p[0])
+                                      .join("")
+                                      .toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <p
+                                    className={`text-xs font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}
+                                  >
+                                    {member.name || "Unnamed Member"}
+                                  </p>
+                                  <VscVerifiedFilled
+                                    className="text-green-500 flex-shrink-0"
+                                    size={12}
+                                  />
+                                </div>
+                                <p
+                                  className={`text-[10px] truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                >
+                                  {member.email || "No email"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="mt-3 space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <span
+                                  className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                >
+                                  Active Contracts
+                                </span>
+                                <span
+                                  className={`text-[10px] font-medium ${isDark ? "text-green-300" : "text-green-700"}`}
+                                >
+                                  {member.activeContracts}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span
+                                  className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                >
+                                  Total Hashrate
+                                </span>
+                                <span
+                                  className={`text-[10px] font-medium ${isDark ? "text-green-300" : "text-green-700"}`}
+                                >
+                                  {member.totalHashrate.toFixed(2)}{" "}
+                                  {member.hashrateUnit}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span
+                                  className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                >
+                                  Country
+                                </span>
+                                <span
+                                  className={`text-[10px] font-medium ${isDark ? "text-green-300" : "text-green-700"}`}
+                                >
+                                  {member.country || "—"}
+                                </span>
+                              </div>
+                            </div>
+                          </InteractiveDepthCard>
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        className={`rounded-xl p-3 border text-xs ${isDark ? "bg-gray-800 border-gray-700/60 text-gray-400" : "bg-white border-gray-200 text-gray-500"}`}
+                      >
+                        No active miner members found.
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                   <h2
                     className={`text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}
@@ -2843,10 +4011,22 @@ export default function F2PoolMiningPage() {
                   </div>
                 ) : workers.length ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {workers.map((w) => (
-                      <div
+                    {workers.map((w, idx) => (
+                      <InteractiveDepthCard
                         key={w.id}
                         className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                        isDark={isDark}
+                        entryY={8}
+                        entryScale={0.995}
+                        delay={idx * 0.03}
+                        lift={4}
+                        tilt={2.3}
+                        hoverScale={1.008}
+                        style={{
+                          background: isDark
+                            ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                            : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                        }}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
@@ -2858,6 +4038,10 @@ export default function F2PoolMiningPage() {
                             >
                               {w.name}
                             </span>
+                            <VscVerifiedFilled
+                              className="text-green-500 flex-shrink-0"
+                              size={13}
+                            />
                           </div>
                           <StatusBadge status={w.status} />
                         </div>
@@ -2889,7 +4073,7 @@ export default function F2PoolMiningPage() {
                             </div>
                           ))}
                         </div>
-                      </div>
+                      </InteractiveDepthCard>
                     ))}
                   </div>
                 ) : (
@@ -2950,10 +4134,22 @@ export default function F2PoolMiningPage() {
                             ? `${Number(stats.bestDay.amount).toFixed(8)} BTC`
                             : "—",
                         },
-                      ].map((item) => (
-                        <div
+                      ].map((item, idx) => (
+                        <InteractiveDepthCard
                           key={item.label}
                           className={`rounded-xl p-3 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                          isDark={isDark}
+                          entryY={8}
+                          entryScale={0.992}
+                          delay={idx * 0.03}
+                          lift={4}
+                          tilt={2.2}
+                          hoverScale={1.008}
+                          style={{
+                            background: isDark
+                              ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                              : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                          }}
                         >
                           <p
                             className={`text-[9px] uppercase tracking-wide mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
@@ -2965,12 +4161,23 @@ export default function F2PoolMiningPage() {
                           >
                             {item.value}
                           </p>
-                        </div>
+                        </InteractiveDepthCard>
                       ))}
                     </div>
                     {stats?.earningsByCoin?.length ? (
-                      <div
+                      <InteractiveDepthCard
                         className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                        isDark={isDark}
+                        entryY={8}
+                        entryScale={0.995}
+                        lift={4}
+                        tilt={2.3}
+                        hoverScale={1.004}
+                        style={{
+                          background: isDark
+                            ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                            : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                        }}
                       >
                         <h3
                           className={`font-semibold text-sm mb-3 ${isDark ? "text-white" : "text-gray-900"}`}
@@ -2985,14 +4192,15 @@ export default function F2PoolMiningPage() {
                             >
                               <div className="flex items-center gap-2">
                                 <div
-                                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
                                   style={{
-                                    backgroundColor:
-                                      COIN_COLORS[item.currency] ?? "#F97316",
+                                    filter:
+                                      "drop-shadow(0 2px 4px rgba(0,0,0,0.35))",
                                   }}
                                 >
-                                  {COIN_ICONS[item.currency] ??
-                                    item.currency[0]}
+                                  <CryptoIcon
+                                    symbol={item.currency}
+                                    size="xs"
+                                  />
                                 </div>
                                 <span
                                   className={`text-xs font-medium ${isDark ? "text-white" : "text-gray-900"}`}
@@ -3002,12 +4210,12 @@ export default function F2PoolMiningPage() {
                               </div>
                               <div className="text-right">
                                 <p
-                                  className={`text-xs font-mono font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                                  className={`text-xs font-mono font-medium ${isDark ? "text-green-300" : "text-green-700"}`}
                                 >
                                   {Number(item._sum.amount ?? 0).toFixed(8)}
                                 </p>
                                 <p
-                                  className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                  className={`text-[10px] ${isDark ? "text-green-400" : "text-green-600"}`}
                                 >
                                   ${Number(item._sum.amountUsd ?? 0).toFixed(2)}
                                 </p>
@@ -3015,10 +4223,21 @@ export default function F2PoolMiningPage() {
                             </div>
                           ))}
                         </div>
-                      </div>
+                      </InteractiveDepthCard>
                     ) : (
-                      <div
+                      <InteractiveDepthCard
                         className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                        isDark={isDark}
+                        entryY={8}
+                        entryScale={0.995}
+                        lift={4}
+                        tilt={2.3}
+                        hoverScale={1.004}
+                        style={{
+                          background: isDark
+                            ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                            : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                        }}
                       >
                         <EmptyState
                           icon={
@@ -3033,7 +4252,7 @@ export default function F2PoolMiningPage() {
                           desc="Start mining to generate statistics"
                           isDark={isDark}
                         />
-                      </div>
+                      </InteractiveDepthCard>
                     )}
                   </div>
                 )}
@@ -3055,8 +4274,19 @@ export default function F2PoolMiningPage() {
                 </h2>
 
                 {/* Balance Banner */}
-                <div
+                <InteractiveDepthCard
                   className={`rounded-xl p-4 mb-4 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                  isDark={isDark}
+                  entryY={8}
+                  entryScale={0.995}
+                  lift={4}
+                  tilt={2.3}
+                  hoverScale={1.004}
+                  style={{
+                    background: isDark
+                      ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                      : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
@@ -3087,12 +4317,23 @@ export default function F2PoolMiningPage() {
                   >
                     Buy More Hashrate
                   </button>
-                </div>
+                </InteractiveDepthCard>
 
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
                   {/* Withdrawal Form */}
-                  <div
+                  <InteractiveDepthCard
                     className={`lg:col-span-3 rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                    isDark={isDark}
+                    entryY={8}
+                    entryScale={0.995}
+                    lift={4}
+                    tilt={2.3}
+                    hoverScale={1.004}
+                    style={{
+                      background: isDark
+                        ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                        : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                    }}
                   >
                     <h3
                       className={`font-semibold text-sm mb-4 ${isDark ? "text-white" : "text-gray-900"}`}
@@ -3340,12 +4581,23 @@ export default function F2PoolMiningPage() {
                             : `Withdraw ${withdrawCurrency}`}
                       </button>
                     </form>
-                  </div>
+                  </InteractiveDepthCard>
 
                   {/* Info Panel */}
                   <div className="lg:col-span-2 space-y-3">
-                    <div
+                    <InteractiveDepthCard
                       className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                      isDark={isDark}
+                      entryY={8}
+                      entryScale={0.995}
+                      lift={4}
+                      tilt={2.3}
+                      hoverScale={1.004}
+                      style={{
+                        background: isDark
+                          ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                          : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                      }}
                     >
                       <h4
                         className={`font-semibold text-xs mb-2.5 ${isDark ? "text-white" : "text-gray-900"}`}
@@ -3376,14 +4628,14 @@ export default function F2PoolMiningPage() {
                               {row.label}
                             </span>
                             <span
-                              className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                              className={`font-medium ${isDark ? "text-green-300" : "text-green-700"}`}
                             >
                               {row.value}
                             </span>
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </InteractiveDepthCard>
                     <div className="rounded-xl p-3 border border-orange-500/20 bg-orange-500/5 flex items-start gap-2">
                       <Shield
                         size={13}
@@ -3400,8 +4652,19 @@ export default function F2PoolMiningPage() {
                 </div>
 
                 {/* Withdrawal History */}
-                <div
+                <InteractiveDepthCard
                   className={`rounded-xl border overflow-hidden ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                  isDark={isDark}
+                  entryY={8}
+                  entryScale={0.995}
+                  lift={4}
+                  tilt={2.3}
+                  hoverScale={1.003}
+                  style={{
+                    background: isDark
+                      ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                      : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                  }}
                 >
                   <div
                     className={`px-4 py-3 border-b ${isDark ? "border-gray-700/60" : "border-gray-100"}`}
@@ -3498,7 +4761,7 @@ export default function F2PoolMiningPage() {
                       isDark={isDark}
                     />
                   )}
-                </div>
+                </InteractiveDepthCard>
               </motion.div>
             )}
 
@@ -3549,9 +4812,21 @@ export default function F2PoolMiningPage() {
                       (tx) => tx.type === t.type,
                     ).length;
                     return (
-                      <div
+                      <InteractiveDepthCard
                         key={t.type}
                         className={`rounded-xl p-3 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                        isDark={isDark}
+                        entryY={6}
+                        entryScale={0.994}
+                        delay={count * 0.01}
+                        lift={3}
+                        tilt={2.1}
+                        hoverScale={1.008}
+                        style={{
+                          background: isDark
+                            ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                            : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                        }}
                       >
                         <p
                           className={`text-[9px] uppercase tracking-wide mb-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
@@ -3563,12 +4838,23 @@ export default function F2PoolMiningPage() {
                         >
                           {count}
                         </p>
-                      </div>
+                      </InteractiveDepthCard>
                     );
                   })}
                 </div>
-                <div
+                <InteractiveDepthCard
                   className={`rounded-xl border overflow-hidden ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                  isDark={isDark}
+                  entryY={8}
+                  entryScale={0.995}
+                  lift={4}
+                  tilt={2.3}
+                  hoverScale={1.003}
+                  style={{
+                    background: isDark
+                      ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                      : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                  }}
                 >
                   {txLoading ? (
                     <div className="flex items-center justify-center py-16">
@@ -3661,7 +4947,7 @@ export default function F2PoolMiningPage() {
                       isDark={isDark}
                     />
                   )}
-                </div>
+                </InteractiveDepthCard>
               </motion.div>
             )}
 
@@ -3678,8 +4964,19 @@ export default function F2PoolMiningPage() {
                 >
                   Saved Wallet Addresses
                 </h2>
-                <div
+                <InteractiveDepthCard
                   className={`rounded-xl p-4 border mb-4 ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                  isDark={isDark}
+                  entryY={8}
+                  entryScale={0.995}
+                  lift={4}
+                  tilt={2.3}
+                  hoverScale={1.004}
+                  style={{
+                    background: isDark
+                      ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                      : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                  }}
                 >
                   <h3
                     className={`font-semibold text-sm mb-3 ${isDark ? "text-white" : "text-gray-900"}`}
@@ -3766,7 +5063,7 @@ export default function F2PoolMiningPage() {
                       </div>
                     </div>
                   </form>
-                </div>
+                </InteractiveDepthCard>
                 {walletsLoading ? (
                   <div className="flex items-center justify-center py-10">
                     <RefreshCw
@@ -3776,19 +5073,30 @@ export default function F2PoolMiningPage() {
                   </div>
                 ) : wallets.length ? (
                   <div className="space-y-2">
-                    {wallets.map((w) => (
-                      <div
+                    {wallets.map((w, idx) => (
+                      <InteractiveDepthCard
                         key={w.id}
                         className={`rounded-xl p-3.5 border flex items-center gap-3 ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                        isDark={isDark}
+                        entryY={6}
+                        entryScale={0.995}
+                        delay={idx * 0.02}
+                        lift={3}
+                        tilt={2.1}
+                        hoverScale={1.006}
+                        style={{
+                          background: isDark
+                            ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                            : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                        }}
                       >
                         <div
-                          className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+                          className="flex-shrink-0"
                           style={{
-                            backgroundColor:
-                              COIN_COLORS[w.currency] ?? "#F97316",
+                            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.35))",
                           }}
                         >
-                          {COIN_ICONS[w.currency] ?? w.currency[0]}
+                          <CryptoIcon symbol={w.currency} size="sm" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -3818,7 +5126,7 @@ export default function F2PoolMiningPage() {
                             <Trash2 size={12} />
                           </button>
                         </div>
-                      </div>
+                      </InteractiveDepthCard>
                     ))}
                   </div>
                 ) : (
@@ -3872,10 +5180,22 @@ export default function F2PoolMiningPage() {
                       ),
                       bg: "bg-orange-500/10",
                     },
-                  ].map((item) => (
-                    <div
+                  ].map((item, idx) => (
+                    <InteractiveDepthCard
                       key={item.label}
                       className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                      isDark={isDark}
+                      entryY={8}
+                      entryScale={0.992}
+                      delay={idx * 0.03}
+                      lift={4}
+                      tilt={2.3}
+                      hoverScale={1.01}
+                      style={{
+                        background: isDark
+                          ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                          : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                      }}
                     >
                       <div className={`p-2 rounded-lg w-fit mb-2 ${item.bg}`}>
                         {item.icon}
@@ -3890,11 +5210,22 @@ export default function F2PoolMiningPage() {
                       >
                         {item.value}
                       </p>
-                    </div>
+                    </InteractiveDepthCard>
                   ))}
                 </div>
-                <div
+                <InteractiveDepthCard
                   className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                  isDark={isDark}
+                  entryY={8}
+                  entryScale={0.995}
+                  lift={4}
+                  tilt={2.3}
+                  hoverScale={1.004}
+                  style={{
+                    background: isDark
+                      ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                      : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                  }}
                 >
                   <h3
                     className={`font-semibold text-sm mb-3 ${isDark ? "text-white" : "text-gray-900"}`}
@@ -3919,7 +5250,7 @@ export default function F2PoolMiningPage() {
                     Earn 5% commission on all mining earnings of your referred
                     users.
                   </p>
-                </div>
+                </InteractiveDepthCard>
               </motion.div>
             )}
 
@@ -3953,10 +5284,22 @@ export default function F2PoolMiningPage() {
                       desc: "Restrict access to trusted IPs",
                       enabled: false,
                     },
-                  ].map((item) => (
-                    <div
+                  ].map((item, idx) => (
+                    <InteractiveDepthCard
                       key={item.label}
                       className={`rounded-xl p-4 border flex items-center justify-between ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                      isDark={isDark}
+                      entryY={6}
+                      entryScale={0.995}
+                      delay={idx * 0.02}
+                      lift={3}
+                      tilt={2.1}
+                      hoverScale={1.006}
+                      style={{
+                        background: isDark
+                          ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                          : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                      }}
                     >
                       <div>
                         <p
@@ -3977,7 +5320,7 @@ export default function F2PoolMiningPage() {
                           className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${item.enabled ? "translate-x-[18px]" : "translate-x-[2px]"}`}
                         />
                       </div>
-                    </div>
+                    </InteractiveDepthCard>
                   ))}
                   <Link
                     href="/settings"
@@ -4017,23 +5360,51 @@ export default function F2PoolMiningPage() {
                 >
                   Account Settings
                 </h2>
-                <div
+                <InteractiveDepthCard
                   className={`rounded-xl p-4 border mb-3 ${isDark ? "bg-gray-800 border-gray-700/60" : "bg-white border-gray-200"} shadow-sm`}
+                  isDark={isDark}
+                  entryY={8}
+                  entryScale={0.995}
+                  lift={4}
+                  tilt={2.2}
+                  hoverScale={1.004}
+                  style={{
+                    background: isDark
+                      ? "linear-gradient(150deg, rgba(31,41,55,0.96) 0%, rgba(17,24,39,0.98) 100%)"
+                      : "linear-gradient(150deg, #ffffff 0%, #f8fafc 100%)",
+                  }}
                 >
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-bold text-lg">
-                        {(session?.user?.name ??
-                          session?.user?.email ??
-                          "U")[0].toUpperCase()}
-                      </span>
+                    <div className="relative flex-shrink-0">
+                      {session?.user?.image ? (
+                        <img
+                          src={session.user.image}
+                          alt={session.user.name || "User"}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-lg font-bold text-white bg-gradient-to-br from-orange-500 to-orange-600">
+                          {(session?.user?.name || "U")
+                            .split(" ")
+                            .slice(0, 2)
+                            .map((p) => p[0])
+                            .join("")
+                            .toUpperCase()}
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <p
-                        className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
-                      >
-                        {session?.user?.name ?? "User"}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p
+                          className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
+                          {session?.user?.name ?? "User"}
+                        </p>
+                        <VscVerifiedFilled
+                          className="text-green-500 flex-shrink-0"
+                          size={14}
+                        />
+                      </div>
                       <p
                         className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
                       >
@@ -4065,14 +5436,14 @@ export default function F2PoolMiningPage() {
                           {row.label}
                         </span>
                         <span
-                          className={`text-xs font-medium ${isDark ? "text-white" : "text-gray-800"}`}
+                          className={`text-xs font-medium ${isDark ? "text-green-300" : "text-green-700"}`}
                         >
                           {row.value}
                         </span>
                       </div>
                     ))}
                   </div>
-                </div>
+                </InteractiveDepthCard>
                 <Link
                   href="/settings"
                   className={`flex items-center justify-between rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700/60 hover:border-orange-500/30" : "bg-white border-gray-200 hover:border-orange-300"} shadow-sm transition-all`}
@@ -4109,6 +5480,19 @@ export default function F2PoolMiningPage() {
           © 2025 F2 Pool Mining. All Rights Reserved.
         </div>
       </div>
+
+      <InsightCardModal
+        isOpen={selectedInsightCard !== null}
+        card={selectedInsightCard ? insightCards[selectedInsightCard] : null}
+        isDark={isDark}
+        onClose={() => setSelectedInsightCard(null)}
+      />
+      <ContractPreviewModal
+        isOpen={selectedPreviewContract !== null}
+        contract={selectedPreviewContract}
+        isDark={isDark}
+        onClose={() => setSelectedPreviewContract(null)}
+      />
     </div>
   );
 }

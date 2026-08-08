@@ -1822,14 +1822,15 @@ function TradingInterface() {
       };
     }
 
-    // If not logged in (unauthenticated), force practice mode
-    if (status === "unauthenticated") {
-      setSelectedAccountType("practice");
-      localStorage.setItem("selectedAccountType", "practice");
-    } else if (status === "authenticated") {
-      // Logged in users: always default to real account
+    // If we have a valid session user, always default to real account.
+    // This avoids mobile auth-status race conditions briefly forcing demo.
+    if (session?.user) {
       setSelectedAccountType("real");
       localStorage.setItem("selectedAccountType", "real");
+    } else if (status === "unauthenticated") {
+      // If not logged in, force practice mode
+      setSelectedAccountType("practice");
+      localStorage.setItem("selectedAccountType", "practice");
     }
 
     return () => {
@@ -1837,7 +1838,7 @@ function TradingInterface() {
       clearInterval(forexInterval);
       clearInterval(countdownInterval);
     };
-  }, [status, expirationSeconds]);
+  }, [status, session?.user, expirationSeconds]);
 
   // Convert balance to USD when balance or exchange rates change
   useEffect(() => {
@@ -2434,7 +2435,10 @@ function TradingInterface() {
           selectedAccountType={selectedAccountType}
           traderoomBalance={traderoomBalance}
           practiceAccountBalance={practiceAccountBalance}
-          onAccountTypeChange={setSelectedAccountType}
+          onAccountTypeChange={(type) => {
+            setSelectedAccountType(type);
+            localStorage.setItem("selectedAccountType", type);
+          }}
           onDeposit={() => setShowFundModal(true)}
           onWithdraw={() => setShowWithdrawModal(true)}
           onReplenishPractice={(amount) => setPracticeAccountBalance(amount)}
